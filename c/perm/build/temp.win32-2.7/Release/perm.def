@@ -1,0 +1,3 @@
+LIBRARY perm.pyd
+EXPORTS
+initperm
