@@ -139,12 +139,19 @@ class detection_model:
         detectors=[[self.detectors[i] for i in pattern] for pattern in indeces]
         return detectors
 
-    #def patterns_and_efficiencies(self, nphotons):
-        #''' iterate over all patterns of n photons, with efficiencies '''
-        #indeces=it.combinations(range(len(self.detectors)), nphotons)
-        #detectors=[[self.detectors[i] for i in pattern] for pattern in indeces]
-        #efficiencies=map(lambda x: self.net_efficiency(x), detectors)
-        #return zip(detectors, efficiencies)
+    def get_detector_label_events(self, nphotons):
+        ''' list all the ways that the used detectors can click '''
+        detector_indeces=range(len(self.detectors))
+        indeces=it.combinations(detector_indeces, nphotons)
+        detectors=[''.join(sorted([self.detectors[i].label for i in pattern])) for pattern in indeces]
+        return detectors
+    
+    def patterns_and_efficiencies(self, nphotons):
+        ''' iterate over all patterns of n photons, with efficiencies '''
+        indeces=it.combinations(range(len(self.detectors)), nphotons)
+        detectors=[[self.detectors[i] for i in pattern] for pattern in indeces]
+        efficiencies=map(lambda x: self.net_efficiency(x), detectors)
+        return zip(detectors, efficiencies)
                 
 
 

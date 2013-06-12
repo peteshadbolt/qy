@@ -20,7 +20,7 @@ indeces_4x4=map(get_index_4x4, irange_4x4)
 def perm_4x4(A):
     ''' faster, maybe '''
     get_term=lambda index: ((-1)**np.sum(index))*np.prod(np.sum(A[index,:], 0))
-    return np.sum(map(get_term, indeces))
+    return np.sum(map(get_term, indeces_4x4))
 
 
 #def perm_ryser(A):

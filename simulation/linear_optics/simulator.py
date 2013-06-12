@@ -10,7 +10,7 @@ class simulator:
         self.device=device
         self.basis=basis
         self.nmodes=self.basis.nmodes
-        self.nphotons=self.basis.nmodes
+        self.nphotons=self.basis.nphotons
         self.quantum_classical='quantum'
         self.perm=perm_4x4 if self.nphotons==4 else perm_ryser
 

@@ -84,8 +84,10 @@ class basis:
         label=''.join(map(str, label)) # easy way to support string labels
         return self.mode_table[label]
 
-    def get_blank_state(self):
-        ''' return a blank state '''
-        return state(self)
+    def get_state(self, starter=None):
+        ''' get an empty state to start building with '''
+        new_state=state(self)
+        if starter!=None: new_state.add(1, starter)
+        return new_state
 
 
