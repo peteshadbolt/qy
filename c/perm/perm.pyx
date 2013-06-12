@@ -34,19 +34,20 @@ def perm(np.ndarray[DTYPE_t, ndim=2] A not None):
 
     cdef int n=A.shape[0]
     cdef int i=0
+    cdef int z=0
     cdef int index=0
     cdef float y_real
     cdef float y_imag
 
-    #for i in range(0, 2**n):
+    # iterate over exponentially many terms
     for i from 0 <= i < 2**n:
         count=countbits(i)
-        print bin(i), count
-        raw_input()
+        for z from 0 <= z < n:
+            index = i & 1<<z != 0
+            y_real=y_real+y_real
+            y_imag=y_imag+y_imag
 
-        y_real=y_real+y_real
-        y_imag=y_imag+y_imag
-
+    # get normalization constant
     cdef float norm=((-1)**n)
 
     return norm*y_real+1j*norm*y_imag
