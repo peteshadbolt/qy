@@ -1,19 +1,18 @@
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
+cnp.import_array()
 cimport cython
 
 '''
-Fast permanent in c. Under windows/mingw32 run with:
-python setup.py build_ext --inplace -c m
+Fast permanent in cython. Under windows/mingw32 compile with:
+python setup.py build_ext --inplace -c mingw32
 '''
 
 
 # typedefs
 DTYPE = np.complex
-ctypedef np.complex_t DTYPE_t
+ctypedef cnp.complex_t DTYPE_t
 
-# safety off!
-@cython.boundscheck(False)
 def countbits(unsigned int n):
     ''' count the number of bits in a binary string ''' 
     n = (n & 0x5555555555555555) + ((n & 0xAAAAAAAAAAAAAAAA) >> 1)
@@ -24,32 +23,44 @@ def countbits(unsigned int n):
     n = (n & 0x00000000FFFFFFFF) + ((n & 0xFFFFFFFF00000000) >> 32) # This last & isn't strictly necessary.
     return n
 
-# safety off!
 @cython.boundscheck(False)
-def perm(np.ndarray[DTYPE_t, ndim=2] A not None):
-    '''
-    The permanent of a matrix
-    m is a complex NxN numpy matrix
-    '''
+@cython.wraparound(False)
+def perm(cnp.ndarray[cnp.complex_t, ndim=2] A):
+    cdef int n = A.shape[0]
+    cdef float norm = (-1)**n
+    cdef int i = 0
+    cdef int z = 0
+    cdef int y = 0
+    cdef float y_real = 0
+    cdef float y_imag = 0
+    cdef float product_real = 0
+    cdef float product_imag = 0
+    cdef float prefactor = 0
+    cdef cnp.complex_t aa
 
-    cdef int n=A.shape[0]
-    cdef int i=0
-    cdef int z=0
-    cdef int index=0
-    cdef float y_real
-    cdef float y_imag
-
-    # iterate over exponentially many terms
+    #iterate over exponentially many terms
     for i from 0 <= i < 2**n:
-        count=countbits(i)
+        prefactor=(-1)**countbits(i)
+
+        # for each term in the index string
         for z from 0 <= z < n:
-            index = i & 1<<z != 0
-            y_real=y_real+y_real
-            y_imag=y_imag+y_imag
 
-    # get normalization constant
-    cdef float norm=((-1)**n)
+            # if the column is marked
+            if i & (1 << z) > 0:
+                product_real = 1
+                product_imag = 1
 
+                # work over the row
+                for y from 0 <= y < n:
+                    aa = A[z,y]
+                    #print aa
+                    # complex multiplication
+                    product_real = (product_real * aa.real) - (product_imag * aa.imag)
+                    product_imag = (product_imag * aa.real) + (product_real * aa.imag)
+
+                # add to the permanent
+                y_real = y_real + prefactor*product_real
+                y_imag = y_imag + prefactor*product_imag
+
+    #get normalization constant
     return norm*y_real+1j*norm*y_imag
-
-
