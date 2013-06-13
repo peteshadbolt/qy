@@ -2,14 +2,13 @@ import numpy as np
 from numpy.linalg import qr
 from perm import perm
 from python_perm import perm_ryser
-from python_perm import perm_ryser_explicit
 import time
 import sys
 from qy import util
 
 # 5 photons in 21 modes
 ntests=5313
-size=5
+size=4
 
 
 # generate a test matrix
@@ -23,14 +22,13 @@ def get_random_u(size):
 # check that we are actually calcualting the permanent!
 for i in range(ntests):
     u=get_random_u(size)
-    p = perm(u)
-    #print '({0.real:.7f} + {0.imag:.7f}j)'.format(p)
-    #p = perm_ryser_explicit(u)
-    print '({0.real:.7f} + {0.imag:.7f}j)'.format(p)
-    p = perm_ryser(u)
-    print '({0.real:.7f} + {0.imag:.7f}j)'.format(p)
-    print
-    raw_input()
+    p1 = perm(u)
+    p2 = perm_ryser(u)
+    dist = np.abs(p1-p2)
+    if dist>0.000000001:
+        print 'DISCREPANCY!!!'
+        print p1
+        print p2
 
 # test c
 print 'C'

@@ -27,46 +27,97 @@ def countbits(unsigned int n):
 @cython.wraparound(False)
 def perm(cnp.ndarray[cnp.complex_t, ndim=2] A):
     cdef int n = A.shape[0]
-    cdef float norm = (-1)**n
+    cdef double norm = (-1)**n
     cdef int i = 0
     cdef int z = 0
     cdef int y = 0
-    cdef float perm_real = 0
-    cdef float perm_imag = 0
-    cdef float product_real = 0
-    cdef float product_imag = 0
-    cdef float sum_real = 0
-    cdef float sum_imag = 0
-    cdef float sign = 0
+    cdef double perm_real = 0
+    cdef double perm_imag = 0
+    cdef double product_real = 0
+    cdef double product_real_old = 0
+    cdef double product_imag = 0
+    cdef double sum_real = 0
+    cdef double sum_imag = 0
+    cdef double sign = 0
     cdef cnp.complex_t aa
 
-    #iterate over exponentially many terms
+    #iterate over exponentially many index strings
     for i from 0 <= i < 2**n:
-        sign=(-1)**countbits(i)
         product_real = 1
         product_imag = 0
 
-        # for each term in the index string
-        for z from 0 <= z < n:
+        # iterate over rows
+        for y from 0 <= y < n:
 
-            # if the column is marked, sum over it
-            if i & (1 << z) > 0:
-                sum_real = 0; sum_imag = 0;
-                # work over the row
-                for y from 0 <= y < n:
+            # zero the sum
+            sum_real = 0; sum_imag = 0;
+
+            # for each column
+            for z from 0 <= z < n:
+                # if the column is marked, add it to the sum
+                if i & (1 << z) > 0:
                     aa = A[z,y]
-                    sum_real = sum_real+aa.real
-                    sum_imag = sum_imag+aa.imag
-
-                print 'sum_c:', sum_real
+                    sum_real = sum_real + aa.real
+                    sum_imag = sum_imag + aa.imag
 
             # multiply the sum into the product (complex multiplication)
+            product_real_old = product_real * 1
             product_real = (product_real * sum_real) - (product_imag * sum_imag)
-            product_imag = (product_imag * sum_real) + (product_real * sum_imag)
+            product_imag = (product_imag * sum_real) + (product_real_old * sum_imag)
 
         # add to the permanent
+        sign=(-1)**countbits(i)
         perm_real = perm_real + sign*product_real
         perm_imag = perm_imag + sign*product_imag
 
     #get normalization constant
     return norm*perm_real+1j*norm*perm_imag
+
+
+
+
+#def perm(cnp.ndarray[cnp.complex_t, ndim=2] A):
+    #cdef int n = A.shape[0]
+    #cdef double norm = (-1)**n
+    #cdef int i = 0
+    #cdef int z = 0
+    #cdef int y = 0
+    #cdef double perm_real = 0
+    #cdef double perm_imag = 0
+    #cdef double product_real = 0
+    #cdef double product_imag = 0
+    #cdef double sum_real = 0
+    #cdef double sum_imag = 0
+    #cdef double sign = 0
+    #cdef cnp.complex_t aa
+
+    #iterate over exponentially many terms
+    #for i from 0 <= i < 2**n:
+        #sign=(-1)**countbits(i)
+        #product_real = 1
+        #product_imag = 0
+
+         #for each term in the index string
+        #for z from 0 <= z < n:
+
+             #if the column is marked, sum over it
+            #if i & (1 << z) > 0:
+                #sum_real = 0; sum_imag = 0;
+                 #work over the row
+                #for y from 0 <= y < n:
+                    #aa = A[z,y]
+                    #sum_real = sum_real+aa.real
+                    #sum_imag = sum_imag+aa.imag
+
+                #print 'sum_c:', sum_real
+
+             #multiply the sum into the product (complex multiplication)
+            #product_real = (product_real * sum_real) - (product_imag * sum_imag)
+            #product_imag = (product_imag * sum_real) + (product_real * sum_imag)
+
+         #add to the permanent
+        #perm_real = perm_real + sign*product_real
+        #perm_imag = perm_imag + sign*product_imag
+
+    #get normalization constant
+    #return norm*perm_real+1j*norm*perm_imag
