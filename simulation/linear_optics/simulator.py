@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.misc import factorial
 import itertools as it
-from perm import perm_ryser, perm_4x4
+from qy.simulation import permanent
 from state import state
 
 class simulator:
@@ -12,7 +12,18 @@ class simulator:
         self.nmodes=self.basis.nmodes
         self.nphotons=self.basis.nphotons
         self.quantum_classical='quantum'
-        self.perm=perm_4x4 if self.nphotons==4 else perm_ryser
+        self.set_perm()
+
+    def set_perm(self, explicit=False):
+        '''
+        Set the permanent function that we will use from now on.
+        If "explicit" is set, we will use the explicit forms up to 4x4 from now on 
+        '''
+        self.perm=permanent.perm_ryser
+        if not explicit: return
+        if self.nphotons == 2: self.perm=permanent.perm_2x2
+        if self.nphotons == 3: self.perm=permanent.perm_3x3
+        if self.nphotons == 4: self.perm=permanent.perm_4x4
 
     def get_state(self, starter=None):
         ''' get an empty state to start building with '''
@@ -55,7 +66,9 @@ class simulator:
         norm=1/(normo)
         
         submatrix=self.device.unitary[rows][:,cols]
-        submatrix=np.power(np.absolute(submatrix),2)
+        submatrix=np.absolute(submatrix)
+        submatrix=np.power(submatrix,2)
+        submatrix=submatrix.view('complex128')
         return norm*self.perm(submatrix).real
 
     def get_output_state_element(self, output):

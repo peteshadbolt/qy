@@ -5,5 +5,5 @@ import numpy
 
 setup(
     cmdclass = {'build_ext': build_ext},
-    ext_modules = [Extension("convolve", ["convolve.pyx"], include_dirs=[numpy.get_include()])]
+    ext_modules = [Extension("perm", ["perm.pyx"], include_dirs=[numpy.get_include()])]
 )
