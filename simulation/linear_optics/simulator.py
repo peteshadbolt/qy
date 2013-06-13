@@ -11,7 +11,7 @@ class simulator:
         self.basis=basis
         self.nmodes=self.basis.nmodes
         self.nphotons=self.basis.nphotons
-        self.quantum_classical='quantum'
+        self.set_mode('quantum')
         self.set_perm()
 
     def set_perm(self, explicit=False):
@@ -19,7 +19,7 @@ class simulator:
         Set the permanent function that we will use from now on.
         If "explicit" is set, we will use the explicit forms up to 4x4 from now on 
         '''
-        self.perm=permanent.perm_ryser
+        self.perm=permanent.perm_ryser if self.quantum_classical else permanent.perm_ryser_real
         if not explicit: return
         if self.nphotons == 2: self.perm=permanent.perm_2x2
         if self.nphotons == 3: self.perm=permanent.perm_3x3
@@ -42,6 +42,7 @@ class simulator:
         if not (quantum_classical in ['quantum', 'classical']):
             print 'mode not understood!'
         self.quantum_classical=quantum_classical=='quantum'
+        self.set_perm()
 
     def map_both(self, input, output):
         ''' helper function. VERY INEFFICIENT'''
@@ -54,6 +55,7 @@ class simulator:
     def get_component(self, input, output):
         ''' get a component of the state vector '''
         inputs, outputs, cols, rows = self.map_both(input, output)
+        print inputs, outputs, cols, rows 
         norm=1/np.sqrt(np.product(map(factorial, inputs)+map(factorial, outputs)))
         submatrix=self.device.unitary[rows][:,cols]
         return norm*self.perm(submatrix)
@@ -68,7 +70,6 @@ class simulator:
         submatrix=self.device.unitary[rows][:,cols]
         submatrix=np.absolute(submatrix)
         submatrix=np.power(submatrix,2)
-        submatrix=submatrix.view('complex128')
         return norm*self.perm(submatrix).real
 
     def get_output_state_element(self, output):

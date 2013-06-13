@@ -42,6 +42,7 @@ Available:
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def perm_ryser(cnp.ndarray[cnp.complex_t, ndim=2] A):
+    ''' Permanent using Ryser's algorithm '''
     cdef int n = A.shape[0]
     cdef int i = 0
     cdef int z = 0
@@ -88,6 +89,36 @@ def perm_ryser(cnp.ndarray[cnp.complex_t, ndim=2] A):
 
     cdef int sign2 = (-1)**n
     return sign2*perm_real+1j*sign2*perm_imag
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def perm_ryser_real(cnp.ndarray[cnp.float_t, ndim=2] A):
+    ''' Permanent according to Ryser's algorithm, real part only. This can be done in polynomial time! '''
+    cdef int n = A.shape[0]
+    cdef int i = 0
+    cdef int z = 0
+    cdef int y = 0
+    cdef double perm = 0
+    cdef double product = 0
+    cdef double summed = 0
+    cdef int sign = 0
+
+    #iterate over exponentially many index strings
+    for i from 0 <= i < 2**n:
+        product= 1
+        # iterate over rows
+        for y from 0 <= y < n:
+            summed = 0
+
+            # for each column
+            # if the column is marked, add it to the sum
+            for z from 0 <= z < n:
+                if i & (1 << z) > 0: summed = summed + A[z,y]
+            product = product * summed
+
+        # add to the permanent
+        perm = perm + parity(i) * product
+    return (-1)**n*perm
 
 '''
 Below are explicit permanents. these are NOT exploiting cython very well:
