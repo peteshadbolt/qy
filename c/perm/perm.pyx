@@ -13,6 +13,7 @@ python setup.py build_ext --inplace -c mingw32
 DTYPE = np.complex
 ctypedef cnp.complex_t DTYPE_t
 
+# helper functions
 def countbits(unsigned int n):
     ''' count the number of bits in a binary string ''' 
     n = (n & 0x5555555555555555) + ((n & 0xAAAAAAAAAAAAAAAA) >> 1)
@@ -23,11 +24,14 @@ def countbits(unsigned int n):
     n = (n & 0x00000000FFFFFFFF) + ((n & 0xFFFFFFFF00000000) >> 32) # This last & isn't strictly necessary.
     return n
 
+def parity(unsigned int n):
+    ''' get the parity as -1 or +1 ''' 
+    return -1 if (countbits(n) & 1) else 1
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def perm(cnp.ndarray[cnp.complex_t, ndim=2] A):
+def perm_ryser(cnp.ndarray[cnp.complex_t, ndim=2] A):
     cdef int n = A.shape[0]
-    cdef double norm = (-1)**n
     cdef int i = 0
     cdef int z = 0
     cdef int y = 0
@@ -38,7 +42,7 @@ def perm(cnp.ndarray[cnp.complex_t, ndim=2] A):
     cdef double product_imag = 0
     cdef double sum_real = 0
     cdef double sum_imag = 0
-    cdef double sign = 0
+    cdef int sign = 0
     cdef cnp.complex_t aa
 
     #iterate over exponentially many index strings
@@ -66,58 +70,51 @@ def perm(cnp.ndarray[cnp.complex_t, ndim=2] A):
             product_imag = (product_imag * sum_real) + (product_real_old * sum_imag)
 
         # add to the permanent
-        sign=(-1)**countbits(i)
+        #sign=(-1)**countbits(i)
+        sign=parity(i)
         perm_real = perm_real + sign*product_real
         perm_imag = perm_imag + sign*product_imag
 
-    #get normalization constant
-    return norm*perm_real+1j*norm*perm_imag
+    cdef int sign2 = (-1)**n
+    return sign2*perm_real+1j*sign2*perm_imag
 
+def perm_2x2(cnp.ndarray a):
+    ''' an explicit 2x2 permanent '''
+    return a[0,0]*a[1,1] \
+         + a[1,0]*a[0,1]
 
+def perm_3x3(cnp.ndarray a):
+    ''' an explicit 3x3 permanent '''
+    return a[0,0]*a[1,1]*a[2,2] \
+         + a[0,0]*a[2,1]*a[1,2] \
+         + a[1,0]*a[0,1]*a[2,2] \
+         + a[1,0]*a[2,1]*a[0,2] \
+         + a[2,0]*a[0,1]*a[1,2] \
+         + a[2,0]*a[1,1]*a[0,2]
 
-
-#def perm(cnp.ndarray[cnp.complex_t, ndim=2] A):
-    #cdef int n = A.shape[0]
-    #cdef double norm = (-1)**n
-    #cdef int i = 0
-    #cdef int z = 0
-    #cdef int y = 0
-    #cdef double perm_real = 0
-    #cdef double perm_imag = 0
-    #cdef double product_real = 0
-    #cdef double product_imag = 0
-    #cdef double sum_real = 0
-    #cdef double sum_imag = 0
-    #cdef double sign = 0
-    #cdef cnp.complex_t aa
-
-    #iterate over exponentially many terms
-    #for i from 0 <= i < 2**n:
-        #sign=(-1)**countbits(i)
-        #product_real = 1
-        #product_imag = 0
-
-         #for each term in the index string
-        #for z from 0 <= z < n:
-
-             #if the column is marked, sum over it
-            #if i & (1 << z) > 0:
-                #sum_real = 0; sum_imag = 0;
-                 #work over the row
-                #for y from 0 <= y < n:
-                    #aa = A[z,y]
-                    #sum_real = sum_real+aa.real
-                    #sum_imag = sum_imag+aa.imag
-
-                #print 'sum_c:', sum_real
-
-             #multiply the sum into the product (complex multiplication)
-            #product_real = (product_real * sum_real) - (product_imag * sum_imag)
-            #product_imag = (product_imag * sum_real) + (product_real * sum_imag)
-
-         #add to the permanent
-        #perm_real = perm_real + sign*product_real
-        #perm_imag = perm_imag + sign*product_imag
-
-    #get normalization constant
-    #return norm*perm_real+1j*norm*perm_imag
+def perm_4x4(cnp.ndarray a):
+    ''' an explicit 4x4 permanent '''
+    return a[0,0]*a[1,1]*a[2,2]*a[3,3] \
+         + a[0,0]*a[1,1]*a[3,2]*a[2,3] \
+         + a[0,0]*a[2,1]*a[1,2]*a[3,3] \
+         + a[0,0]*a[2,1]*a[3,2]*a[1,3] \
+         + a[0,0]*a[3,1]*a[1,2]*a[2,3] \
+         + a[0,0]*a[3,1]*a[2,2]*a[1,3] \
+         + a[1,0]*a[0,1]*a[2,2]*a[3,3] \
+         + a[1,0]*a[0,1]*a[3,2]*a[2,3] \
+         + a[1,0]*a[2,1]*a[0,2]*a[3,3] \
+         + a[1,0]*a[2,1]*a[3,2]*a[0,3] \
+         + a[1,0]*a[3,1]*a[0,2]*a[2,3] \
+         + a[1,0]*a[3,1]*a[2,2]*a[0,3] \
+         + a[2,0]*a[0,1]*a[1,2]*a[3,3] \
+         + a[2,0]*a[0,1]*a[3,2]*a[1,3] \
+         + a[2,0]*a[1,1]*a[0,2]*a[3,3] \
+         + a[2,0]*a[1,1]*a[3,2]*a[0,3] \
+         + a[2,0]*a[3,1]*a[0,2]*a[1,3] \
+         + a[2,0]*a[3,1]*a[1,2]*a[0,3] \
+         + a[3,0]*a[0,1]*a[1,2]*a[2,3] \
+         + a[3,0]*a[0,1]*a[2,2]*a[1,3] \
+         + a[3,0]*a[1,1]*a[0,2]*a[2,3] \
+         + a[3,0]*a[1,1]*a[2,2]*a[0,3] \
+         + a[3,0]*a[2,1]*a[0,2]*a[1,3] \
+         + a[3,0]*a[2,1]*a[1,2]*a[0,3]

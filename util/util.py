@@ -17,8 +17,13 @@ def get_groups(directory):
         groups[get_key(file)].append(file)
     return groups
 
+last_t=0
+
 def progress_bar(progress):
     ''' progress bar '''
+    global last_t
     t=int(100*progress)
-    sys.stdout.write('\r[{0}] {1}%'.format('#'*(t/5), t))
-    sys.stdout.flush()
+    if t<=0 or t>last_t:
+        last_t=t
+        sys.stdout.write('\r[{0}] {1}%'.format('#'*(t/5), t))
+        sys.stdout.flush()
