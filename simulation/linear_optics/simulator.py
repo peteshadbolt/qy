@@ -6,24 +6,34 @@ from state import state
 
 class simulator:
     '''get states and statistics from a device'''
-    def __init__(self, basis, device):
+    def __init__(self, basis, device, accelerate=True, explicit=True):
+    #def __init__(self, basis, device, accelerate=True, explicit=True):
         self.device=device
         self.basis=basis
         self.nmodes=self.basis.nmodes
         self.nphotons=self.basis.nphotons
+        self.accelerate=accelerate
+        self.explicit=explicit
         self.set_mode('quantum')
         self.set_perm()
 
-    def set_perm(self, explicit=False):
+    def set_perm(self):
         '''
         Set the permanent function that we will use from now on.
         If "explicit" is set, we will use the explicit forms up to 4x4 from now on 
         '''
-        self.perm=permanent.perm_ryser if self.quantum_classical else permanent.perm_ryser_real
-        if not explicit: return
-        if self.nphotons == 2: self.perm=permanent.perm_2x2
-        if self.nphotons == 3: self.perm=permanent.perm_3x3
-        if self.nphotons == 4: self.perm=permanent.perm_4x4
+        if self.accelerate:
+            self.perm=permanent.perm_ryser if self.quantum_classical else permanent.perm_ryser_real
+            if not self.explicit: return
+            if self.nphotons == 2: self.perm=permanent.perm_2x2
+            if self.nphotons == 3: self.perm=permanent.perm_3x3
+            if self.nphotons == 4: self.perm=permanent.perm_4x4
+        else:
+            self.perm=permanent.perm_ryser_p
+            if not self.explicit: return
+            if self.nphotons == 2: self.perm=permanent.perm_2x2_p
+            if self.nphotons == 3: self.perm=permanent.perm_3x3_p
+            if self.nphotons == 4: self.perm=permanent.perm_4x4_p
 
     def get_state(self, starter=None):
         ''' get an empty state to start building with '''
@@ -42,31 +52,31 @@ class simulator:
         if not (quantum_classical in ['quantum', 'classical']):
             print 'mode not understood!'
         self.quantum_classical=quantum_classical=='quantum'
+        if self.quantum_classical:
+            self.get_probability = self.get_probability_quantum
+        else: 
+            self.get_probability = self.get_probability_classical
         self.set_perm()
 
-    def map_both(self, input, output):
+    def map_both(self, input):
         ''' helper function. VERY INEFFICIENT'''
         inputs=self.basis.fock(input)
-        outputs=self.basis.fock(output)
         cols=self.basis.mode(input)
-        rows=self.basis.mode(output)
-        return inputs, outputs, cols, rows
+        return inputs, cols
 
-    def get_component(self, input, output):
+    def get_component(self, input, outputs, rows):
         ''' get a component of the state vector '''
-        inputs, outputs, cols, rows = self.map_both(input, output)
-        print inputs, outputs, cols, rows 
+        inputs, cols = self.map_both(input)
         norm=1/np.sqrt(np.product(map(factorial, inputs)+map(factorial, outputs)))
         submatrix=self.device.unitary[rows][:,cols]
         return norm*self.perm(submatrix)
 
-    def get_single_probability_classical(self, input, output):
+    def get_single_probability_classical(self, input, outputs, rows):
         ''' get a component of the state vector '''
         # this part is mega inefficient
-        inputs, outputs, cols, rows = self.map_both(input, output)
+        inputs, cols = self.map_both(input)
         normo=np.product(map(factorial, outputs))
         norm=1/(normo)
-        
         submatrix=self.device.unitary[rows][:,cols]
         submatrix=np.absolute(submatrix)
         submatrix=np.power(submatrix,2)
@@ -75,7 +85,9 @@ class simulator:
     def get_output_state_element(self, output):
         '''get an element of the state vector, summing over terms in the input state '''
         output=self.basis.get_index(output)
-        terms=[amplitude*self.get_component(input, output) for input, amplitude in self.input_state.get_nonzero_terms()]
+        outputs=self.basis.fock(output)
+        rows=self.basis.mode(output)
+        terms=[amplitude*self.get_component(input, outputs, rows) for input, amplitude in self.input_state.get_nonzero_terms()]
         return np.sum(terms)
 
     def get_probability_quantum(self, output):
@@ -86,12 +98,10 @@ class simulator:
     def get_probability_classical(self, output):
         ''' get the probability of an event '''
         output=self.basis.get_index(output)
-        terms=[(np.abs(amplitude)**2)*self.get_single_probability_classical(input, output) for input, amplitude in self.input_state.get_nonzero_terms()]
+        outputs=self.basis.fock(output)
+        rows=self.basis.mode(output)
+        terms=[(np.abs(amplitude)**2)*self.get_single_probability_classical(input, outputs, rows) for input, amplitude in self.input_state.get_nonzero_terms()]
         return float(np.sum(terms))
-
-    def get_probability(self, output):
-        ''' get the probability of an event '''
-        return self.get_probability_quantum(output) if self.quantum_classical else self.get_probability_classical(output)
 
     def get_output_state(self, input_state=None):
         ''' compute the full state vector'''
