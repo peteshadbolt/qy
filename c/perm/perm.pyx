@@ -31,36 +31,42 @@ def perm(cnp.ndarray[cnp.complex_t, ndim=2] A):
     cdef int i = 0
     cdef int z = 0
     cdef int y = 0
-    cdef float y_real = 0
-    cdef float y_imag = 0
+    cdef float perm_real = 0
+    cdef float perm_imag = 0
     cdef float product_real = 0
     cdef float product_imag = 0
-    cdef float prefactor = 0
+    cdef float sum_real = 0
+    cdef float sum_imag = 0
+    cdef float sign = 0
     cdef cnp.complex_t aa
 
     #iterate over exponentially many terms
     for i from 0 <= i < 2**n:
-        prefactor=(-1)**countbits(i)
+        sign=(-1)**countbits(i)
+        product_real = 1
+        product_imag = 0
 
         # for each term in the index string
         for z from 0 <= z < n:
 
-            # if the column is marked
+            # if the column is marked, sum over it
             if i & (1 << z) > 0:
-                product_real = 1
-                product_imag = 1
-
+                sum_real = 0; sum_imag = 0;
                 # work over the row
                 for y from 0 <= y < n:
                     aa = A[z,y]
-                    #print aa
-                    # complex multiplication
-                    product_real = (product_real * aa.real) - (product_imag * aa.imag)
-                    product_imag = (product_imag * aa.real) + (product_real * aa.imag)
+                    sum_real = sum_real+aa.real
+                    sum_imag = sum_imag+aa.imag
 
-                # add to the permanent
-                y_real = y_real + prefactor*product_real
-                y_imag = y_imag + prefactor*product_imag
+                print 'sum_c:', sum_real
+
+            # multiply the sum into the product (complex multiplication)
+            product_real = (product_real * sum_real) - (product_imag * sum_imag)
+            product_imag = (product_imag * sum_real) + (product_real * sum_imag)
+
+        # add to the permanent
+        perm_real = perm_real + sign*product_real
+        perm_imag = perm_imag + sign*product_imag
 
     #get normalization constant
-    return norm*y_real+1j*norm*y_imag
+    return norm*perm_real+1j*norm*perm_imag

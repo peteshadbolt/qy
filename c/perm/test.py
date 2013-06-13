@@ -23,9 +23,9 @@ def get_random_u(size):
 # check that we are actually calcualting the permanent!
 for i in range(ntests):
     u=get_random_u(size)
-    #p = perm(u)
+    p = perm(u)
     #print '({0.real:.7f} + {0.imag:.7f}j)'.format(p)
-    p = perm_ryser_explicit(u)
+    #p = perm_ryser_explicit(u)
     print '({0.real:.7f} + {0.imag:.7f}j)'.format(p)
     p = perm_ryser(u)
     print '({0.real:.7f} + {0.imag:.7f}j)'.format(p)
@@ -48,7 +48,6 @@ for i in range(ntests):
     p=perm_ryser(u)
     #util.progress_bar(i/float(ntests))
 t2=time.clock()-t
-
 
 print 'c time: %.6f' % t1
 print 'python time: %.6f' % t2

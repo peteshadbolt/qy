@@ -8,7 +8,15 @@ def perm_ryser(A):
     irange=xrange(2**n)
     get_index=lambda i: (i & (1 << z)) != 0 
     get_term=lambda index: ((-1)**np.sum(index))*np.prod(np.sum(A[index,:], 0))
+
+    get_term=lambda index: np.sum(A[index,:], 0)
+
+
     indeces=map(get_index, irange)
+
+    for index in indeces:
+        print 'sum:', get_term(index)
+
     terms=map(get_term, indeces) 
     return np.sum(terms)*((-1)**n)
 
@@ -32,8 +40,6 @@ def perm_ryser_explicit(A):
             if get_index(i, z):
                 print 'use col %d' % z
                 product=product*sum
-                
-
 
     return total*((-1)**n)
 
