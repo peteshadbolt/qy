@@ -1,38 +1,56 @@
 from scipy.misc import comb
 import numpy as np
 from qy.simulation import linear_optics as lo
+from qy.simulation import combinadics
 
-# testing combinatorial number systems
-def convert(n,r,m):
-    '''
-    Encodes the input integer 'm' to a constant weight code of n-digits with r-ones
-    Most significant digit at highest index.
-    '''
-    out=np.zeros(n*2)
-    n=n-1
-    while (n>=0):
-        if (n>r & r>=0):
-            y = comb(n-1,r, exact=True)
-        else:
-            y = 0;
-     
-        if (m>=y):
-            m = m - y;
-            out[n] = 1;
-            r = r - 1;
-        else:
-            out[n] = 0;
+def largestv(a,b,x):
+    ''' largest value v where v < a and (v choose b <= x) '''
+    v = a - 1
+    #print v, b, x
+    while comb(v, b, exact=True) > x:
+        v+=-1
+    return v
 
-        n += -1
-    return out
+def element(n,k,m):
+    ''' return the mth lexicographic element of combination C(n,k) '''
+    ans=np.zeros(k, dtype=int)
+    a=n*1
+    b=k*1
+    
+    # x is the dual of m
+    x=(comb(n, k, exact=1)-1)-m
+
+    for i in range(k):
+        ans[i]=largestv(a,b,x)
+        x=x-comb(ans[i],b,exact=True)
+        a=ans[i]
+        b=b-1
+
+    for i in range(k):
+        ans[i]= (n-1)-ans[i]
+
+    return ans
+
+from time import clock
+
+for i in range(10):
+    print element(5,3,i)
+    print combinadics.fock(5,3,i)
+
+t=clock()
+for i in range(10):
+    for j in range(10000):
+        a=element(5,3,i)
+print clock()-t
 
 
 
-nmodes=3
-nphotons=2
-d=comb(nphotons+nmodes-1, nphotons, exact=1)
+t=clock()
+for i in range(10):
+    for j in range(10000):
+        a=combinadics.fock(5,3,i)
+print clock()-t
+    
 
-for i in range(d):
-    aa=convert(nmodes, nphotons, i)
-    print i, aa, sum(aa)
+
 
