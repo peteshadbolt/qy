@@ -1,9 +1,12 @@
+import os
 import numpy as np
 import itertools as it
 from scipy.misc import comb
 from collections import Counter
 from misc import ket
 from state import state
+import cPickle as pickle
+import tempfile
 
 class basis:
     ''' a flexible basis for linear optics '''
@@ -20,14 +23,22 @@ class basis:
         self.dimensions=xrange(self.hilbert_space_dimension)
 
         self.mode_representation=it.combinations_with_replacement(range(self.nmodes), self.nphotons)
-        self.mode_representation=map(list, self.mode_representation)
-        self.mode_representation=map(sorted, self.mode_representation)
         self.mode_table=dict(zip(map(s, self.mode_representation), self.dimensions))
 
         self.fock_representation=map(self.mode_to_fock, self.mode_representation)
-        self.fock_representation=map(list, self.fock_representation)
         self.fock_table=dict(zip(map(s, self.fock_representation), self.dimensions))
         print 'done'
+
+        # dump to the cache
+        cache_dir=os.path.join(tempfile.gettempdir(), 'qy')
+        if not os.path.exists(cache_dir): os.makedirs(cache_dir)
+        mode_file=open(os.path.join(cache_dir, 'basis_modes_%d_%d.p' % (self.nphotons, self.nmodes)), 'w')
+        pickle.dump(self.mode_table, mode_file)
+        mode_file.close()
+        fock_file=open(os.path.join(cache_dir, 'basis_fock_%d_%d.p' % (self.nphotons, self.nmodes)), 'w')
+        pickle.dump(self.fock_table, fock_file)
+        print 'Cached basis to to %s' % cache_dir
+        fock_file.close()
 
     def __str__(self):
         ''' print out '''
@@ -73,16 +84,12 @@ class basis:
     def get_index_fock(self, label):
         ''' get the index of a state based on its label '''
         label=map(int, label)
-        #assert(max(label)<self.nmodes)
-        #assert(len(label)==self.nphotons)
         label=''.join(map(str, label)) # easy way to support string labels
         return self.fock_table[label]
     
     def get_index_mode(self, label):
         ''' get the index of a state based on its label '''
         label=map(int, label)
-        #assert(max(label)<self.nmodes)
-        #assert(len(label)==self.nphotons)
         label=sorted(label)
         label=''.join(map(str, label)) # easy way to support string labels
         return self.mode_table[label]
