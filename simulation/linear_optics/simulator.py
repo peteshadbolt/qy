@@ -6,24 +6,38 @@ from state import state
 
 class simulator:
     '''get states and statistics from a device'''
-    def __init__(self, basis, device, accelerate=True, explicit=True):
+    def __init__(self, basis, device):
     #def __init__(self, basis, device, accelerate=True, explicit=True):
         self.device=device
         self.basis=basis
         self.nmodes=self.basis.nmodes
         self.nphotons=self.basis.nphotons
-        self.accelerate=accelerate
-        self.explicit=explicit
+        self.explicit=True
+        self.accelerate=True
         self.set_mode('quantum')
+
+    def set_mode(self, quantum_classical):
+        ''' determines whether to return quantum or classical statistics '''
+        if not (quantum_classical in ['quantum', 'classical']): print 'Quantum/classical mode not understood!'; return
+        self.quantum_classical=quantum_classical=='quantum'
+
+        # choose the function that we will use to compute probabilities
+        if self.quantum_classical:
+            self.get_probability = self.get_probability_quantum
+        else: 
+            self.get_probability = self.get_probability_classical
+
+        # re-select the function that we'll use to compute permanents
         self.set_perm()
 
     def set_perm(self):
         '''
-        Set the permanent function that we will use from now on.
+        Make the best choice of permanent function we can
         If "explicit" is set, we will use the explicit forms up to 4x4 from now on 
         '''
         if self.accelerate:
-            self.perm=permanent.perm_ryser if self.quantum_classical else permanent.perm_ryser_real
+            if self.quantum_classical: self.perm=permanent.perm_ryser
+            if not self.quantum_classical: self.perm=permanent.perm_ryser_real
             if not self.explicit: return
             if self.nphotons == 2: self.perm=permanent.perm_2x2
             if self.nphotons == 3: self.perm=permanent.perm_3x3
@@ -34,29 +48,13 @@ class simulator:
             if self.nphotons == 2: self.perm=permanent.perm_2x2_p
             if self.nphotons == 3: self.perm=permanent.perm_3x3_p
             if self.nphotons == 4: self.perm=permanent.perm_4x4_p
+            if self.nphotons == 5: self.perm=permanent.perm_4x4_5
 
-    def get_state(self, starter=None):
-        ''' get an empty state to start building with '''
-        new_state=state(self.basis)
-        if starter!=None: new_state.add(1, starter)
-        return new_state
-    
     def set_input_state(self, input_state):
         ''' set the input state in fock basis '''
         self.input_state=input_state
         modes=[self.basis.mode(index) for index in self.input_state.nonzero_terms]
         self.device.set_input_modes(modes)
-
-    def set_mode(self, quantum_classical):
-        ''' determines whether to return quantum or classical statistics '''
-        if not (quantum_classical in ['quantum', 'classical']):
-            print 'mode not understood!'
-        self.quantum_classical=quantum_classical=='quantum'
-        if self.quantum_classical:
-            self.get_probability = self.get_probability_quantum
-        else: 
-            self.get_probability = self.get_probability_classical
-        self.set_perm()
 
     def map_both(self, input):
         ''' helper function. VERY INEFFICIENT'''

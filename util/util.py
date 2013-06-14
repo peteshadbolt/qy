@@ -27,3 +27,7 @@ def progress_bar(progress):
         last_t=t
         sys.stdout.write('\r[{0}] {1}%'.format('#'*(t/5), t))
         sys.stdout.flush()
+    if t==100: 
+        sys.stdout.write('\r')
+        sys.stdout.flush()
+        print

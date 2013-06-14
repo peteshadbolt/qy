@@ -15,12 +15,15 @@ class basis:
         # might also want to do this with generators
         print 'building basis...',
         s=lambda x: ''.join(map(str, x))
-        self.mode_representation=list(it.combinations_with_replacement(range(self.nmodes), self.nphotons))
-        self.hilbert_space_dimension=len(self.mode_representation)
+
+        self.hilbert_space_dimension=int(comb(nphotons+nmodes-1, nphotons,exact=1))
         self.dimensions=xrange(self.hilbert_space_dimension)
+
+        self.mode_representation=it.combinations_with_replacement(range(self.nmodes), self.nphotons)
         self.mode_representation=map(list, self.mode_representation)
         self.mode_representation=map(sorted, self.mode_representation)
         self.mode_table=dict(zip(map(s, self.mode_representation), self.dimensions))
+
         self.fock_representation=map(self.mode_to_fock, self.mode_representation)
         self.fock_representation=map(list, self.fock_representation)
         self.fock_table=dict(zip(map(s, self.fock_representation), self.dimensions))
