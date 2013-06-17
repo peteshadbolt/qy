@@ -12,3 +12,7 @@ def trace_distance(a,b):
 def fidelity(a,b): 
 	''' the classical fidelity between two probability distributions [Nielsen and Chuang] '''
 	return np.sum(np.sqrt(a*b))
+
+def similarity(a,b):
+    ''' the similarity between two probability distributions '''
+    return fidelity(a,b)**2

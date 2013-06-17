@@ -1,3 +1,4 @@
+import sys
 from scipy.misc import comb
 import numpy as np
 from qy.simulation import linear_optics as lo
@@ -9,6 +10,7 @@ def largestv(a,b,x):
     #print v, b, x
     while comb(v, b, exact=True) > x:
         v+=-1
+    #print v
     return v
 
 def element(n,k,m):
@@ -31,12 +33,34 @@ def element(n,k,m):
 
     return ans
 
+
+def fock(p, m, i):
+    ans=np.zeros(p, dtype=int) # here's where we'll put the photons
+    
+    return ans
+
+for i in range(5):
+    print 'i %d' % i
+    print fock(3,5,i)
+    print
+
+
+
+sys.exit()
+
+
+
 from time import clock
 
 for i in range(10):
+    print 'python'
     print element(5,3,i)
+    print 'cython'
     print combinadics.fock(5,3,i)
+    print '\n'
 
+
+# python
 t=clock()
 for i in range(10):
     for j in range(10000):
@@ -44,13 +68,18 @@ for i in range(10):
 print clock()-t
 
 
-
+# cython
 t=clock()
 for i in range(10):
     for j in range(10000):
         a=combinadics.fock(5,3,i)
 print clock()-t
     
-
-
-
+# basis
+b=lo.basis(5,20)
+t=clock()
+for j in range(10):
+    for j in range(10000):
+        x = b.get_index(['m']+[1,2,3,4,5])
+print clock()-t
+    

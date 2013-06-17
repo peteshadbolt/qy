@@ -4,7 +4,7 @@ cnp.import_array()
 cimport cython
 from scipy.misc import comb
 
-cdef long n_take_k(int n, int k):
+def binomial(int n, int k):
     ''' the binomial coefficient '''
     cdef long ntok = 1
     cdef long ktok = 1
@@ -14,16 +14,15 @@ cdef long n_take_k(int n, int k):
         for t from 1 <= t < p+1:
             ntok *= n
             ktok *= t
-            n -= 1
-        return ntok
+            n -= 1 # useless?
+        return ntok // ktok
     else:
         return 0
 
 cdef int largestv(int a, int b, int x):
-    ''' largest value v where v < a and (v choose b <= x) '''
+    ''' largest value v where v < a and (v choose b) <= x '''
     cdef int v = a - 1
-    #print v, b, x
-    while n_take_k(v, b) > x:
+    while binomial(v, b) > x:
         v+=-1
     return v
 
@@ -36,11 +35,11 @@ def fock(int n, int k, int m):
     cdef int b=k
     
     # x is the dual of m
-    cdef int x=(n_take_k(n, k)-1)-m
+    cdef int x=(binomial(n, k)-1)-m
 
     for i from 0 <= i < k:
         ans[i]=largestv(a,b,x)
-        x=x-n_take_k(ans[i],b)
+        x=x-binomial(ans[i],b)
         a=ans[i]
         b=b-1
 
