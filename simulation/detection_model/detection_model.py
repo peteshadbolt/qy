@@ -1,13 +1,9 @@
 import itertools as it
 import numpy as np
-from scipy.misc import factorial
-
-# useful function to invert efficiency matrices
-invert_efficiency_matrix = np.vectorize(lambda a:  1/a if (a>0) else 0) 
 
 class detector:
     def __init__(self, label, efficiency, ratio, loss, mode):
-        self.label=label
+        self.label=label.upper()
         self.efficiency=efficiency
         self.ratio=ratio
         self.loss=loss
@@ -16,11 +12,12 @@ class detector:
 
     def __str__(self):
         ''' print out '''
-        s='detector %s\n  quantum efficiency %.2f\n  ' % (self.label, self.efficiency)
-        s+='ratio %.2f | loss %.2f\n' % (self.ratio, self.loss)
-        s+='  connected to mode %d' % self.mode
+        s='Detector %s (Efficiency %.2f, ' % (self.label, self.efficiency)
+        s+='ratio %.2f, loss %.2f, ' % (self.ratio, 1-self.loss)
+        s+='mode %d)' % self.mode
         return s
         
+
 class detection_model:
     def __init__(self, nmodes):
         ''' a model of some detection scheme '''
@@ -30,10 +27,7 @@ class detection_model:
         self.all_detectors=[]
         self.available_detectors=[]
         self.detectors=[]
-        
-    def net_efficiency(self, pattern):
-        ''' get the lumped efficiency of a pattern of detectors '''
-        return np.prod([det.lumped_efficiency for det in pattern])
+        self.detector_mode_map=[[] for i in range(16)]
 
     def provide_detector(self, name, efficiency):
         ''' provide a single detector '''
@@ -45,27 +39,23 @@ class detection_model:
         self.all_detectors=zip(names, efficiencies)
         self.available_detectors+=list(zip(names, efficiencies))
     
-    def provide_splitter(self, ratio, loss):
+    def provide_splitter(self, label, ratio, loss):
         ''' provide a single splitter '''
         s=float(sum(ratio))
         ratio=tuple([x/s for x in ratio])
         n=len(ratio)
-        self.all_splitters[n].append([ratio, loss])
-        self.available_splitters[n].append([ratio, loss])
+        self.all_splitters[n].append((label, ratio, loss))
+        self.available_splitters[n].append((label, ratio, loss))
 
-    def provide_splitters(self, ratios, losses):
+    def provide_splitters(self, label, ratios, losses):
         ''' provide some splitters to use '''
         for ratio, loss in zip(ratios, losses):
-            self.provide_splitter(ratio, loss)
+            self.provide_splitter(label, ratio, loss)
             
     def reset_shelf(self):
         ''' reset the list of available gear '''
         self.available_detectors=[x[:] for x in self.all_detectors]
         self.available_splitters=[x[:] for x in self.all_splitters]
-        
-    def detector_pattern(self, pattern):
-        ''' look up a set of detectors '''
-        return [self.detector_map[x] for x in sorted(pattern.lower())]
 
     def build(self, scheme_string):
         ''' build the whole thing '''
@@ -88,43 +78,51 @@ class detection_model:
         ''' add a mode '''
         if len(self.available_splitters[ndetectors])==0: return
         splitter=self.available_splitters[ndetectors].pop(0)
-        for arm in zip(*splitter):
-            ratio, loss=arm
-            if len(self.available_detectors)==0: return
-            label, detector_efficiency=self.available_detectors.pop(0)
-            d=detector(label, detector_efficiency, ratio, loss, mode)
-            self.detectors.append(d)
+        label, ratios, losses = splitter
+        for ratio, loss in zip(ratios, losses):
+            self.add_detector(mode, ratio, loss)
             
-    def add_detector(self, mode):
+    def add_detector(self, mode, ratio=1, loss=1):
         ''' add a detector '''
-        ratio, loss=1,1
         if len(self.available_detectors)==0: return
         label, detector_efficiency=self.available_detectors.pop(0)
         d=detector(label, detector_efficiency, ratio, loss, mode)
+        self.detector_mode_map[mode].append(d)
         self.detectors.append(d)
 
-    def iterate_over_detector_events(self, nphotons, heralds=[]):
-        ''' 
-        iterate over all meaningful combinations of detector labels.
-        optionally specify heralding detectors by label
-        '''
-        real_detectors=filter(lambda x: not x.label in heralds, self.detectors)
-        herald_detectors=filter(lambda x: x.label in heralds, self.detectors)
-        patterns=it.combinations(real_detectors, nphotons)
-        patterns=map(lambda x: list(x)+herald_detectors, patterns)
-        return patterns
+    def get_detectors_from_mode(self, mode):
+        ''' given a mode, return the detectors connected to that mode '''
+        return self.detector_mode_map[mode]
+
+    def get_mode_from_detector(self, label):
+        ''' given a detector label, return the mode '''
+        return self.detector_map[label.upper()].mode
+    
+    def iterate_over_mode_events(self, nphotons):
+        ''' iterate over all unique "mode events" which can be detected using this detection scheme '''
+        modes=[x.mode for x in self.detectors]
+        return list(set(it.combinations(modes, nphotons)))
+
+    def iterate_over_detector_events(self, nphotons):
+        ''' iterate over all unique detection events which can be detected using this detection scheme '''
+        return list(it.combinations(self.detectors, nphotons))
+        
+    def get_detector_event_efficiency(self, pattern):
+        ''' get the lumped efficiency of a pattern of detectors '''
+        return np.prod([det.lumped_efficiency for det in pattern])
 
     def show_available(self):
         ''' print all available gear '''
-        s='AVAILABLE DETECTORS:\n'
+        s='Available detectors:\n'
         for detector in self.available_detectors:
             s+='%s (%.3f)\n' % detector
-        s+='\nAVAILABLE SPLITTERS:\n'
+        s+='\nAvailable splitters:\n'
         for n, nfold in enumerate(self.available_splitters):
             if len(nfold)>0:
-                s+='\n1-BY-%d SPLITTERS:\n' % n
+                s+='\n1-by-%d splitters:\n' % n
                 for splitter in nfold:
-                    ratios, losses = splitter
+                    label, ratios, losses = splitter
+                    s+='%s: ' % label
                     s+= ', '.join(map(str, ratios))+'  |  '
                     s+= ', '.join(map(str, losses))+'\n'
         return s
@@ -134,15 +132,13 @@ class detection_model:
         s=''
         for mode in range(self.nmodes):
             s+= '\nMode: %d\n' % mode
-            for detector in self.detectors:
-                if detector.mode==mode:
-                    s+= '\-- %s (%.2f)\n' % (detector.label, detector.efficiency)
+            for detector in self.detector_mode_map[mode]:
+                s+= '\-- %s (%.2f)\n' % (detector.label, detector.efficiency)
         return s
 
     def __str__(self):
         ''' printout '''
-        s='DETECTION SCHEME:\n'
-        return s+'\n\n'.join(map(str, self.detectors))
+        return self.draw()
 
 if __name__=='__main__':
     # build a detection model
@@ -151,21 +147,45 @@ if __name__=='__main__':
     # provide some components
     m.provide_detectors('abcdefgh', [1]*8)
     m.provide_detector('z', 1)
-    m.provide_splitter((1,1,1),(1,1,1))
+    m.provide_splitter('tr0', (1,1,1),(1,1,1))
     for i in range(4):
-        m.provide_splitter((1,1),(1,1))
+        m.provide_splitter('sp_%d' % i, (1,1),(1,1))
 
     # show what we have available
     print m.show_available()
 
     # build the model with some splitters
-    m.build('2123')
+    m.build('3210')
     print m.draw()
 
-    # iterate over all detection events and their corresponding efficiencies
-    nphotons=3
-    for event in m.iterate_over_detector_events(nphotons):
-        print ''.join([d.label for d in event]).upper()
+    # which detectors are connected to mode 2?
+    print 'Detectors connected to mode 2:'
+    for d in m.get_detectors_from_mode(2):
+        print d
+
+    print 'Detectors connected to mode 3:'
+    for d in m.get_detectors_from_mode(0):
+        print d
+
+    # which mode is connected to detector F?
+    print 'Mode', m.get_mode_from_detector('f'), 'is connected to F'
+    
+    # iterate over all the probabilitiy amplitudes that we would need to simulate 
+    print '\nThree photon mode events which can be detected with this system:'
+    for pattern in m.iterate_over_mode_events(3):
+        print pattern
+
+    # iterate over two-photon detection events that we might care about
+    print '\nTwo-photon events'
+    for pattern in m.iterate_over_detector_events(2):
+        print ','.join([x.label for x in pattern])
+
+    # iterate over all three-photon detection events, with efficiencies
+    print '\nThree-photon events, with efficiencies'
+    for pattern in m.iterate_over_detector_events(3):
+        label = ','.join([x.label for x in pattern]) ,
+        efficiency = m.get_detector_event_efficiency(pattern)
+        print '%s: efficiency = %.3f' % (label, efficiency)
 
 
 
@@ -173,13 +193,11 @@ if __name__=='__main__':
 
 
 
-
-
-
-
-
-
-
+##################################
+#OLD CODE, IGNORE!
+#def detector_pattern(self, pattern):
+    #''' look up a set of detectors '''
+    #return [self.detector_map[x] for x in sorted(pattern.lower())]
 
 
 #def get_modes(self, pattern):
