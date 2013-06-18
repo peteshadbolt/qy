@@ -43,18 +43,15 @@ class detection_model:
     def provide_detectors(self, names, efficiencies):
         ''' provide some detectors to use '''
         self.all_detectors=zip(names, efficiencies)
-        self.available_detectors=zip(names, efficiencies)
-        
-    def map_pattern_to_modes(self, pattern):
-        ''' map a list of detectors to a list of modes '''
-        return map(lambda x: x.mode)
+        self.available_detectors+=list(zip(names, efficiencies))
     
     def provide_splitter(self, ratio, loss):
         ''' provide a single splitter '''
-        s=sum(ratio)
+        s=float(sum(ratio))
         ratio=tuple([x/s for x in ratio])
-        self.all_splitters[len(ratio)].append([ratio, loss])
-        self.available_splitters[len(ratio)].append([ratio, loss])
+        n=len(ratio)
+        self.all_splitters[n].append([ratio, loss])
+        self.available_splitters[n].append([ratio, loss])
 
     def provide_splitters(self, ratios, losses):
         ''' provide some splitters to use '''
@@ -69,10 +66,6 @@ class detection_model:
     def detector_pattern(self, pattern):
         ''' look up a set of detectors '''
         return [self.detector_map[x] for x in sorted(pattern.lower())]
-
-    def get_modes(self, pattern):
-        ''' get a sorted tuple of modes corresponding to a given detection pattern '''
-        return tuple(sorted([d.mode for d in self.detector_pattern(pattern)]))
 
     def build(self, scheme_string):
         ''' build the whole thing '''
@@ -110,50 +103,121 @@ class detection_model:
         d=detector(label, detector_efficiency, ratio, loss, mode)
         self.detectors.append(d)
 
+    def iterate_over_detector_events(self, nphotons, heralds=[]):
+        ''' 
+        iterate over all meaningful combinations of detector labels.
+        optionally specify heralding detectors by label
+        '''
+        real_detectors=filter(lambda x: not x.label in heralds, self.detectors)
+        herald_detectors=filter(lambda x: x.label in heralds, self.detectors)
+        patterns=it.combinations(real_detectors, nphotons)
+        patterns=map(lambda x: list(x)+herald_detectors, patterns)
+        return patterns
+
     def show_available(self):
         ''' print all available gear '''
         s='AVAILABLE DETECTORS:\n'
         for detector in self.available_detectors:
             s+='%s (%.3f)\n' % detector
-        s='\nAVAILABLE SPLITTERS:\n'
-        for splitter in self.available_splitters:
-            s+='%s (%.3f)\n' % detector
+        s+='\nAVAILABLE SPLITTERS:\n'
+        for n, nfold in enumerate(self.available_splitters):
+            if len(nfold)>0:
+                s+='\n1-BY-%d SPLITTERS:\n' % n
+                for splitter in nfold:
+                    ratios, losses = splitter
+                    s+= ', '.join(map(str, ratios))+'  |  '
+                    s+= ', '.join(map(str, losses))+'\n'
+        return s
+
+    def draw(self):
+        ''' draw the detection model '''
+        s=''
+        for mode in range(self.nmodes):
+            s+= '\nMode: %d\n' % mode
+            for detector in self.detectors:
+                if detector.mode==mode:
+                    s+= '\-- %s (%.2f)\n' % (detector.label, detector.efficiency)
+        return s
 
     def __str__(self):
         ''' printout '''
         s='DETECTION SCHEME:\n'
         return s+'\n\n'.join(map(str, self.detectors))
 
-    def get_used_modes(self):
-        ''' just return the modes that are connected to something '''
-        return list(self.used_modes)
+if __name__=='__main__':
+    # build a detection model
+    m=detection_model(4)
 
-    def get_mode_events(self, nphotons):
-        ''' list the different unique combinations of modes which can be addressed using this scheme, given some photon number '''
-        return 'awd'
+    # provide some components
+    m.provide_detectors('abcdefgh', [1]*8)
+    m.provide_detector('z', 1)
+    m.provide_splitter((1,1,1),(1,1,1))
+    for i in range(4):
+        m.provide_splitter((1,1),(1,1))
 
-    def get_detector_events(self, nphotons):
-        ''' list all the ways that the used detectors can click '''
-        detector_indeces=range(len(self.detectors))
-        indeces=it.combinations(detector_indeces, nphotons)
-        detectors=[[self.detectors[i] for i in pattern] for pattern in indeces]
-        return detectors
+    # show what we have available
+    print m.show_available()
 
-    def get_detector_label_events(self, nphotons):
-        ''' list all the ways that the used detectors can click '''
-        detector_indeces=range(len(self.detectors))
-        indeces=it.combinations(detector_indeces, nphotons)
-        detectors=[''.join(sorted([self.detectors[i].label for i in pattern])) for pattern in indeces]
-        return detectors
-    
-    def patterns_and_efficiencies(self, nphotons):
-        ''' iterate over all patterns of n photons, with efficiencies '''
-        indeces=it.combinations(range(len(self.detectors)), nphotons)
-        detectors=[[self.detectors[i] for i in pattern] for pattern in indeces]
-        efficiencies=map(lambda x: self.net_efficiency(x), detectors)
-        return zip(detectors, efficiencies)
-                
+    # build the model with some splitters
+    m.build('2123')
+    print m.draw()
 
+    # iterate over all detection events and their corresponding efficiencies
+    nphotons=3
+    for event in m.iterate_over_detector_events(nphotons):
+        print ''.join([d.label for d in event]).upper()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#def get_modes(self, pattern):
+    #''' get a sorted tuple of modes corresponding to a given detection pattern '''
+    #return tuple(sorted([d.mode for d in self.detector_pattern(pattern)]))
+
+#def map_pattern_to_modes(self, pattern):
+    #''' map a list of detectors to a list of modes '''
+    #return map(lambda x: x.mode)
+
+#def get_used_modes(self):
+    #''' just return the modes that are connected to something '''
+    #return list(self.used_modes)
+
+#def get_mode_events(self, nphotons):
+    #''' list the different unique combinations of modes which can be addressed using this scheme, given some photon number '''
+    #return 'dwa'
+
+#def get_detector_events(self, nphotons):
+    #''' list all the ways that the used detectors can click '''
+    #detector_indeces=range(len(self.detectors))
+    #indeces=it.combinations(detector_indeces, nphotons)
+    #detectors=[[self.detectors[i] for i in pattern] for pattern in indeces]
+    #return detectors
+
+#def get_detector_label_events(self, nphotons):
+    #''' list all the ways that the used detectors can click '''
+    #detector_indeces=range(len(self.detectors))
+    #indeces=it.combinations(detector_indeces, nphotons)
+    #detectors=[''.join(sorted([self.detectors[i].label for i in pattern])) for pattern in indeces]
+    #return detectors
+
+#def patterns_and_efficiencies(self, nphotons):
+    #''' iterate over all patterns of n photons, with efficiencies '''
+    #indeces=it.combinations(range(len(self.detectors)), nphotons)
+    #detectors=[[self.detectors[i] for i in pattern] for pattern in indeces]
+    #efficiencies=map(lambda x: self.net_efficiency(x), detectors)
+    #return zip(detectors, efficiencies)
 
 #def patterns_and_efficiencies(self, nphotons):
         #''' iterate over all patterns of n photons, with efficiencies '''
