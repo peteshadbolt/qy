@@ -183,11 +183,15 @@ if __name__=='__main__':
     # iterate over all three-photon detection events, with efficiencies
     print '\nThree-photon events, with efficiencies'
     for pattern in m.iterate_over_detector_events(3):
-        label = ','.join([x.label for x in pattern]) ,
+        label = ','.join([x.label for x in pattern])
+        label2= ','.join([str(x.mode) for x in pattern])
+
         efficiency = m.get_detector_event_efficiency(pattern)
-        print '%s: efficiency = %.3f' % (label, efficiency)
+        print '%s (%s): efficiency = %.3f' % (label, label2, efficiency)
 
+    # iterate over all three-photon events, where we only care about modes, with efficiencies
 
+    
 
 
 

@@ -1,2 +1,2 @@
 from detection_model import detection_model
-from detection_model import invert_efficiency_matrix
+#from detection_model import invert_efficiency_matrix
