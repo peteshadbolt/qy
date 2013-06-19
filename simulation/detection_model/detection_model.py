@@ -1,13 +1,15 @@
 import itertools as it
 import numpy as np
+from collections import defaultdict
 
 class detector:
     def __init__(self, label, efficiency, ratio, loss, mode):
-        self.label=label.upper()
-        self.efficiency=efficiency
-        self.ratio=ratio
-        self.loss=loss
-        self.mode=mode
+        ''' a detector in place in the detection model '''
+        self.label=label.upper()    # a helpful label
+        self.efficiency=efficiency  # this detectors quantum efficiency
+        self.ratio=ratio            # the ratio of light given to this detector by the preceeding splitter
+        self.loss=loss              # the fibre loss prior to this splitter
+        self.mode=mode              # the mode which this detector is attached to
         self.lumped_efficiency=self.efficiency*self.ratio*self.loss
 
     def __str__(self):
@@ -16,7 +18,6 @@ class detector:
         s+='ratio %.2f, loss %.2f, ' % (self.ratio, 1-self.loss)
         s+='mode %d)' % self.mode
         return s
-        
 
 class detection_model:
     def __init__(self, nmodes):
@@ -111,6 +112,14 @@ class detection_model:
         ''' get the lumped efficiency of a pattern of detectors '''
         return np.prod([det.lumped_efficiency for det in pattern])
 
+    def get_mode_event_efficiencies(self, nphotons):
+        ''' get efficiencies of all events that can be seen with this detection model '''
+        table=defaultdict(int)
+        for event in self.iterate_over_detector_events(nphotons):
+            modes=tuple(sorted([d.mode for d in event]))
+            table[modes]+=self.get_detector_event_efficiency(event)
+        return table
+
     def show_available(self):
         ''' print all available gear '''
         s='Available detectors:\n'
@@ -139,6 +148,9 @@ class detection_model:
     def __str__(self):
         ''' printout '''
         return self.draw()
+
+
+# Tests start here
 
 if __name__=='__main__':
     # build a detection model
@@ -189,77 +201,8 @@ if __name__=='__main__':
         efficiency = m.get_detector_event_efficiency(pattern)
         print '%s (%s): efficiency = %.3f' % (label, label2, efficiency)
 
+    print '\nAll efficiencies, mapped to mode events'
     # iterate over all three-photon events, where we only care about modes, with efficiencies
+    for event, efficiency in m.get_mode_event_efficiencies(3).items():
+        print event, efficiency
 
-    
-
-
-
-
-
-##################################
-#OLD CODE, IGNORE!
-#def detector_pattern(self, pattern):
-    #''' look up a set of detectors '''
-    #return [self.detector_map[x] for x in sorted(pattern.lower())]
-
-
-#def get_modes(self, pattern):
-    #''' get a sorted tuple of modes corresponding to a given detection pattern '''
-    #return tuple(sorted([d.mode for d in self.detector_pattern(pattern)]))
-
-#def map_pattern_to_modes(self, pattern):
-    #''' map a list of detectors to a list of modes '''
-    #return map(lambda x: x.mode)
-
-#def get_used_modes(self):
-    #''' just return the modes that are connected to something '''
-    #return list(self.used_modes)
-
-#def get_mode_events(self, nphotons):
-    #''' list the different unique combinations of modes which can be addressed using this scheme, given some photon number '''
-    #return 'dwa'
-
-#def get_detector_events(self, nphotons):
-    #''' list all the ways that the used detectors can click '''
-    #detector_indeces=range(len(self.detectors))
-    #indeces=it.combinations(detector_indeces, nphotons)
-    #detectors=[[self.detectors[i] for i in pattern] for pattern in indeces]
-    #return detectors
-
-#def get_detector_label_events(self, nphotons):
-    #''' list all the ways that the used detectors can click '''
-    #detector_indeces=range(len(self.detectors))
-    #indeces=it.combinations(detector_indeces, nphotons)
-    #detectors=[''.join(sorted([self.detectors[i].label for i in pattern])) for pattern in indeces]
-    #return detectors
-
-#def patterns_and_efficiencies(self, nphotons):
-    #''' iterate over all patterns of n photons, with efficiencies '''
-    #indeces=it.combinations(range(len(self.detectors)), nphotons)
-    #detectors=[[self.detectors[i] for i in pattern] for pattern in indeces]
-    #efficiencies=map(lambda x: self.net_efficiency(x), detectors)
-    #return zip(detectors, efficiencies)
-
-#def patterns_and_efficiencies(self, nphotons):
-        #''' iterate over all patterns of n photons, with efficiencies '''
-        #combinations=list(it.permutations(self.detectors, nphotons))
-        #efficiencies=map(lambda x: self.net_efficiency(x), combinations)
-        #return zip(combinations, efficiencies)
-
-    #def choose_n_photons(self, nphotons):
-        #''' iterate over all combinations of detectors '''
-        #return it.permutations(self.detectors, nphotons)
-
-    #def efficiency_matrix(self, nphotons):
-        #''' generate a sparse efficiency matrix for n photons '''
-        #sparse={}
-        #for pattern in self.choose_n_photons(nphotons):
-            #net_efficiency=self.net_efficiency(pattern)
-            #position=tuple(sorted([det.mode for det in pattern]))
-            #if position in sparse: 
-                #sparse[position]+=net_efficiency
-            #else:
-                #sparse[position]=net_efficiency
-        #return sparse
-    
