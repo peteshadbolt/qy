@@ -96,7 +96,7 @@ class detection_model:
     def get_mode_from_detector(self, label):
         ''' given a detector label, return the mode '''
         return self.detector_map[label.upper()].mode
-    
+
     def iterate_over_mode_events(self, nphotons):
         ''' iterate over all unique "mode events" which can be detected using this detection scheme '''
         modes=[x.mode for x in self.detectors]
