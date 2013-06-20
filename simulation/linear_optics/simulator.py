@@ -2,6 +2,7 @@ import numpy as np
 from scipy.misc import factorial
 import itertools as it
 from qy.simulation import permanent
+from qy import util
 from state import state
 
 class simulator:
@@ -109,6 +110,15 @@ class simulator:
             amplitude=self.get_output_state_element(output)
             self.output_state.add_by_index(amplitude, output) 
         return self.output_state
+
+    def from_detection_model(self, detection_model):
+        ''' generate all probabilities relevant to a given detection model'''
+        patterns=list(detection_model.iterate_over_mode_events(self.nphotons))
+        probabilities={}
+        for index, pattern in enumerate(patterns):
+            probabilities[pattern]=self.get_probability(['m']+list(pattern))
+            util.progress_bar(index, len(patterns))
+        return probabilities
 
     def __str__(self):
         '''print out'''

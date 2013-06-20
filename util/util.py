@@ -19,10 +19,15 @@ def get_groups(directory):
 
 last_t=0
 
-def progress_bar(progress):
+def progress_bar(progress, divisor=None):
     ''' progress bar '''
     global last_t
-    t=int(100*progress)
+
+    if divisor==None: 
+        t=int(100*progress)
+    else:
+        t=int(100*progress/float(divisor-1))
+
     if t<=0 or t>last_t:
         last_t=t
         sys.stdout.write('\r[{0}] {1}%'.format('#'*(t/5), t))
