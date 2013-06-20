@@ -112,16 +112,6 @@ class detection_model:
         ''' get the lumped efficiency of a pattern of detectors '''
         return np.prod([det.lumped_efficiency for det in pattern])
 
-    def get_mode_event_efficiency(self, pattern):
-        ''' get the lumped_efficiency of a pattern of modes '''
-        eff=0
-        all_detectors = reduce(list.__add__, map(self.get_detectors_from_mode, pattern))
-        unique_detectors=set(all_detectors)
-        for event in it.combinations(unique_detectors, len(pattern)):
-            print [x.label for x in event]
-            eff+=self.get_detector_event_efficiency(event)
-        return eff
-
     def get_efficiency_table(self, nphotons):
         ''' get efficiencies of all events that can be seen with this detection model '''
         table=defaultdict(int)
@@ -216,5 +206,3 @@ if __name__=='__main__':
     for event, efficiency in m.get_efficiency_table(3).items():
         print event, efficiency
 
-    print '\nEfficiency of (0,1,1) event'
-    print m.get_mode_event_efficiency([0,1,1])
