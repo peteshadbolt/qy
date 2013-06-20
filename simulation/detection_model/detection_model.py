@@ -14,7 +14,7 @@ class detector:
 
     def __str__(self):
         ''' print out '''
-        s='Detector %s (Efficiency %.2f, ' % (self.label, self.efficiency)
+        s='Detector %s (efficiency %.2f, ' % (self.label, self.efficiency)
         s+='ratio %.2f, loss %.2f, ' % (self.ratio, 1-self.loss)
         s+='mode %d)' % self.mode
         return s
@@ -28,7 +28,7 @@ class detection_model:
         self.all_detectors=[]
         self.available_detectors=[]
         self.detectors=[]
-        self.detector_mode_map=[[] for i in range(16)]
+        self.detector_mode_map=[[] for i in range(nmodes)]
 
     def provide_detector(self, name, efficiency):
         ''' provide a single detector '''
@@ -62,14 +62,12 @@ class detection_model:
         ''' build the whole thing '''
         self.reset_shelf()
         self.detectors=[]
-        self.used_modes=set()
         # while you haven't run out of detectors...
         mode=0
         while len(self.available_detectors)>0 \
                and len(self.available_splitters)>0 \
                and mode<self.nmodes:
             ndetectors=int(scheme_string[mode % len(scheme_string)])
-            if ndetectors>0: self.used_modes.add(mode)
             if ndetectors==1: self.add_detector(mode)
             if ndetectors>1: self.add_splitter(ndetectors, mode)
             mode+=1
