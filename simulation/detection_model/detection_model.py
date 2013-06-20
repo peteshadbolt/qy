@@ -142,7 +142,7 @@ class detection_model:
         for mode in range(self.nmodes):
             s+= '\nMode: %d\n' % mode
             for detector in self.detector_mode_map[mode]:
-                s+= '\-- %s (%.2f)\n' % (detector.label, detector.efficiency)
+                s+= '\-- %s\n' % (str(detector))
         return s
 
     def __str__(self):
