@@ -1,13 +1,8 @@
-import _counted_file_parser
+import _counted_file_parser as counted_file_parser
 import numpy as np
 import os
 import parser
-import sys
-
-def progress_bar(progress):
-    ''' progress bar '''
-    t=int(100*progress)
-    sys.stdout.write('\r[{0}] {1}%'.format('#'*(t/5), t))
+from qy import util
 
 class counted_file_reader:
     def __init__(self, fname, patterns=None, silent=False):
@@ -49,7 +44,7 @@ class counted_file_reader:
         while chunks_read>0:
             chunks_read=self.read_chunk() 
             if callback!=None: callback(total)
-            if not self.silent: progress_bar(self.progress)
+            if not self.silent: util.progress_bar(self.progress)
             total+=1
         if trim: self.trim()
         if not self.silent: print
