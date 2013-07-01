@@ -28,5 +28,28 @@ Python drivers for various pieces of hardware.
 - DAC (NI etc)
 - ...
 
-###Util
+###GUI
+Useful wrappers for various bits of [wxPython](http://wxpython.org).
+
+###Miscellaneous useful things
 - Easier file access, numpy tools, command line tools...
+
+###Installing 
+
+qy depends on [numpy](http://numpy.org) and [matplotlib](http://matplotlib.org). I am trying to avoid dependency on SciPy.
+
+Installation is done using disutils. In the root directory, you will find 'setup.py'.
+
+####Linux
+Under linux, this is the command that I am using to compile/build and install qy:
+
+    $ python setup.py  install --user
+
+The --user is optional.
+
+####Windows
+Under windows using [mingw32](http://www.mingw.org/), the following commands seem to work:
+
+    > python setup.py build --compiler mingw32
+    > python setup.py install
+
