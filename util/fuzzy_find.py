@@ -11,11 +11,17 @@ class fuzzy_finder:
 
     def find(self, substring):
         ''' fuzzy-find a file and return its path '''
+        for item in self.mega:
+            if substring in item: return item
+        print '%s not found!!!' % substring
+        raw_input()
+
+    def find_many(self, substring):
+        ''' fuzzy-find a list of files and return its path '''
         items=[]
         for item in self.mega:
             if substring in item: items.append(item)
-        if len(items)==1: return items[0]
-        if len(items)>1: return items
+        if len(items)>=1: return items
         print '%s not found!!!' % substring
         raw_input()
 
