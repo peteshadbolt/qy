@@ -1,0 +1,3 @@
+LIBRARY _counted_file_parser.pyd
+EXPORTS
+init_counted_file_parser

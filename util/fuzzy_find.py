@@ -18,3 +18,7 @@ class fuzzy_finder:
         if len(items)>1: return items
         print '%s not found!!!' % substring
         raw_input()
+
+    def __str__(self):
+        ''' convert to string '''
+        return '\n'.join(self.mega)

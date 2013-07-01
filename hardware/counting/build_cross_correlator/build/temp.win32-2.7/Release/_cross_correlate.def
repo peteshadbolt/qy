@@ -1,0 +1,3 @@
+LIBRARY _cross_correlate.pyd
+EXPORTS
+init_cross_correlate
