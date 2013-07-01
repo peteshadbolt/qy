@@ -1,7 +1,7 @@
 Qy for Python
 -------------
 
-Quantum libraries all in one place. Control and automation, DAQ, IO, simulation, graphics, GUI, analysis.
+Quantum libraries all in one place. Control and automation, DAQ, IO, simulation, graphics, GUI, analysis. [Installation instructions](#installing)
 
 ###Analysis
 Post-processing and analysis tools.
