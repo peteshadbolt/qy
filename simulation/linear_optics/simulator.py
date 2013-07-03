@@ -13,8 +13,8 @@ class simulator:
         self.basis=basis
         self.nmodes=self.basis.nmodes
         self.nphotons=self.basis.nphotons
-        self.explicit=True
-        self.accelerate=True
+        self.explicit=False
+        self.accelerate=False
         self.set_mode('quantum')
 
     def set_mode(self, quantum_classical):

@@ -1,13 +1,15 @@
 import os
 
 class fuzzy_finder:
-    def __init__(self, root, suffix=''):
+    def __init__(self, root, suffix='', extra_filter=None):
         ''' helpful for finding files without putting massive great paths in scripts '''
         self.root=root
         self.mega=[]
         for root,dirs,files in os.walk(root):
             self.mega+=map(lambda x: os.path.join(root, x), files)
         self.mega=filter(lambda x: x.endswith(suffix), self.mega)
+        if extra_filter!=None:
+            self.mega=filter(lambda x: extra_filter in x, self.mega)
 
     def find(self, substring):
         ''' fuzzy-find a file and return its path '''
