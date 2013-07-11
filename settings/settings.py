@@ -1,9 +1,17 @@
 import os
 
+if 'APPDATA' in os.environ:
+    confighome = os.environ['APPDATA']
+elif 'XDG_CONFIG_HOME' in os.environ:
+    confighome = os.environ['XDG_CONFIG_HOME']
+else:
+    confighome = os.path.join(os.environ['HOME'], '.config')
+configpath = os.path.join(confighome, 'qython')
+print configpath
+
 
 print 'loading settings...',
-filename=os.path.dirname(__file__)
-filename=os.path.join(filename, 'qython.txt')
+filename=os.path.join(configpath, 'qython.txt')
 f=open(filename, 'r')
 lines=f.readlines()
 f.close()

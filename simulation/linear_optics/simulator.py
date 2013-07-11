@@ -74,8 +74,7 @@ class simulator:
         ''' get a component of the state vector '''
         # this part is mega inefficient
         inputs, cols = self.map_both(input)
-        normo=np.product(map(factorial, outputs))
-        norm=1/(normo)
+        norm=1/np.product(map(factorial, outputs))
         submatrix=self.device.unitary[rows][:,cols]
         submatrix=np.absolute(submatrix)
         submatrix=np.power(submatrix,2)

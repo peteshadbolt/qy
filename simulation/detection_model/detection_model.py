@@ -23,6 +23,7 @@ class detection_model:
     def __init__(self, nmodes):
         ''' a model of some detection scheme '''
         self.nmodes=nmodes
+        self.scheme_string=''
         self.all_splitters=[[] for i in range(16)]
         self.available_splitters=[[] for i in range(16)]
         self.all_detectors=[]
@@ -60,6 +61,7 @@ class detection_model:
 
     def build(self, scheme_string):
         ''' build the whole thing '''
+        self.scheme_string=scheme_string
         self.reset_shelf()
         self.detectors=[]
         # while you haven't run out of detectors...
@@ -136,7 +138,7 @@ class detection_model:
 
     def draw(self):
         ''' draw the detection model '''
-        s=''
+        s=self.scheme_string
         for mode in range(self.nmodes):
             s+= '\nMode: %d\n' % mode
             for detector in self.detector_mode_map[mode]:

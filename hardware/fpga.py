@@ -1,5 +1,5 @@
 import serial
-import qy
+from qy import settings
 
 class fpga:
 	"""	
@@ -12,17 +12,18 @@ class fpga:
 	finedelays=[0]*8
 	modes=[0]*14
 	
-	def __init__(self, COM=None):
+	def __init__(self, COM=None, callback=None):
 		""" Constructor for an FPGA object. Remember that python's COM port indexing starts at zero! """
-		if COM==None: COM=int(qy.settings.lookup('fpga_com'))
-		self.labels=qy.settings.lookup('fpga_labels').split(' ')
+		if COM==None: COM=int(settings.lookup('fpga_com'))
+		self.labels=settings.lookup('fpga_labels').split(',')
 		self.serial=serial.Serial()
 		self.serial.port=COM
-		self.serial.timeout=10
+		self.serial.timeout=.1
 		self.serial.baudrate=9600
 		self.serial.bytesize=serial.EIGHTBITS
 		self.serial.parity=serial.PARITY_NONE
 		self.serial.stopbits=serial.STOPBITS_ONE
+		self.callback=callback
 		self.initialize()
 		
 	def lookup(self, labels, counts):
@@ -94,13 +95,33 @@ class fpga:
 			
 	def flush(self):
 		self.serial.flushInput()
+		
+	def get_byte(self):
+		out=''
+		while len(out)==0:
+			out=self.serial.read(1)
+		return out
+		
+	def get_first_byte(self):
+		out=''
+		while len(out)==0:
+			out=self.serial.read(1)
+			self.callback('FPGA is waiting for data...')
+		return out
+		
+	def count(self,op=0):
+		""" Main function to read a set of values from the FPGA. Returns a list of numbers corresponding to the counts in fpga.labels """
+		print 'count'
+		counts=self.read()
+		q=dict(zip(self.labels,counts))
+		return q
 			
-	def read(self,callback=None, op=0):
+	def read(self,op=0):
 		""" Main function to read a set of values from the FPGA. Returns a list of numbers corresponding to the counts in fpga.labels """
 		self.serial.flush()
 		counts=[0]*22
 		if self.serial.isOpen():
-			charFromSerial=self.serial.read(1)
+			charFromSerial=self.get_first_byte()#self.get_byte()
 			# Look for data
 			if len(charFromSerial)==0:
 				print "You might want to try plugging the serial cable in"
@@ -110,19 +131,19 @@ class fpga:
 			
 			while ((zeroword+zeroword2)!=0):
 				zeroword2=zeroword
-				zeroword=ord(self.serial.read(1))
+				zeroword=ord(self.get_byte())
 		
 			# Read the count rates of the 8 channels and the 14 combinations
 			for i in xrange(22):
 				counts[i]=0
 				for j in xrange(0,32,8):
 					# Read and store the counts
-					word=ord(self.serial.read(1))
+					word=ord(self.get_byte())
 					word<<=j
 					
 					counts[i]|=word
 					# Read the 'address' (and ignore it)
-					address=ord(self.serial.read(1))
+					address=ord(self.get_byte())
 		if counts[21]>100000:
 			self.serial.read(2)
 			return [0]*22
