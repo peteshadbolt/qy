@@ -10,7 +10,7 @@ packages.append('qy')
 
 # simulation packages
 packages.append('qy.simulation')
-for p in ['combinadics', 'linear_optics', 'permanent', 'detection_model']:
+for p in ['combinadics', 'linear_optics', 'permanent', 'detection_model', 'qi']:
     packages.append('qy.simulation.'+p)
 
 # other packages

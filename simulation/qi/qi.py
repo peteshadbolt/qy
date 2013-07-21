@@ -16,7 +16,7 @@ px = np.matrix([[0,1],[1,0]])
 py = np.matrix([[0,-1j],[1j,0]])
 pz = np.matrix([[1,0],[0,-1]])
 hadamard = np.matrix([[1,1],[1,-1]])/r2
-dc = np.matrix([[1,1j],[1j,1]])
+dc = np.matrix([[1,1j],[1j,1]])/r2
 paulis=[px,py,pz]
 pauli_dict={x:p for x, p in zip('xyz', paulis)}
 tomography=[identity,px,py,pz]
@@ -32,6 +32,7 @@ phi_minus=(np.kron(zero,zero)-np.kron(one,one))/r2
 
 # two-qubit gates
 cnot=np.matrix([[1,0,0,0],[0,1,0,0],[0,0,0,1],[0,0,1,0]])
+cz=np.matrix([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,-1]])
 
 # krauss operators
 krauss=[]
