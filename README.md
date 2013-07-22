@@ -1,11 +1,11 @@
 Qy for Python
 -------------
 
-Quantum libraries all in one place. Control and automation, DAQ, IO, simulation, graphics, GUI, analysis. [Installation instructions](#installing)
+Quantum libraries all in one place. Control and automation, DAQ, IO, simulation, graphics, GUI, analysis.
 
 ###Installing 
 
-qy depends on [numpy](http://numpy.org) and [matplotlib](http://matplotlib.org). I am trying to avoid dependency on [SciPy](http://scipy.org), but some functions (`$ grep -rl "scipy" ./`) still need it. You will need [cython](http://cython.org) and [SWIG](http://swig.org) if you want to compile from source.
+`qy` depends on [numpy](http://numpy.org) and [matplotlib](http://matplotlib.org). I am trying to avoid dependency on [SciPy](http://scipy.org), but some functions (`$ grep -rl "scipy" ./`) still need it. You will need [cython](http://cython.org) and [SWIG](http://swig.org) if you want to compile from source.
 
 ####Windows
 I am periodically building windows installers. You can download them [here](https://github.com/peteshadbolt/qy/tree/master/dist).
@@ -21,18 +21,20 @@ Under linux, this is the command that I am using to compile/build and install qy
 
 The --user is optional.
 
-## Contents
+### Contents
 
-###Analysis
+`qy` is broken into six sub-packages, for analysis, input/output, simulation of linear optics and quantum information, interfaces to various bits of lab hardware and DAQ, graphical user interfaces, and miscellaneous stuff. You should only import the packages that you need - don't do `from qy import *`
+
+####Analysis
 Post-processing and analysis tools.
 - Quantum metrics: quantum state fidelity, process fidelity, CHSH ...
 - Classical metrics: Trace distance, statistical fidelity ...
 
-###IO
+####IO
 Interface to non-standard binary formats.
 - Fast interface to binary .COUNTED files from DPC-230
 
-###Simulation
+####Simulation
 Optimized code for simulating linear quantum optics and quantum information, some of which is written using [cython](http://www.cython.org).
 - Optimized linear optics simulator. *p* photons in *m* modes. Reck schemes, quantum walks, interferometers, random unitaries.
 - Optimized permanent in cython.
@@ -40,7 +42,7 @@ Optimized code for simulating linear quantum optics and quantum information, som
 - Detection model for fan-out pseudo number-resolving detectors
 - QI fundamentals: Qubit bases, Pauli operators, two-qubit gates...
 
-###Hardware
+####Hardware
 Python drivers for various pieces of hardware.
 - Motor controllers
 - FPGA-based counting systems
@@ -48,9 +50,9 @@ Python drivers for various pieces of hardware.
 - DAC (NI etc)
 - ...
 
-###GUI
+####GUI
 Useful wrappers for various bits of [wxPython](http://wxpython.org).
 
-###Miscellaneous useful things
+####Miscellaneous useful things
 - Easier file access, numpy tools, command line tools...
 
