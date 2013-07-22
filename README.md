@@ -1,5 +1,4 @@
-Qy for Python
--------------
+##Qy for Python
 
 Quantum libraries all in one place. Control and automation, DAQ, IO, simulation, graphics, GUI, analysis.
 
@@ -19,11 +18,11 @@ Under linux, this is the command that I am using to compile/build and install qy
 
     $ python setup.py  install --user
 
-The --user is optional.
+The `--user` is optional.
 
 ### Contents
 
-`qy` is broken into six sub-packages, for analysis, input/output, simulation of linear optics and quantum information, interfaces to various bits of lab hardware and DAQ, graphical user interfaces, and miscellaneous stuff. You should only import the packages that you need - don't do `from qy import *`
+`qy` is broken into six sub-packages, for analysis, input/output, simulation of linear optics and quantum information, interfaces to various bits of lab hardware and DAQ, graphical user interfaces, and miscellaneous stuff.
 
 ####Analysis
 Post-processing and analysis tools.
@@ -32,7 +31,7 @@ Post-processing and analysis tools.
 
 ####IO
 Interface to non-standard binary formats.
-- Fast interface to binary .COUNTED files from DPC-230
+- Fast interface to binary `.counted` files from [DPC-230](http://www.becker-hickl.com/pdf/dbdpc3.pdf) timetagger
 
 ####Simulation
 Optimized code for simulating linear quantum optics and quantum information, some of which is written using [cython](http://www.cython.org).
