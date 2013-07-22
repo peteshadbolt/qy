@@ -4,7 +4,7 @@ Quantum libraries all in one place. Control and automation, DAQ, IO, simulation,
 
 ###Installing 
 
-`qy` depends on [numpy](http://numpy.org) and [matplotlib](http://matplotlib.org). I am trying to avoid dependency on [SciPy](http://scipy.org), but some functions (`$ grep -rl "scipy" ./`) still need it. You will need [cython](http://cython.org) and [SWIG](http://swig.org) if you want to compile from source.
+`qy` depends on [numpy](http://numpy.org) and [matplotlib](http://matplotlib.org). I am trying to avoid dependency on [SciPy](http://scipy.org), but some functions still need it. You will need [cython](http://cython.org) and [SWIG](http://swig.org) if you want to compile from source.
 
 ####Windows
 I am periodically building windows installers. You can download them [here](https://github.com/peteshadbolt/qy/tree/master/dist).
@@ -55,3 +55,7 @@ Useful wrappers for various bits of [wxPython](http://wxpython.org).
 ####Miscellaneous useful things
 - Easier file access, numpy tools, command line tools...
 
+###TODO
+- Get rid of Scipy (`$ grep -rl "scipy" ./`) 
+- Stress test cython code in `linear_optics`
+- Tidy up `hardware` modules, get code from other people e.g. PicoHarp
