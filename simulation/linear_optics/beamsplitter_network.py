@@ -40,11 +40,13 @@ class beamsplitter_network:
         ''' set the phases '''
         for shifter, phase in zip(self.phaseshifters, new_phases):  
             shifter.set_phi(phase)
+        self.get_unitary()
    
     def set_splitting_ratios(self, new_splitting_ratios):
         ''' set the phases '''
         for splitter, splitting_ratio in zip(self.beamsplitters, new_splitting_ratios): 
             splitter.set_splitting_ratio(splitting_ratio)
+        self.get_unitary()
 
     def set_parameters(self, p):
         ''' set all parameters'''
