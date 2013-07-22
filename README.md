@@ -36,7 +36,11 @@ Useful wrappers for various bits of [wxPython](http://wxpython.org).
 
 ###Installing 
 
-qy depends on [numpy](http://numpy.org) and [matplotlib](http://matplotlib.org). I am trying to avoid dependency on SciPy.
+qy depends on [numpy](http://numpy.org) and [matplotlib](http://matplotlib.org). I am trying to avoid dependency on SciPy. 
+
+	$ grep -rl "scipy" ./
+
+will root out files which have leftover Scipy dependencies.
 
 Installation is done using disutils. In the root directory, you will find 'setup.py'.
 
