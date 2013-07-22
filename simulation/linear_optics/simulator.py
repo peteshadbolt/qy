@@ -104,7 +104,7 @@ class simulator:
     def get_output_state(self, input_state=None):
         ''' compute the full state vector'''
         if input_state!=None: self.set_input_state(input_state)
-        self.output_state=self.get_state()
+        self.output_state=self.basis.get_state()
         for output in range(self.basis.hilbert_space_dimension):
             amplitude=self.get_output_state_element(output)
             self.output_state.add_by_index(amplitude, output) 

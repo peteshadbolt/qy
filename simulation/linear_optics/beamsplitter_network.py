@@ -57,7 +57,7 @@ class beamsplitter_network:
         ''' build the unitary '''
         #TODO: this can be optimized by generating columns	
         self.unitary=np.matrix(np.eye(self.nmodes), dtype=complex)
-        for o in self.structure:
+        for o in reversed(self.structure):
             u=np.matrix(np.eye(self.nmodes, dtype=complex))
             u[o.y:o.y+2, o.y:o.y+2]=o.get_unitary()
             self.unitary*=u
