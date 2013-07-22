@@ -7,10 +7,6 @@ Quantum libraries all in one place. Control and automation, DAQ, IO, simulation,
 
 qy depends on [numpy](http://numpy.org) and [matplotlib](http://matplotlib.org). I am trying to avoid dependency on [SciPy](http://scipy.org), but some functions (`$ grep -rl "scipy" ./`) still need it. You will need [cython](http://cython.org) and [SWIG](http://swig.org) if you want to compile from source.
 
-
-
-will root out files which have leftover Scipy dependencies.
-
 ####Windows
 I am periodically building windows installers. You can download them [here](https://github.com/peteshadbolt/qy/tree/master/dist).
 Under windows using [mingw32](http://www.mingw.org/), the following commands seem to do the job when building from source:
