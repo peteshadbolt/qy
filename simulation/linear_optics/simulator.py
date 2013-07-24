@@ -124,7 +124,7 @@ class simulator:
         probabilities={}
         for index in range(self.basis.hilbert_space_dimension):
             modes=self.basis.mode(index)
-            probabilities[modes]=self.get_probability(index)
+            probabilities[tuple(modes)]=self.get_probability(index)
             util.progress_bar(index, self.basis.hilbert_space_dimension)
         return probabilities
 
