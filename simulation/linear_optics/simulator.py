@@ -122,7 +122,7 @@ class simulator:
     def from_basis(self):
         ''' generate all probabilities relevant to a given detection model'''
         probabilities={}
-        for index in range(self.basis.hilbert_space_dimension)
+        for index in range(self.basis.hilbert_space_dimension):
             modes=self.basis.mode(index)
             probabilities[modes]=self.get_probability(index)
             util.progress_bar(index, self.basis.hilbert_space_dimension)
