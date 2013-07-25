@@ -4,16 +4,20 @@ class fuzzy_finder:
     def __init__(self, root, suffix='', extra_filter=None):
         ''' helpful for finding files without putting massive great paths in scripts '''
         self.root=root
-        self.mega=[]
+        self.all_files=[]
         for root,dirs,files in os.walk(root):
-            self.mega+=map(lambda x: os.path.join(root, x), files)
-        self.mega=filter(lambda x: x.endswith(suffix), self.mega)
+            self.all_files+=map(lambda x: os.path.join(root, x), files)
+        self.all_files=filter(lambda x: x.endswith(suffix), self.all_files)
         if extra_filter!=None:
-            self.mega=filter(lambda x: extra_filter in x, self.mega)
+            self.all_files=filter(lambda x: extra_filter in x, self.all_files)
+
+    def get_all_files(self):
+        ''' get the list of all files '''
+        return list(self.all_files)
 
     def find(self, substring):
         ''' fuzzy-find a file and return its path '''
-        for item in self.mega:
+        for item in self.all_files:
             if substring in item: return item
         print '%s not found!!!' % substring
         raw_input()
@@ -21,7 +25,7 @@ class fuzzy_finder:
     def find_many(self, substring):
         ''' fuzzy-find a list of files and return its path '''
         items=[]
-        for item in self.mega:
+        for item in self.all_files:
             if substring in item: items.append(item)
         if len(items)>=1: return items
         print '%s not found!!!' % substring
@@ -29,4 +33,4 @@ class fuzzy_finder:
 
     def __str__(self):
         ''' convert to string '''
-        return '\n'.join(self.mega)
+        return '\n'.join(self.all_files)
