@@ -153,11 +153,12 @@ class detection_model:
 # Tests start here
 
 if __name__=='__main__':
+
     # build a detection model
     m=detection_model(4)
 
     # provide some components
-    m.provide_detectors('abcdefgh', [1]*8)
+    m.provide_detectors('abcdef', [1,1,.5,1,1,1])
     m.provide_detector('z', 1)
     m.provide_splitter('tr0', (1,1,1),(1,1,1))
     for i in range(4):

@@ -22,11 +22,11 @@ class fuzzy_finder:
         print '%s not found!!!' % substring
         raw_input()
 
-    def find_many(self, substring):
+    def find_many(self, substrings):
         ''' fuzzy-find a list of files and return its path '''
         items=[]
         for item in self.all_files:
-            if substring in item: items.append(item)
+            if all([(substring in item) for substring in substrings]): items.append(item)
         if len(items)>=1: return items
         print '%s not found!!!' % substring
         raw_input()

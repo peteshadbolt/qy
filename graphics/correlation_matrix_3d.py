@@ -4,16 +4,16 @@ import os, subprocess
 
 ''' this module is used for plotting 3d correlation matrices '''
 
-def render(pov_filename, scaling=2):
+def render(pov_filename, scale=2):
     ''' call povray '''
-    w, h=(640*scaling,480*scaling)
+    w, h=(640*scale,480*scale)
     print 'rendering POVray 3d image %s (%d x %d)...' % (pov_filename, w,h),
     
     root, file=os.path.split(pov_filename)
     image_filename=os.path.join(root, file.split('.')[0])+'.png'
 
-    print pov_filename
-    print image_filename
+    #print pov_filename
+    #print image_filename
 
     output='Output_File_Name=%s' % image_filename
     args=[r'C:\Program Files\megapov\bin\megapov.exe', pov_filename, '+FN', '+H%d' % h, '+W%d' % w, 'Antialias=On', output]
@@ -30,7 +30,7 @@ def sphere(x,y,z,r,color=1):
     q=(x,y,z,r, R,G,B)
     return 'sphere {<%.9f, %.9f, %.9f> %.9f pigment{color rgb <%.5f,%.5f,%.5f>}}\n' % q
 
-def plot3d(matrix, template_filename, pov_filename='out.pov', color=None, scale=2, normalization=None): 
+def plot3d(matrix, template_filename, pov_filename='out.pov', color=None, scale=2, norm=None): 
     ''' generates povray code for a 3d image of the cube '''
     # load the template
     f=open(template_filename, 'r')
@@ -39,19 +39,24 @@ def plot3d(matrix, template_filename, pov_filename='out.pov', color=None, scale=
     
     # generate all spheres
     X,Y,Z = matrix.shape
-    
-    # perhaps?
-    #matrix=np.sqrt(matrix)
-    
+
+    # get ready to draw
     xs=2./(X-1); ys=2./(Y-1); zs=2./(Z-1)
-    if normalization == None:
-        normalization=.1/np.amax(matrix)
+    maxvalue=np.amax(matrix)
+    if norm == None: norm=.1/maxvalue
+
+    # choose colors
+    if color!=None: col=color
     
     for x in range(X):
         for y in range (Y):
             for z in range(Z):
-                if matrix[x,y,z]>0: 
-                    output+=sphere(x*xs-1,y*ys-1,z*zs-1, matrix[x,y,z]*normalization*scale, color)
+                value = matrix[x,y,z]
+                xx=x*xs-1
+                yy=y*ys-1
+                zz=z*zs-1
+                if color==None: col=value/maxvalue
+                if value>0: output+=sphere(xx,yy,zz, value*norm*scale, col)
         
     # write the povray file
     f=open(pov_filename, 'w')
