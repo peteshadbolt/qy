@@ -1,10 +1,17 @@
 import numpy as np
 import sys
 
-def dict_to_sorted_numpy(x):
+def dict_to_sorted_numpy(data):
     ''' convert a dictionary to a sorted numpy array '''
-    data=sorted(x.items(), key=lambda x:x[0])
-    return np.array([list(item[0])+[item[1]] for item in data])
+    N=len(d.keys()[0])
+    sorted_data=sorted(data.items(), key=lambda x:x[0])
+    structure=[('labels', int, (N,)), ('counts', float)]
+    return np.array(sorted_data, dtype=structure)
+
+#def dict_to_sorted_numpy(x):
+    #''' convert a dictionary to a sorted numpy array '''
+    #data=sorted(x.items(), key=lambda x:x[0])
+    #return np.array([list(item[0])+[item[1]] for item in data])
 
 def get_key(filename): return '_'.join(os.path.split(filename)[-1].split('.')[0].split('_')[:-1])
 
@@ -36,3 +43,4 @@ def progress_bar(progress, divisor=None):
         sys.stdout.write('\r')
         sys.stdout.flush()
         print
+

@@ -7,7 +7,7 @@ import os, subprocess
 def render(pov_filename, scale=2):
     ''' call povray '''
     w, h=(640*scale,480*scale)
-    print 'rendering POVray 3d image %s (%d x %d)...' % (pov_filename, w,h),
+    print 'povray %s (%d x %d)...' % (pov_filename, w,h),
     
     root, file=os.path.split(pov_filename)
     image_filename=os.path.join(root, file.split('.')[0])+'.png'
