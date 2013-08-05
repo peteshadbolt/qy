@@ -7,26 +7,26 @@ from state import state
 
 class simulator:
     '''get states and statistics from a device'''
-    def __init__(self, basis, device):
+    def __init__(self, basis, device, accelerate=True, explicit=True):
     #def __init__(self, basis, device, accelerate=True, explicit=True):
         self.device=device
         self.basis=basis
         self.nmodes=self.basis.nmodes
         self.nphotons=self.basis.nphotons
         self.visibility=1.0
-        self.explicit=True
-        self.accelerate=True
+        self.explicit=explicit
+        self.accelerate=accelerate
         self.set_mode('quantum')
 
-    def set_mode(self, quantum_classical, visibility=None):
+    def set_visibility(self, new_visibility):
+        ''' set the visibility of quantum interference '''
+        self.visibility=new_visibility
+        self.set_mode(self.quantum_classical)
+
+    def set_mode(self, quantum_classical):
         ''' determines whether to return quantum or classical statistics '''
         if not (quantum_classical in ['quantum', 'classical']): print 'Quantum/classical mode not understood!'; return
-        if visibility!=None:
-            self.quantum_classical='quantum'
-            self.visibility=visibility
-        else:
-            self.visibility=1
-            self.quantum_classical=quantum_classical
+        self.quantum_classical=quantum_classical
 
         # choose the function that we will use to compute probabilities
         if self.quantum_classical=='quantum':

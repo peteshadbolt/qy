@@ -46,11 +46,13 @@ print '\nCHANGING VISIBILITY, STANDARD HOM DIP'
 input_state=basis.get_state('m01')
 simulator.set_input_state(input_state)
 for visibility in np.linspace(0, 1, 6):
-    simulator.set_mode('quantum', visibility=visibility)
+    simulator.set_visibility(visibility)
     print '\nVISIBILITY: %.3f' % visibility
-    print 'Term\tP'
+    print 'Term\tPq\t\tPc'
     for modes in basis.mode_representation:
-        p=simulator.get_probability(['m']+modes)
+        simulator.set_mode('quantum')
+        q=simulator.get_probability(['m']+modes)
+        simulator.set_mode('classical')
+        c=simulator.get_probability(['m']+modes)
         s=','.join(map(str, modes))
-        print '%s\t%.4f' % (s, p)
-
+        print '%s\t\t%.4f\t%.4f' % (s, q, c)
