@@ -3,10 +3,15 @@ import sys
 
 def dict_to_sorted_numpy(data):
     ''' convert a dictionary to a sorted numpy array '''
-    N=len(d.keys()[0])
-    sorted_data=sorted(data.items(), key=lambda x:x[0])
+    N=len(data.keys()[0])
+    sorted_data=sorted(data.items(), key=lambda pair:pair[0])
     structure=[('labels', int, (N,)), ('counts', float)]
     return np.array(sorted_data, dtype=structure)
+
+#def copy_labelled_numpy_array(template):
+    #''' return a copy of some labelled numpy data '''
+    #out=np.copy(template)
+    #return out
 
 #def dict_to_sorted_numpy(x):
     #''' convert a dictionary to a sorted numpy array '''
@@ -43,4 +48,19 @@ def progress_bar(progress, divisor=None):
         sys.stdout.write('\r')
         sys.stdout.flush()
         print
+
+if __name__=='__main__':
+    # test dict_to_sorted_numpy
+    data={}
+    data[(1,2,3)]=10
+    data[(4,5,6)]=20
+    data[(5,6,9)]=30
+    data[(0,0,0)]=24.5
+    print data
+    
+    n=dict_to_sorted_numpy(data)
+    print n
+    print n['counts']
+    print n['labels']
+    print n[:]
 

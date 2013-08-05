@@ -13,18 +13,27 @@ class simulator:
         self.basis=basis
         self.nmodes=self.basis.nmodes
         self.nphotons=self.basis.nphotons
-        self.explicit=False
-        self.accelerate=False
+        self.visibility=1.0
+        self.explicit=True
+        self.accelerate=True
         self.set_mode('quantum')
 
-    def set_mode(self, quantum_classical):
+    def set_mode(self, quantum_classical, visibility=None):
         ''' determines whether to return quantum or classical statistics '''
         if not (quantum_classical in ['quantum', 'classical']): print 'Quantum/classical mode not understood!'; return
-        self.quantum_classical=quantum_classical=='quantum'
+        if visibility!=None:
+            self.quantum_classical='quantum'
+            self.visibility=visibility
+        else:
+            self.visibility=1
+            self.quantum_classical=quantum_classical
 
         # choose the function that we will use to compute probabilities
-        if self.quantum_classical:
-            self.get_probability = self.get_probability_quantum
+        if self.quantum_classical=='quantum':
+            if self.visibility==1:
+                self.get_probability = self.get_probability_quantum
+            else:
+                self.get_probability = self.get_probability_limited_visibility
         else: 
             self.get_probability = self.get_probability_classical
 
@@ -37,8 +46,8 @@ class simulator:
         If "explicit" is set, we will use the explicit forms up to 4x4 from now on 
         '''
         if self.accelerate:
-            if self.quantum_classical: self.perm=permanent.perm_ryser
-            if not self.quantum_classical: self.perm=permanent.perm_ryser_real
+            if self.quantum_classical=='quantum': self.perm=permanent.perm_ryser
+            if self.quantum_classical=='classical': self.perm=permanent.perm_ryser_real
             if not self.explicit: return
             if self.nphotons == 2: self.perm=permanent.perm_2x2
             if self.nphotons == 3: self.perm=permanent.perm_3x3
@@ -100,6 +109,12 @@ class simulator:
         rows=self.basis.mode(output)
         terms=[(np.abs(amplitude)**2)*self.get_single_probability_classical(input, outputs, rows) for input, amplitude in self.input_state.get_nonzero_terms()]
         return float(np.sum(terms))
+    
+    def get_probability_limited_visibility(self, output):
+        ''' get a probability with limited visibility of quantum interference '''
+        q=self.get_probability_quantum(output)
+        c=self.get_probability_classical(output)
+        return self.visibility*q+(1-self.visibility)*c
 
     def get_output_state(self, input_state=None):
         ''' compute the full state vector'''
@@ -110,14 +125,13 @@ class simulator:
             self.output_state.add_by_index(amplitude, output) 
         return self.output_state
 
-    def from_detection_model(self, detection_model):
-        ''' generate all probabilities relevant to a given detection model'''
-        patterns=list(detection_model.iterate_over_mode_events(self.nphotons))
+    def from_pattern_list(self, patterns):
+        ''' generate all probabilities, iterating over a list of patterns'''
         probabilities={}
         for index, pattern in enumerate(patterns):
-            probabilities[pattern]=self.get_probability(['m']+list(pattern))
+            probabilities[tuple(pattern)]=self.get_probability(pattern)
             util.progress_bar(index, len(patterns))
-        return probabilities
+        return util.dict_to_sorted_numpy(probabilities)
 
     def from_basis(self):
         ''' generate all probabilities relevant to a given detection model'''
@@ -126,7 +140,7 @@ class simulator:
             modes=self.basis.mode(index)
             probabilities[tuple(modes)]=self.get_probability(index)
             util.progress_bar(index, self.basis.hilbert_space_dimension)
-        return probabilities
+        return util.dict_to_sorted_numpy(probabilities)
 
     def __str__(self):
         '''print out'''
