@@ -129,7 +129,7 @@ class simulator:
         ''' generate all probabilities, iterating over a list of patterns'''
         probabilities={}
         for index, pattern in enumerate(patterns):
-            probabilities[tuple(pattern)]=self.get_probability(pattern)
+            probabilities[tuple(pattern)]=self.get_probability(['m']+pattern)
             util.progress_bar(index, len(patterns))
         return util.dict_to_sorted_numpy(probabilities)
 
