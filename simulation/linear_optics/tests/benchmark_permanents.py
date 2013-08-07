@@ -10,7 +10,6 @@ def test(nphotons, nmodes, accelerate, explicit, mode='quantum'):
     basis=lo.basis(nphotons, nmodes)
     device=lo.random_unitary(basis.nmodes)
     simulator=lo.simulator(basis, device)
-    simulator.configure_perm(accelerate, explicit)
     mode='quantum' if not mode else 'classical'
     simulator.set_mode(mode)
 
@@ -39,10 +38,11 @@ times_python_explicit=[[], []]
 for mode in 0,1:
     for nphotons in photonrange:
         print '%d photons' % nphotons
-        times_python_ryser[mode].append( test(nphotons, 10, 0, 0, mode))
-        times_python_explicit[mode].append( test(nphotons, 10, 0, 1, mode))
-        times_cython_ryser[mode].append( test(nphotons, 10, 1, 0, mode))
-        times_cython_explicit[mode].append( test(nphotons, 10, 1, 1, mode))
+        pp=['quantum', 'classical'][mode]
+        times_python_ryser[mode].append( test(nphotons, 10, 0, 0, pp))
+        times_python_explicit[mode].append( test(nphotons, 10, 0, 1, pp))
+        times_cython_ryser[mode].append( test(nphotons, 10, 1, 0, pp))
+        times_cython_explicit[mode].append( test(nphotons, 10, 1, 1, pp))
 
 plt.plot(photonrange, times_python_ryser[0], '.-', label='python ryser', color='red', ms=9)
 plt.plot(photonrange, times_python_explicit[0], '.-', label='python explicit', color='blue', ms=9)
