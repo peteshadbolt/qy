@@ -2,48 +2,60 @@ import numpy as np
 cimport numpy as cnp
 cnp.import_array()
 cimport cython
-from scipy.misc import comb
-
-def binomial(int n, int k):
-    ''' the binomial coefficient '''
-    cdef long ntok = 1
-    cdef long ktok = 1
-    cdef long p = n-k
-    if 0 <= k <= n:
-        if k < p: p=k
-        for t from 1 <= t < p+1:
-            ntok *= n
-            ktok *= t
-            n -= 1 # useless?
-        return ntok // ktok
-    else:
-        return 0
-
-cdef int largestv(int a, int b, int x):
-    ''' largest value v where v < a and (v choose b) <= x '''
-    cdef int v = a - 1
-    while binomial(v, b) > x:
-        v+=-1
-    return v
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def fock(int n, int k, int m):
-    ''' return the mth lexicographic element of combination C(n,k) '''
-    cdef cnp.ndarray[cnp.int_t, ndim=1] ans = np.zeros(k, dtype=int)
-    cdef int a=n
-    cdef int b=k
-    
-    # x is the dual of m
-    cdef int x=(binomial(n, k)-1)-m
+@cython.cdivision(True)
+def choose(int n, int k):
+    ''' n choose k '''
+    cdef double out=1
+    if n<k: return 0
+    cdef int i
+    for i from 1 <= i <= n-k:
+        out *= (i+k)/<double>i
+    return int(out+.5)
 
-    for i from 0 <= i < k:
-        ans[i]=largestv(a,b,x)
-        x=x-binomial(ans[i],b)
-        a=ans[i]
-        b=b-1
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def toindex(modes, int p, int m):
+    ''' 
+    Maps a list of positions of p photons in m modes to an index.
+    After Nick Russel.
+    '''
+    cdef int out=0
+    cdef int mx = choose(m+p-1,p)
+    cdef int i
+    for i from 1 <= i <= p:
+        out+=choose(m-modes[p-i]+i-2,i)
+    return mx-out-1
 
-    for i from 0 <= i < k:
-        ans[i]= (n-1)-ans[i]
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def fromindex(int idx, int p, int m):
+    '''
+    Maps an index to a list of positions of p photons in m modes.
+    After Nick Russel.
+    '''
+    cdef int mx = choose(m+p-1,p)
+    if idx>=mx: print 'Index out of range'; return
+    cdef int n=m+p-1
+    cdef int r=p
+    cdef int i=0
+    cdef int y=0
+    modes = [0]*p
+    idx = mx-idx-1
+    while n>0:
+        if n>r and r>=0:
+            y = choose(n-1,r)
+        else:
+            y = 0
+        if idx>=y:
+            idx = idx-y
+            modes[i] = m+p-1-n-i
+            r+=-1
+            i+=1
+        n+=-1;
+    return modes
 
-    return ans
