@@ -1,10 +1,6 @@
-from scipy.misc import comb
-import numpy as np
 from qy.simulation import combinadics
-import itertools as it
-from collections import Counter
-
-def ket(term): return '|%s>' % (''.join(map(str, term)))
+from misc import ket
+from state import state
 
 class basis:
     def __init__(self, nphotons, nmodes):
@@ -12,20 +8,34 @@ class basis:
         self.nmodes=nmodes
         self.hilbert_space_dimension=combinadics.choose(self.nphotons+self.nmodes-1, self.nphotons)
 
+    def get_state(self, starter=None):
+        ''' Get a new state in this basis '''
+        new_state=state(self)
+        if starter!=None: new_state.add(1, starter)
+        return new_state
+
+    def get_modes(self, index):
+        ''' Given an index, return the modes that the photons are in '''
+        return combinadics.from_index(index, self.nphotons, self.nmodes)
+
+    def from_modes(self, modes):
+        ''' Given a list of modes, return the index of that term '''
+        return combinadics.to_index(modes, self.nphotons, self.nmodes)
+
+    def get_normalization_constant(self, modes):
+        ''' Given an index, return the normalization constant '''
+        return combinadics.get_normalization(modes)
+
     def __str__(self):
         s='Basis of %d photons in %d modes, ' % (self.nphotons, self.nmodes)
         s+='Hilbert space dimension: %d\n' % self.hilbert_space_dimension
         for index in xrange(self.hilbert_space_dimension):
-            modes=combinadics.from_index(index, self.nphotons, self.nmodes)
-            s+=str(index)+'\t - \t '+ket(modes)+'\n'
-        return s+'\n'
-
-    def get_state(self, starter=None):
-        new_state=state(self)
-        if starter!=None: new_state.add(1, starter)
-        return new_state
+            s+=str(index)+'\t - \t '+ket(self.get_modes(index))+'\n'
+        return s
 
 if __name__=='__main__':
     print 'Testing basis...'
     b=basis(2,4)
     print b
+    print b.get_normalization_constant(b.get_modes(7))
+    print b.get_state([1,2])

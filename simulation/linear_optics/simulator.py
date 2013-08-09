@@ -4,13 +4,14 @@ import itertools as it
 from qy.simulation import permanent
 from qy import util
 from state import state
+from basis import basis
 
 class simulator:
     '''get states and statistics from a device'''
-    def __init__(self, basis, device, accelerate=True, explicit=True):
+    def __init__(self, device, nphotons, accelerate=True, explicit=True):
     #def __init__(self, basis, device, accelerate=True, explicit=True):
         self.device=device
-        self.basis=basis
+        self.basis=basis(nphotons, self.device.nmodes)
         self.nmodes=self.basis.nmodes
         self.nphotons=self.basis.nphotons
         self.visibility=1.0
@@ -61,54 +62,44 @@ class simulator:
             if self.nphotons == 5: self.perm=permanent.perm_4x4_5
 
     def set_input_state(self, input_state):
-        ''' set the input state in fock basis '''
+        ''' set the input state '''
         self.input_state=input_state
-        modes=[self.basis.mode(index) for index in self.input_state.nonzero_terms]
+        modes=[self.basis.get_modes(x) for x in input_state.nonzero_terms]
         self.device.set_input_modes(modes)
 
-    def map_both(self, input):
-        ''' helper function. VERY INEFFICIENT'''
-        inputs=self.basis.fock(input)
-        cols=self.basis.mode(input)
-        return inputs, cols
-
-    def get_component(self, input, outputs, rows):
+    def get_component(self, input, rows, norm):
         ''' get a component of the state vector '''
-        inputs, cols = self.map_both(input)
-        norm=1/np.sqrt(np.product(map(factorial, inputs)+map(factorial, outputs)))
+        cols=self.basis.get_modes(input)
+        n1=self.basis.get_normalization_constant(input)
+        norm=1/np.sqrt(n1*norm)
         submatrix=self.device.unitary[rows][:,cols]
         return norm*self.perm(submatrix)
 
-    def get_single_probability_classical(self, input, outputs, rows):
+    def get_single_probability_classical(self, input, rows, norm):
         ''' get a component of the state vector '''
-        # this part is mega inefficient
-        inputs, cols = self.map_both(input)
-        norm=1/np.product(map(factorial, outputs))
+        cols=self.basis.get_modes(input)
         submatrix=self.device.unitary[rows][:,cols]
-        submatrix=np.absolute(submatrix)
-        submatrix=np.power(submatrix,2)
+        submatrix=np.power(np.absolute(submatrix).real,2)
         return norm*self.perm(submatrix).real
 
     def get_output_state_element(self, output):
         '''get an element of the state vector, summing over terms in the input state '''
-        output=self.basis.get_index(output)
-        outputs=self.basis.fock(output)
-        rows=self.basis.mode(output)
-        terms=[amplitude*self.get_component(input, outputs, rows) for input, amplitude in self.input_state.get_nonzero_terms()]
+        rows=self.basis.get_modes(output)
+        norm=self.basis.get_normalization_constant(rows)
+        terms=[amplitude*self.get_component(input, rows, norm) for input, amplitude in self.input_state.get_nonzero_terms()]
         return np.sum(terms)
+
+    def get_probability_classical(self, output):
+        ''' get the probability of an event '''
+        rows=self.basis.get_modes(output)
+        norm=1/self.basis.get_normalization_constant(rows)
+        terms=[(np.abs(amplitude)**2)*self.get_single_probability_classical(input, rows, norm) for input, amplitude in self.input_state.get_nonzero_terms()]
+        return float(np.sum(terms))
 
     def get_probability_quantum(self, output):
         ''' get the probability of an event '''
         amplitude=self.get_output_state_element(output) 
         return float(np.abs(amplitude))**2
-
-    def get_probability_classical(self, output):
-        ''' get the probability of an event '''
-        output=self.basis.get_index(output)
-        outputs=self.basis.fock(output)
-        rows=self.basis.mode(output)
-        terms=[(np.abs(amplitude)**2)*self.get_single_probability_classical(input, outputs, rows) for input, amplitude in self.input_state.get_nonzero_terms()]
-        return float(np.sum(terms))
     
     def get_probability_limited_visibility(self, output):
         ''' get a probability with limited visibility of quantum interference '''
@@ -129,7 +120,7 @@ class simulator:
         ''' generate all probabilities, iterating over a list of patterns'''
         probabilities={}
         for index, pattern in enumerate(patterns):
-            probabilities[tuple(pattern)]=self.get_probability(['m']+list(pattern))
+            probabilities[tuple(pattern)]=self.get_probability(index)
             util.progress_bar(index, len(patterns))
         return util.dict_to_sorted_numpy(probabilities)
 
@@ -137,7 +128,7 @@ class simulator:
         ''' generate all probabilities relevant to a given detection model'''
         probabilities={}
         for index in range(self.basis.hilbert_space_dimension):
-            modes=self.basis.mode(index)
+            modes=self.basis.get_modes(index)
             probabilities[tuple(modes)]=self.get_probability(index)
             util.progress_bar(index, self.basis.hilbert_space_dimension)
         return util.dict_to_sorted_numpy(probabilities)

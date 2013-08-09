@@ -12,7 +12,7 @@ def factorial(int n):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def get_normalization(modes, int m):
+def get_normalization(modes):
     ''' 
     Get the normalization constant
     norm=1/np.sqrt(np.product(map(factorial, inputs)+map(factorial, outputs)))
