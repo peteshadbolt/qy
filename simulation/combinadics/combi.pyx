@@ -6,6 +6,31 @@ cimport cython
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
+def factorial(int n):
+    return [1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800][n]
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def get_normalization(modes, int m):
+    ''' 
+    Get the normalization constant
+    norm=1/np.sqrt(np.product(map(factorial, inputs)+map(factorial, outputs)))
+    '''
+    nonzeros={}
+    for mode in modes:
+        if mode in nonzeros: 
+            nonzeros[mode]+=1
+        else:
+            nonzeros[mode]=1
+    cdef int total=1
+    for value in nonzeros.values():
+        total*=factorial(value)
+    return total
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 def choose(int n, int k):
     ''' n choose k '''
     cdef double out=1
@@ -18,7 +43,7 @@ def choose(int n, int k):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def toindex(modes, int p, int m):
+def to_index(modes, int p, int m):
     ''' 
     Maps a list of positions of p photons in m modes to an index.
     After Nick Russel.
@@ -33,7 +58,7 @@ def toindex(modes, int p, int m):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def fromindex(int idx, int p, int m):
+def from_index(int idx, int p, int m):
     '''
     Maps an index to a list of positions of p photons in m modes.
     After Nick Russel.

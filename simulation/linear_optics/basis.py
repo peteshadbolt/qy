@@ -1,5 +1,6 @@
 from scipy.misc import comb
 import numpy as np
+from qy.simulation import combinadics
 
 class basis:
     def __init__(self, nphotons, nmodes):
