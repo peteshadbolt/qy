@@ -8,15 +8,13 @@ from basis import basis
 
 class simulator:
     '''get states and statistics from a device'''
-    def __init__(self, device, nphotons, accelerate=True, explicit=True):
-    #def __init__(self, basis, device, accelerate=True, explicit=True):
+    def __init__(self, device, new_basis=None, nphotons=None):
         self.device=device
-        self.basis=basis(nphotons, self.device.nmodes)
+        if new_basis!=None: self.basis=new_basis
+        if nphotons!=None: self.basis=basis(nphotons, self.device.nmodes)
         self.nmodes=self.basis.nmodes
         self.nphotons=self.basis.nphotons
         self.visibility=1.0
-        self.explicit=explicit
-        self.accelerate=accelerate
         self.set_mode('quantum')
 
     def set_visibility(self, new_visibility):
@@ -44,22 +42,12 @@ class simulator:
     def set_perm(self):
         '''
         Make the best choice of permanent function we can
-        If "explicit" is set, we will use the explicit forms up to 4x4 from now on 
         '''
-        if self.accelerate:
-            if self.quantum_classical=='quantum': self.perm=permanent.perm_ryser
-            if self.quantum_classical=='classical': self.perm=permanent.perm_ryser_real
-            if not self.explicit: return
-            if self.nphotons == 2: self.perm=permanent.perm_2x2
-            if self.nphotons == 3: self.perm=permanent.perm_3x3
-            if self.nphotons == 4: self.perm=permanent.perm_4x4
-        else:
-            self.perm=permanent.perm_ryser_p
-            if not self.explicit: return
-            if self.nphotons == 2: self.perm=permanent.perm_2x2_p
-            if self.nphotons == 3: self.perm=permanent.perm_3x3_p
-            if self.nphotons == 4: self.perm=permanent.perm_4x4_p
-            if self.nphotons == 5: self.perm=permanent.perm_4x4_5
+        if self.quantum_classical=='quantum': self.perm=permanent.perm_ryser
+        if self.quantum_classical=='classical': self.perm=permanent.perm_ryser_real
+        if self.nphotons == 2: self.perm=permanent.perm_2x2
+        if self.nphotons == 3: self.perm=permanent.perm_3x3
+        if self.nphotons == 4: self.perm=permanent.perm_4x4
 
     def set_input_state(self, input_state):
         ''' set the input state '''
@@ -70,7 +58,7 @@ class simulator:
     def get_component(self, input, rows, norm):
         ''' get a component of the state vector '''
         cols=self.basis.get_modes(input)
-        n1=self.basis.get_normalization_constant(input)
+        n1=self.basis.get_normalization_constant(cols)
         norm=1/np.sqrt(n1*norm)
         submatrix=self.device.unitary[rows][:,cols]
         return norm*self.perm(submatrix)
@@ -133,9 +121,29 @@ class simulator:
             util.progress_bar(index, self.basis.hilbert_space_dimension)
         return util.dict_to_sorted_numpy(probabilities)
 
+    def context_free(self):
+        ''' generate all probabilities relevant to a given detection model, without any context'''
+        probabilities=np.zeros(self.basis.hilbert_space_dimension)
+        for index in range(self.basis.hilbert_space_dimension):
+            probabilities[index]=self.get_probability(index)
+            util.progress_bar(index, self.basis.hilbert_space_dimension)
+        return probabilities
+
     def __str__(self):
         '''print out'''
         s='linear optics simulator: '
         s+=str(self.device)
         return s
-        
+
+if __name__=='__main__':
+    from random_unitary import random_unitary
+    p=6
+    m=p**2
+    basis=basis(p, m)
+    device=random_unitary(m)
+    simulator=simulator(device, new_basis=basis)
+    state=simulator.basis.get_state(range(p))
+    simulator.set_input_state(state)
+    simulator.context_free()
+
+
