@@ -10,8 +10,7 @@ class simulator:
     ''' Get states and statistics from a device '''
     def __init__(self, device, new_basis=None, nphotons=None):
         self.device=device
-        if new_basis!=None: self.basis=new_basis
-        if nphotons!=None: self.basis=basis(nphotons, self.device.nmodes)
+        self.basis=new_basis
         self.nmodes=self.basis.nmodes
         self.nphotons=self.basis.nphotons
         self.visibility=1.0
@@ -45,66 +44,52 @@ class simulator:
         modes=[self.basis.get_modes(term) for term in input_state.nonzero_terms]
         self.device.set_input_modes(modes)
 
-    def get_single_probability_classical(self, input, rows, norm):
-        ''' Get a component of the state vector '''
-        cols=self.basis.get_modes(input)
-        submatrix=self.device.unitary[rows][:,cols]
-        submatrix=np.power(np.absolute(submatrix).real,2)
-        return norm*self.perm(submatrix).real
+    def get_term_quantum(rows, cols, norm):
+        ''' get a quantum probability '''
+        return self.perm(self.device.unitary[rows][:,cols])/np.sqrt(n1*n2)
 
-    def get_probability_classical(self, output):
-        ''' Get the probability of an event '''
-        rows=self.basis.get_modes(output)
-        norm=1/self.basis.get_normalization_constant(rows)
-        #terms=[(np.abs(self.input_state.vector[input])**2)*self.get_single_probability_classical(input, rows, norm) for input, in self.input_state.nonzero_terms)]
-        return float(np.sum(terms))
+    def get_term_classical(rows, cols, norm):
+        ''' get a classical probability '''
+        return np.abs(self.perm(self.device.unitary[rows][:,cols])/n1*n2)**2
 
-    def get_probability_quantum(self, output):
-        ''' Get the probability of an event '''
-        amplitude=self.get_output_state_element(output) 
-        return float(np.abs(amplitude))**2
+    def get_probabilities(self, outputs):
+        ''' Get the probabilities of some events, by index '''
+        full_hilbert = outputs=='all' 
+        N=self.basis.hilbert_space_dimension if full_hilbert else len(outputs)
+        amplitudes=np.zeros(N, dtype=(complex if self.quantum_classical=='quantum' else float))
+
+        # the following is optimized for sparse input states
+        for input in self.input_state.nonzero_terms:
+            if full_hilbert: outputs=xrange(self.basis.hilbert_space_dimension)
+            cols=self.basis.get_modes(input)
+            n1=self.basis.get_normalization_constant(cols)
+            for index, output in enumerate(outputs):
+                rows=self.basis.get_modes(output)
+                n2=self.basis.get_normalization_constant(rows)
+                amplitudes[index]+=
+                util.progress_bar(index, N)
+        return np.power(np.abs(amplitudes), 2)
+
     
-    def get_probability_limited_visibility(self, output):
-        ''' Get a probability with limited visibility of quantum interference '''
-        q=self.get_probability_quantum(output)
-        c=self.get_probability_classical(output)
-        return self.visibility*q+(1-self.visibility)*c
-
     def get_probabilities(self, **kwargs):
-        ''' 
-        Generate a list of probabilities. 
-        Examples:
-        get_probabilities(patterns=[[1,2,3],[4,5,6]], sort=True, label=True)    # gets probabilities for a particular set, with labels
-        get_probabilities(patterns=[[1,2,3],[4,5,6]], sort=True, label=False)   # gets probabilities for a particular set, without labels
-        get_probabilities(pattern=[1,2,3])                                      # gets probabilities for a single pattern
-        get_probabilities(indeces=[1,2,3,4,5], label=True)                      # gets probabilities over a set of indeces, with mode labels
-        get_probabilities(label=True)                                           # just iterates over the full hilbert space
-        '''
-        # parse the options
-        sort=True; label=True
-        output_patterns='all'
+        ''' Generate a list of probabilities.  '''
+        # this part manages labelling etc.
+        # if we were provided with a list of lists, we need to map from modes
+        # if we're labelling, always sort and return a structured list
+        label=True
         if 'label' in kwargs: label=kwargs['label']
-        if 'sort' in kwargs: sort=kwargs['sort']
-        if 'patterns' in kwargs: 
-            output_patterns=kwargs['patterns']
-            if sort: output_patterns=sorted(patterns)
-        elif 'pattern' in kwargs:
-            output_patterns=[kwargs['pattern']]
-            label=False
-        elif 'indeces' in kwargs:
-            output_patterns=map(self.basis.get_modes, kwargs['indeces']
-
         # prepare the data structure 
         if label:
             structure=[('labels', int, (self.basis.nmodes,)), ('counts', float)]
-            output=np.zeros((self.basis.nmodes+1, , dtype=structure)
+            output=np.zeros((self.basis.nmodes+1, npatterns), dtype=structure)
         else:
-            output=np.zeros(len(patterns))
+            output=np.zeros(npatterns)
 
         # iterate over everything that we care about
-        for index, pattern in enumerate(patterns):
-            probabilities[tuple(pattern)]=self.get_probability(index)
-            util.progress_bar(index, len(patterns))
+        if patterns=='all':
+            for index in xrange(self.basis.hilbert_space_dimension):
+                probabilities[tuple(pattern)]=self.get_probability(index)
+                util.progress_bar(index, len(patterns))
         return output
 
     def __str__(self):
@@ -114,11 +99,18 @@ class simulator:
         return s
 
 if __name__=='__main__':
+    from random_unitary import random_unitary
+    p=6
+    m=p**2
+    m=12
     basis=basis(p, m)
     device=random_unitary(m)
-    simulator=simulator(device, new_basis=basis)
+    simulator=simulator(device, basis)
+    state=simulator.basis.get_state(range(p))
+    simulator.set_input_state(state)
+    #simulator.get_probabilities_quantum('all')
+    simulator.get_probabilities_quantum([1,2,3,4,5,6])
     
-    #from random_unitary import random_unitary
     #p=6
     #m=p**2
     #basis=basis(p, m)
@@ -128,6 +120,29 @@ if __name__=='__main__':
     #simulator.set_input_state(state)
     #simulator.context_free()
 
+
+
+    #def get_probability_limited_visibility(self, output):
+        #''' Get a probability with limited visibility of quantum interference '''
+        #q=self.get_probability_quantum(output)
+        #c=self.get_probability_classical(output)
+        #return self.visibility*q+(1-self.visibility)*c
+
+
+
+    #def get_single_probability_classical(self, input, rows, norm):
+        #''' Get a component of the state vector '''
+        #cols=self.basis.get_modes(input)
+        #submatrix=self.device.unitary[rows][:,cols]
+        #submatrix=np.power(np.absolute(submatrix).real,2)
+        #return norm*self.perm(submatrix).real
+
+    #def get_probability_classical(self, output):
+        #''' Get the probability of an event '''
+        #rows=self.basis.get_modes(output)
+        #norm=1/self.basis.get_normalization_constant(rows)
+        #terms=[(np.abs(self.input_state.vector[input])**2)*self.get_single_probability_classical(input, rows, norm) for input, in self.input_state.nonzero_terms)]
+        #return float(np.sum(terms))
 
 
 
