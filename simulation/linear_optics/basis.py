@@ -7,6 +7,7 @@ class basis:
         self.nphotons=nphotons
         self.nmodes=nmodes
         self.hilbert_space_dimension=combinadics.choose(self.nphotons+self.nmodes-1, self.nphotons)
+        self.iterator_index=0
 
     def get_state(self, starter=None):
         ''' Get a new state in this basis '''
@@ -26,11 +27,24 @@ class basis:
         ''' Given an index, return the normalization constant '''
         return combinadics.get_normalization(modes)
 
+    def __iter__(self):
+        ''' Allow use as an iterator '''
+        return self
+
+    def next(self):
+        ''' Allow use as an iterator '''
+        if self.iterator_index < self.hilbert_space_dimension:
+            cur, self.iterator_index = self.iterator_index, self.iterator_index+1
+            return cur, self.get_modes(cur)
+        else:
+            self.iterator_index=0
+            raise StopIteration()
+
     def __str__(self):
         s='Basis of %d photons in %d modes, ' % (self.nphotons, self.nmodes)
         s+='Hilbert space dimension: %d\n' % self.hilbert_space_dimension
         for index in xrange(self.hilbert_space_dimension):
-            s+=str(index)+'\t - \t '+ket(self.get_modes(index))+'\n'
+           s+=str(index)+'\t - \t '+ket(self.get_modes(index))+'\n'
         return s
 
 if __name__=='__main__':
@@ -39,3 +53,5 @@ if __name__=='__main__':
     print b
     print b.get_normalization_constant(b.get_modes(7))
     print b.get_state([1,2])
+    for x in b:
+        print x
