@@ -15,11 +15,11 @@ class basis:
         if starter!=None: new_state.add(1, starter)
         return new_state
 
-    def get_modes(self, index):
+    def modes_from_index(self, index):
         ''' Given an index, return the modes that the photons are in '''
         return combinadics.from_index(index, self.nphotons, self.nmodes)
 
-    def from_modes(self, modes):
+    def modes_to_index(self, modes):
         ''' Given a list of modes, return the index of that term '''
         return combinadics.to_index(modes, self.nphotons, self.nmodes)
 

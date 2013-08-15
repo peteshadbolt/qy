@@ -37,7 +37,7 @@ class simulator:
     def set_input_state(self, input_state):
         ''' Set the input state '''
         self.input_state=input_state
-        modes=[self.basis.get_modes(term) for term in input_state.nonzero_terms]
+        modes=[self.basis.modes_from_index(term) for term in input_state.nonzero_terms]
         self.device.set_input_modes(modes)
 
     def get_probability_quantum(self, pattern):
@@ -53,10 +53,10 @@ class simulator:
         N=len(outputs)
         amplitudes=np.zeros(N, dtype=complex)
         for input in self.input_state.nonzero_terms:
-            cols=self.basis.get_modes(input)
+            cols=self.basis.modes_from_index(input)
             n1=self.basis.get_normalization_constant(cols)
             for index, output in enumerate(outputs):
-                rows=self.basis.get_modes(output)
+                rows=self.basis.modes_from_index(output)
                 n2=self.basis.get_normalization_constant(rows)
                 amplitudes[index]+=self.perm(self.device.unitary[rows][:,cols])/np.sqrt(n1*n2)
                 util.progress_bar(index, N, label='Computing probabilities...')
@@ -69,9 +69,9 @@ class simulator:
         N=len(outputs)
         probabilities=np.zeros(N, dtype=float)
         for input in self.input_state.nonzero_terms:
-            cols=self.basis.get_modes(input)
+            cols=self.basis.modes_from_index(input)
             for index, output in enumerate(outputs):
-                rows=self.basis.get_modes(output)
+                rows=self.basis.modes_from_index(output)
                 n2=self.basis.get_normalization_constant(rows)
                 submatrix=np.abs(self.device.unitary[rows][:,cols])
                 submatrix=np.multiply(submatrix, submatrix)
@@ -94,7 +94,7 @@ class simulator:
 
         # Possibly convert to indeces from a list of modes
         try:
-            outputs=map(self.basis.from_modes, outputs)
+            outputs=map(self.basis.modes_to_index, outputs)
         except TypeError:
             pass
 
@@ -116,7 +116,7 @@ class simulator:
         # Label the list of probabilities and make sure that it is sorted
         d={}
         for index, output in enumerate(outputs):
-            labels=tuple(self.basis.get_modes(output))
+            labels=tuple(self.basis.modes_from_index(output))
             d[labels]=probabilities[index]
             util.progress_bar(index, len(outputs), label='Labelling...')
         return util.dict_to_sorted_numpy(d)
@@ -148,7 +148,7 @@ if __name__=='__main__':
 
     #def get_component(self, input, rows, norm):
         #''' Get a component of the state vector '''
-        #cols=self.basis.get_modes(input)
+        #cols=self.basis.modes_from_index(input)
         #n1=self.basis.get_normalization_constant(cols)
         #norm=1/np.sqrt(n1*norm)
         #submatrix=self.device.unitary[rows][:,cols]
@@ -156,7 +156,7 @@ if __name__=='__main__':
 
     #def get_output_state_element(self, output):
         #'''Get an element of the state vector, summing over terms in the input state '''
-        #rows=self.basis.get_modes(output)
+        #rows=self.basis.modes_from_index(output)
         #norm=self.basis.get_normalization_constant(rows)
         #terms=[amplitude*self.get_component(input, rows, norm) for input, amplitude in self.input_state.get_nonzero_terms()]
         #return np.sum(terms)

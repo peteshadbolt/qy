@@ -28,7 +28,7 @@ class state:
 
     def add(self, probability_amplitude, label):
         ''' add a term '''
-        index=self.basis.from_modes(label)
+        index=self.basis.modes_to_index(label)
         self.nonzero_terms.add(index)
         self.vector[index]+=probability_amplitude
 
@@ -44,7 +44,7 @@ class state:
         for index in self.nonzero_terms:
             a=self.vector[index]
             s+='%.2f + %.2fi  ' % (a.real, a.imag)
-            if self.nmodes<10: s+='  ('+ket(self.basis.get_modes(index))+')'
+            if self.nmodes<10: s+='  ('+ket(self.basis.modes_from_index(index))+')'
             s+='\n'
         return s
     
