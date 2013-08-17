@@ -14,7 +14,7 @@ class beamsplitter:
         
     def get_unitary(self):
         ''' get my unitary '''
-	return np.matrix([[np.sqrt(self.splitting_ratio), 1j*np.sqrt(1-self.splitting_ratio)],[1j*np.sqrt(1-self.splitting_ratio), np.sqrt(self.splitting_ratio)]])
+	return np.matrix([[np.sqrt(self.splitting_ratio), 1j*np.sqrt(1-self.splitting_ratio)],[1j*np.sqrt(1-self.splitting_ratio), np.sqrt(self.splitting_ratio)]], dtype=complex)
         #return np.matrix([[1,1],[1,-1]])/np.sqrt(2)
         
     def draw(self, axis, text=True):
@@ -54,9 +54,9 @@ class phaseshifter:
     def get_unitary(self):
         ''' get my unitary '''
         if self.invert:
-            return np.matrix([[np.exp(1j*self.phi),0],[0,1]])
+            return np.matrix([[np.exp(1j*self.phi),0],[0,1]], dtype=complex)
         else:
-            return np.matrix([[1,0],[0,np.exp(1j*self.phi)]])
+            return np.matrix([[1,0],[0,np.exp(1j*self.phi)]], dtype=complex)
         
     def draw(self, axis, text=True):
         ''' draw the splitter '''
@@ -65,7 +65,7 @@ class phaseshifter:
         yo=np.sin(self.phi)*.1
         x,y = (self.x, self.y) if self.invert else (self.x, self.y+1)
         axis.plot([x], [y], 'k.', zorder=150)
-        p=axis.plot([x-xo, x+xo], [y-yo, y+yo], lw=1, color='red', zorder=100)
+        p=axis.plot([x, x+xo], [y, y+yo], lw=1, color='red', zorder=100)
         
         if text:
             axis.text(self.x, self.y+.8, 'P%d' % self.index, color='#4444ff', fontsize=5, ha='center', va='center')

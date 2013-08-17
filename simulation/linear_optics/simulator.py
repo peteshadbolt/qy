@@ -119,6 +119,15 @@ class simulator:
             util.progress_bar(index, len(patterns))
         return probabilities
 
+    def from_basis(self):
+        ''' generate all probabilities relevant to a given detection model'''
+        probabilities={}
+        for index in range(self.basis.hilbert_space_dimension):
+            modes=self.basis.mode(index)
+            probabilities[tuple(modes)]=self.get_probability(index)
+            util.progress_bar(index, self.basis.hilbert_space_dimension)
+        return probabilities
+
     def __str__(self):
         '''print out'''
         s='linear optics simulator: '

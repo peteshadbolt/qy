@@ -40,11 +40,13 @@ class beamsplitter_network:
         ''' set the phases '''
         for shifter, phase in zip(self.phaseshifters, new_phases):  
             shifter.set_phi(phase)
+        self.get_unitary()
    
     def set_splitting_ratios(self, new_splitting_ratios):
         ''' set the phases '''
         for splitter, splitting_ratio in zip(self.beamsplitters, new_splitting_ratios): 
             splitter.set_splitting_ratio(splitting_ratio)
+        self.get_unitary()
 
     def set_parameters(self, p):
         ''' set all parameters'''
@@ -57,7 +59,7 @@ class beamsplitter_network:
         ''' build the unitary '''
         #TODO: this can be optimized by generating columns	
         self.unitary=np.matrix(np.eye(self.nmodes), dtype=complex)
-        for o in self.structure:
+        for o in reversed(self.structure):
             u=np.matrix(np.eye(self.nmodes, dtype=complex))
             u[o.y:o.y+2, o.y:o.y+2]=o.get_unitary()
             self.unitary*=u

@@ -49,7 +49,7 @@ class state:
             a=self.vector[index]
             s+='%.2f + %.2fi  ' % (a.real, a.imag)
             s+=ket(self.basis.fock(index))
-            if self.nmodes<10: s+='  ('+ket(self.basis.mode(index))+')\n'
+            if self.nmodes<10: s+='  ('+ket(self.basis.mode(index))+')'
             s+='\n'
         return s
     
