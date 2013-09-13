@@ -35,7 +35,7 @@ class basis:
         ''' Allow use as an iterator '''
         if self.iterator_index < self.hilbert_space_dimension:
             cur, self.iterator_index = self.iterator_index, self.iterator_index+1
-            return cur, self.get_modes(cur)
+            return cur, self.modes_from_index(cur)
         else:
             self.iterator_index=0
             raise StopIteration()
@@ -44,14 +44,14 @@ class basis:
         s='Basis of %d photons in %d modes, ' % (self.nphotons, self.nmodes)
         s+='Hilbert space dimension: %d\n' % self.hilbert_space_dimension
         for index in xrange(self.hilbert_space_dimension):
-           s+=str(index)+'\t - \t '+ket(self.get_modes(index))+'\n'
+           s+=str(index)+'\t - \t '+ket(self.modes_from_index(index))+'\n'
         return s
 
 if __name__=='__main__':
     print 'Testing basis...'
     b=basis(2,4)
     print b
-    print b.get_normalization_constant(b.get_modes(7))
+    print b.get_normalization_constant(b.modes_from_index(7))
     print b.get_state([1,2])
     for x in b:
         print x

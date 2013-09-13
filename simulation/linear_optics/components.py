@@ -61,14 +61,14 @@ class phaseshifter:
     def draw(self, axis, text=True):
         ''' draw the splitter '''
         l=.1
-        xo=np.cos(self.phi)*.1
-        yo=np.sin(self.phi)*.1
+        xo=np.sin(self.phi)*.1
+        yo=np.cos(self.phi)*.1
         x,y = (self.x, self.y) if self.invert else (self.x, self.y+1)
-        axis.plot([x], [y], 'k.', zorder=150)
-        p=axis.plot([x, x+xo], [y, y+yo], lw=1, color='red', zorder=100)
+        axis.plot([x+.5], [y], 'k.', zorder=150)
+        p=axis.plot([x+.5, x+.5+xo], [y, y-yo], lw=1, color='red', zorder=100)
         
         if text:
-            axis.text(self.x, self.y+.8, 'P%d' % self.index, color='#4444ff', fontsize=5, ha='center', va='center')
+            axis.text(self.x+.5, self.y+.8, 'P%d' % self.index, color='#4444ff', fontsize=5, ha='center', va='center')
         
     def __str__(self):
         ''' print '''

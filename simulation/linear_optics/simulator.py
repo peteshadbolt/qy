@@ -40,14 +40,6 @@ class simulator:
         modes=[self.basis.modes_from_index(term) for term in input_state.nonzero_terms]
         self.device.set_input_modes(modes)
 
-    def get_probability_quantum(self, pattern):
-        ''' Get a single probability '''
-        pass
-
-    def get_probability_classical(self, pattern):
-        ''' Get a single probability '''
-        pass
-
     def get_probabilities_quantum(self, outputs=None):
         ''' Iterate over a bunch of patterns.  Outputs must be a list or generator of indeces '''
         N=len(outputs)
@@ -90,15 +82,14 @@ class simulator:
 
     def get_probabilities(self, **kwargs):
         ''' Helpful interface to getting probabilities '''
+        # Get the list of output modes in a sensible format
         outputs=kwargs['patterns'] if 'patterns' in kwargs else xrange(self.basis.hilbert_space_dimension)
-
-        # Possibly convert to indeces from a list of modes
         try:
             outputs=map(self.basis.modes_to_index, outputs)
         except TypeError:
             pass
 
-        # Compute probabilities over the list
+        # Compute all the probabilities 
         probabilities=None
         if self.quantum_classical=='quantum':
             if self.visibility==1:
@@ -109,8 +100,7 @@ class simulator:
             probabilities=self.get_probabilities_classical(outputs)
 
         # Should we label?
-        label=False
-        if 'label' in kwargs: label=kwargs['label']
+        label = kwargs['label'] if 'label' in kwargs else False
         if not label: return probabilities
 
         # Label the list of probabilities and make sure that it is sorted
@@ -121,30 +111,22 @@ class simulator:
             util.progress_bar(index, len(outputs), label='Labelling...')
         return util.dict_to_sorted_numpy(d)
 
+    def get_probability_quantum(self, pattern):
+        ''' Get a single probability. Do not use this in big loops! '''
+        self.set_mode('quantum')
+        return float(self.get_probabilities(patterns=[pattern], label=False))
+
+    def get_probability_classical(self, pattern):
+        ''' Get a single probability. Do not use this in big loops! '''
+        self.set_mode('classical')
+        return float(self.get_probabilities(patterns=[pattern], label=False))
+
     def __str__(self):
         ''' Print out '''
         s='Linear optics simulator: '
         s+=str(self.device)
+        s+=str(self.basis)
         return s
-
-if __name__=='__main__':
-    from qy.simulation.linear_optics import random_unitary
-    p=4
-    m=p**2
-    device=random_unitary(m)
-    basis=basis(p,m)
-    simulator=simulator(device, new_basis=basis)
-    state=simulator.basis.get_state(range(p))
-    simulator.set_input_state(state)
-    simulator.set_visibility(.9)
-
-    simulator.set_mode('quantum')
-    x=simulator.get_probabilities(label=False)
-    print sum(x)
-
-    simulator.set_mode('classical')
-    x=simulator.get_probabilities(label=False)
-    print sum(x)
 
     #def get_component(self, input, rows, norm):
         #''' Get a component of the state vector '''

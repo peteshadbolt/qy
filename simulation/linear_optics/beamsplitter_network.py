@@ -1,20 +1,38 @@
-import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib import rc 
-#rc('font', family='arial', size=8)
 
+import numpy as np
+import json
 import components
+from misc import multikeysort
 
 class beamsplitter_network:
     '''an object which describes a beamsplitter network'''
-    def __init__(self, nmodes):
+    def __init__(self, nmodes=None, json=None):
         self.nmodes = nmodes
         self.name='beamsplitter network'
         self.structure=[]
         self.phaseshifters=[]
         self.beamsplitters=[]
         self.input_modes=[]
+        if json!=None: self.from_json(json)
+
+    def from_json(self, json_filename):
+        ''' build the structure '''
+        f=open(json_filename); s=f.read(); f.close();
+        jsondata=json.loads(s)
+        self.nmodes=jsondata['modes']
+        self.name=jsondata['name']
+        self.width=jsondata['width']
+        things=jsondata['couplers']+jsondata['shifters']
+        things=multikeysort(things, ['x', 'y'])
+        for thing in things:
+            if 'phase' in thing:
+                self.add_phaseshifter(thing['x'], thing['y'])
+            elif 'ratio' in thing:
+                self.add_beamsplitter(thing['x'], thing['y'], thing['ratio'])
+        self.get_unitary()
 
     def get_ndof(self):
         '''get the number of degrees of freedom'''
