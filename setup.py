@@ -21,12 +21,17 @@ packages.append('qy.util')
 packages.append('qy.graphics')
 packages.append('qy.settings')
 packages.append('qy.hardware')
+packages.append('qy.graphics')
 packages.append('qy.wx')
 
 # SWIG/cython extensions
 extensions=[]
+combi_path=os.path.join('simulation','combinadics', 'combi.pyx')
+extensions.append(Extension('qy.simulation.combinadics.combi', [combi_path]))
+
 perm_path=os.path.join('simulation','permanent', 'perm.pyx')
 extensions.append(Extension('qy.simulation.permanent.perm', [perm_path]))
+
 parserc = os.path.join('io', 'counted_file', 'counted_file_parser.c')
 parserwrapc = os.path.join('io', 'counted_file', 'counted_file_parser_wrap.c')
 cf = Extension('qy.io.counted_file._counted_file_parser', sources=[parserc, parserwrapc])
