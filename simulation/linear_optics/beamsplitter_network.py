@@ -26,7 +26,7 @@ class beamsplitter_network:
         self.name=jsondata['name']
         self.width=jsondata['width']
         things=jsondata['couplers']+jsondata['shifters']
-        things=multikeysort(things, ['x', 'y'])
+        #things=multikeysort(things, ['x', 'y'])
         for thing in things:
             if 'phase' in thing:
                 self.add_phaseshifter(thing['x'], thing['y'])

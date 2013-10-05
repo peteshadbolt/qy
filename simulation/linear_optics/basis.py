@@ -1,9 +1,11 @@
 from qy.simulation import combinadics
-from misc import ket
 from state import state
+
+def ket(term): return '|%s>' % (''.join(map(str, term)))
 
 class basis:
     def __init__(self, nphotons, nmodes):
+        ''' A fast basis for P photons in M modes '''
         self.nphotons=nphotons
         self.nmodes=nmodes
         self.hilbert_space_dimension=combinadics.choose(self.nphotons+self.nmodes-1, self.nphotons)
@@ -27,12 +29,33 @@ class basis:
         ''' Given an index, return the normalization constant '''
         return combinadics.get_normalization(modes)
 
-    def __iter__(self):
-        ''' Allow use as an iterator '''
-        return self
+    ######## BOILERPLATE ########
 
+    def __str__(self):
+        s='Basis of %d photons in %d modes, ' % (self.nphotons, self.nmodes)
+        s+='Hilbert space dimension: %d\n' % self.hilbert_space_dimension
+        if self.hilbert_space_dimension<200:
+           s+='\n'.join([str(index)+'\t - \t '+ket(modes) for index, modes in self])
+        return s
+
+    def __len__(self):
+        ''' Number of elements in the basis '''
+        return self.hilbert_space_dimension
+
+    def __getitem__(self, key):
+        ''' Allow basic square-bracket indexing '''
+        if isinstance(key, int):
+            if key<0: key+=self.hilbert_space_dimension
+            if key>=self.hilbert_space_dimension: raise IndexError, 'The index (%d) is out of range' % key
+            return self.modes_from_index(key)
+        elif isinstance(key, list) or isinstance(key, tuple):
+            return self.modes_to_index(key)
+        else:
+            raise TypeError, 'Invalid basis index'
+
+    def __iter__(self): return self
     def next(self):
-        ''' Allow use as an iterator '''
+        ''' Allow use as an iterator (for index, modes in basis)'''
         if self.iterator_index < self.hilbert_space_dimension:
             cur, self.iterator_index = self.iterator_index, self.iterator_index+1
             return cur, self.modes_from_index(cur)
@@ -40,18 +63,17 @@ class basis:
             self.iterator_index=0
             raise StopIteration()
 
-    def __str__(self):
-        s='Basis of %d photons in %d modes, ' % (self.nphotons, self.nmodes)
-        s+='Hilbert space dimension: %d\n' % self.hilbert_space_dimension
-        for index in xrange(self.hilbert_space_dimension):
-           s+=str(index)+'\t - \t '+ket(self.modes_from_index(index))+'\n'
-        return s
-
 if __name__=='__main__':
-    print 'Testing basis...'
-    b=basis(2,4)
+    ''' Test out the basis class '''
+    b=basis(2,3)
+
     print b
-    print b.get_normalization_constant(b.modes_from_index(7))
+    print 'Zeroth element is this: ', b[0]
+    print 'Normalization constant: ', b.get_normalization_constant(b.modes_from_index(3))
+    print 'State [1,2]: '
     print b.get_state([1,2])
+    print b[0]
+    print b[0,2]
+    print 'Testing iteration:'
     for x in b:
         print x
