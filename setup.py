@@ -21,6 +21,7 @@ packages.append('qy.util')
 packages.append('qy.graphics')
 packages.append('qy.settings')
 packages.append('qy.hardware')
+packages.append('qy.hardware.counting')
 packages.append('qy.graphics')
 packages.append('qy.wx')
 

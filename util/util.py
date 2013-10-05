@@ -34,6 +34,7 @@ last_t=0
 def progress_bar(progress, divisor=None, label=''):
     ''' progress bar '''
     global last_t
+    if divisor<=1: return
 
     if divisor==None: 
         t=int(100*progress)
