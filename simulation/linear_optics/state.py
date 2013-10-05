@@ -11,19 +11,15 @@ class state:
 
         # A list of indeces of nonzero terms in the state vector
         self.nonzero_terms=set()
-        self.tolerance=0.00001
         self.vector=np.zeros(self.basis.hilbert_space_dimension, dtype=complex)
 
     def add(self, probability_amplitude, label):
         ''' add a term '''
-        index=self.basis.modes_to_index(label)
-        self.nonzero_terms.add(index)
-        self.vector[index]+=probability_amplitude
+        self[label]+=probability_amplitude
 
     def add_by_index(self, probability_amplitude, index):
         ''' add a term '''
-        self.nonzero_terms.add(index)
-        self.vector[index]+=probability_amplitude
+        self[label]+=probability_amplitude
     
     ######## BOILERPLATE ########
 
@@ -83,6 +79,14 @@ if __name__=='__main__':
 
     # Add a bit of probability amplitude
     s[1,2,3,4,5]+=.1
+    s[2,3,4,5,6]+=.1
+    s[0]+=.1
     print s
+    print s[0]
+    print s[1,2,3,4,5]
+
+    # Iterate over nonzero terms
+    for index, value in s:
+        print index, value
 
 
