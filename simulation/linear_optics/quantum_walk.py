@@ -1,6 +1,5 @@
 import numpy as np
 import scipy as sp
-import scipy.linalg
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
