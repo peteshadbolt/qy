@@ -103,8 +103,6 @@ class beamsplitter_network:
             max_x=max([q.x for q in self.structure])
 
         # build a figure and some axes
-        print max_x
-        print self.nmodes
         self.figure=Figure(figsize=(10*(max_x+2)/7.,5*self.nmodes/7.))
         self.canvas=FigureCanvas(self.figure)
         self.axes=self.figure.add_subplot(111)

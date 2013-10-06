@@ -160,44 +160,57 @@ if __name__=='__main__':
     device.add_beamsplitter(0,0)
 
     # Make a simulator and set the input state
-    simulator=simulator(device, nphotons=2)
-    simulator.set_input_state([0,0])
+    sim=simulator(device, nphotons=2)
+    sim.set_input_state([0,0])
     print '\nSimulator summary:'
-    print simulator
+    print sim
     print '\nInput state:'
-    print simulator.input_state
+    print sim.input_state
 
     # Get some probabilities
-    print simulator.get_probabilities()
-    print simulator.get_probabilities(label=True)
-    print simulator.get_probabilities(patterns=[[0,0]])
+    print sim.get_probabilities()
+    print sim.get_probabilities(label=True)
+    print sim.get_probabilities(patterns=[[0,0]])
 
     print '\nForward HOM interference:'
-    state=simulator.basis.get_state([0,1])
+    state=sim.basis.get_state([0,1])
     print 'Input state:'
     print state
-    simulator.set_input_state(state)
+    sim.set_input_state(state)
     print 'Output probabilities:'
-    print simulator.get_probabilities(label=True)
+    print sim.get_probabilities(label=True)
     print 'Output state:'
-    print simulator.get_output_state()
+    print sim.get_output_state()
 
     print '\nChanging visibility'
     for v in np.linspace(0, 1, 5):
-        simulator.set_visibility(v)
-        probabilities=simulator.get_probabilities(label=True)
+        sim.set_visibility(v)
+        probabilities=sim.get_probabilities(label=True)
         s='V: %.3f   |  ' % v
         s+='  '.join('P%s: %.3f' % (label, prob) for label, prob in probabilities)
         print s
 
     print '\nReverse HOM interference:'
-    state=simulator.basis.get_state()
+    state=sim.basis.get_state()
     state[0,0]+=1/np.sqrt(2)
     state[1,1]+=1/np.sqrt(2)
     print 'Input state:'
     print state
-    simulator.set_input_state(state)
+    sim.set_input_state(state)
     print 'Output probabilities:'
-    print simulator.get_probabilities(label=True)
+    print sim.get_probabilities(label=True)
     print 'Output state:'
-    print simulator.get_output_state()
+    print sim.get_output_state()
+
+    print '\nBigger devices:'
+    from random_unitary import random_unitary
+    device=random_unitary(3)
+    sim=simulator(device, nphotons=3)
+    sim.set_input_state(range(sim.basis.nphotons))
+    output_state=sim.get_output_state()
+    print 'Output probabilities:'
+    print sim.get_probabilities()
+    print 'Output state:'
+    print output_state
+    print np.abs(output_state.vector)**2
+
