@@ -45,6 +45,7 @@ def to_index(modes, int p, int m):
     Maps a list of positions of p photons in m modes to an index.
     After Nick Russel.
     '''
+    if len(modes)!=p: raise ValueError('Photon numbers do not match!')
     cdef int out=0
     cdef int mx = choose(m+p-1,p)
     cdef int i
@@ -61,7 +62,7 @@ def from_index(int idx, int p, int m):
     After Nick Russel.
     '''
     cdef int mx = choose(m+p-1,p)
-    if idx>=mx: print 'Index out of range'; return
+    if idx>=mx: raise ValueError('Index out of range!')
     cdef int n=m+p-1
     cdef int r=p
     cdef int i=0

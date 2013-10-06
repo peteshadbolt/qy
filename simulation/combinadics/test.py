@@ -54,6 +54,12 @@ def get_normalization(modes):
     return total
 
 ###########################################
+# Check error reporting
+
+print combi.to_index([1,2,3], 3,1)
+print combi.to_index([1,2,3], 4,1)
+
+###########################################
 
 # time factorial
 t1=time.clock()

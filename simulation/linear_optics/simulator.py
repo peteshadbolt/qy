@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.misc import factorial
 import itertools as it
 from qy.simulation import permanent
 from qy import util
@@ -106,8 +105,8 @@ class simulator:
         # Label the list of probabilities and make sure that it is sorted
         d={}
         for index, output in enumerate(outputs):
-            labels=tuple(self.basis.modes_from_index(output))
-            d[labels]=probabilities[index]
+            label=tuple(self.basis.modes_from_index(output))
+            d[label]=probabilities[index]
             util.progress_bar(index, len(outputs), label='Labelling...')
         return util.dict_to_sorted_numpy(d)
 
@@ -127,6 +126,12 @@ class simulator:
         s+=str(self.device)
         s+=str(self.basis)
         return s
+
+if __name__=='__main__':
+    b=basis(3,5)
+    s=b.get_state([1,2,3])
+    print s
+
 
     #def get_component(self, input, rows, norm):
         #''' Get a component of the state vector '''
