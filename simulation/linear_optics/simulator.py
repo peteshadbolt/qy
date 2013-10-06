@@ -10,7 +10,7 @@ class simulator:
     def __init__(self, device, new_basis=None, nphotons=None):
         self.device=device
         if new_basis==None:
-            self.basis=basis(device.nmodes, nphotons)
+            self.basis=basis(nphotons, device.nmodes)
         else:
             self.basis=new_basis
         self.nmodes=self.basis.nmodes
