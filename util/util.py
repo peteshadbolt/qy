@@ -50,12 +50,18 @@ def progress_bar(progress, divisor=None, label=''):
         last_t=t
         sys.stdout.write('\r{2} [{0}] {1}%'.format('#'*(t/5), t, label))
         sys.stdout.flush()
+
     if t==100: 
-        sys.stdout.write('\r')
+        sys.stdout.write('\r'+' '*150+'\033[F')
         sys.stdout.flush()
         print
 
 if __name__=='__main__':
+    print 'Text before progress bar'
+    for i in range(100000):
+        progress_bar(i, 100000, 'Testing progress bar...')
+    print 'Text after progress bar'
+
     # test dict_to_sorted_numpy
     data={}
     data[(1,2,3)]=10
@@ -70,3 +76,4 @@ if __name__=='__main__':
     print n['labels']
     print n[:]
 
+    

@@ -43,17 +43,32 @@ class simulator:
         modes=[self.basis.modes_from_index(term) for term in input_state.nonzero_terms]
         self.device.set_input_modes(modes)
 
+    def get_output_state(self):
+        ''' Get the output state, assuming indistinguishable photons'''
+        output_state=self.basis.get_state()
+        for input in self.input_state.nonzero_terms:
+            input_amplitude=self.input_state.vector[input]
+            cols=self.basis.modes_from_index(input)
+            n1=self.basis.get_normalization_constant(cols)
+            for output in xrange(self.basis.hilbert_space_dimension):
+                rows=self.basis.modes_from_index(output)
+                n2=self.basis.get_normalization_constant(rows)
+                output_state[output]+=input_amplitude*self.perm(self.device.unitary[rows][:,cols])/np.sqrt(n1*n2)
+                util.progress_bar(output, self.basis.hilbert_space_dimension, label='Computing output state...')
+        return output_state
+
     def get_probabilities_quantum(self, outputs=None):
         ''' Iterate over a bunch of patterns.  Outputs must be a list or generator of indeces '''
         N=len(outputs)
         amplitudes=np.zeros(N, dtype=complex)
-        for input_index, input_amplitude in self.input_state:
-            cols=self.basis(input_index)
+        for input in self.input_state.nonzero_terms:
+            input_amplitude=self.input_state.vector[input]
+            cols=self.basis.modes_from_index(input)
             n1=self.basis.get_normalization_constant(cols)
             for index, output in enumerate(outputs):
                 rows=self.basis.modes_from_index(output)
                 n2=self.basis.get_normalization_constant(rows)
-                amplitudes[index]+=self.perm(self.device.unitary[rows][:,cols])/np.sqrt(n1*n2)
+                amplitudes[index]+=input_amplitude*self.perm(self.device.unitary[rows][:,cols])/np.sqrt(n1*n2)
                 util.progress_bar(index, N, label='Computing probabilities...')
         probabilities=np.abs(amplitudes)
         probabilities=probabilities*probabilities
@@ -65,12 +80,14 @@ class simulator:
         probabilities=np.zeros(N, dtype=float)
         for input in self.input_state.nonzero_terms:
             cols=self.basis.modes_from_index(input)
+            input_amplitude=self.input_state.vector[input]
+            input_probability=np.abs(input_amplitude)*np.abs(input_amplitude)
             for index, output in enumerate(outputs):
                 rows=self.basis.modes_from_index(output)
                 n2=self.basis.get_normalization_constant(rows)
                 submatrix=np.abs(self.device.unitary[rows][:,cols])
                 submatrix=np.multiply(submatrix, submatrix)
-                probabilities[index]+=self.perm(submatrix)/n2
+                probabilities[index]+=input_probability*self.perm(submatrix)/n2
                 util.progress_bar(index, N, label='Computing probabilities...')
         return probabilities
 
@@ -155,3 +172,32 @@ if __name__=='__main__':
     print simulator.get_probabilities(label=True)
     print simulator.get_probabilities(patterns=[[0,0]])
 
+    print '\nForward HOM interference:'
+    state=simulator.basis.get_state([0,1])
+    print 'Input state:'
+    print state
+    simulator.set_input_state(state)
+    print 'Output probabilities:'
+    print simulator.get_probabilities(label=True)
+    print 'Output state:'
+    print simulator.get_output_state()
+
+    print '\nChanging visibility'
+    for v in np.linspace(0, 1, 5):
+        simulator.set_visibility(v)
+        probabilities=simulator.get_probabilities(label=True)
+        s='V: %.3f   |  ' % v
+        s+='  '.join('P%s: %.3f' % (label, prob) for label, prob in probabilities)
+        print s
+
+    print '\nReverse HOM interference:'
+    state=simulator.basis.get_state()
+    state[0,0]+=1/np.sqrt(2)
+    state[1,1]+=1/np.sqrt(2)
+    print 'Input state:'
+    print state
+    simulator.set_input_state(state)
+    print 'Output probabilities:'
+    print simulator.get_probabilities(label=True)
+    print 'Output state:'
+    print simulator.get_output_state()

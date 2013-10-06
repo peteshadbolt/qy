@@ -48,16 +48,6 @@ class state:
         else:
             raise TypeError, 'Invalid state index'
 
-    def __iter__(self): return self
-    def next(self):
-        ''' Allow iteration over the nonzero terms'''
-        if self.iterator_index < len(self.nonzero_terms):
-            cur, self.iterator_index = self.iterator_index, self.iterator_index+1
-            return self.nonzero_terms[cur], self.vector[self.nonzero_terms[cur]]
-        else:
-            self.iterator_index=0
-            raise StopIteration()
-
     def __str__(self):
         s=''
         if len(self.nonzero_terms)==0: s+='No nonzero terms in this state'
@@ -84,9 +74,4 @@ if __name__=='__main__':
     print s
     print s[0]
     print s[1,2,3,4,5]
-
-    # Iterate over nonzero terms
-    for index, value in s:
-        print index, value
-
 
