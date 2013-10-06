@@ -9,7 +9,10 @@ class simulator:
     ''' Get states and statistics from a device '''
     def __init__(self, device, new_basis=None, nphotons=None):
         self.device=device
-        self.basis=new_basis
+        if new_basis==None:
+            self.basis=basis(device.nmodes, nphotons)
+        else:
+            self.basis=new_basis
         self.nmodes=self.basis.nmodes
         self.nphotons=self.basis.nphotons
         self.visibility=1.0
@@ -35,6 +38,7 @@ class simulator:
 
     def set_input_state(self, input_state):
         ''' Set the input state '''
+        if isinstance(input_state, list): input_state=self.basis.get_state(input_state)
         self.input_state=input_state
         modes=[self.basis.modes_from_index(term) for term in input_state.nonzero_terms]
         self.device.set_input_modes(modes)
@@ -43,8 +47,8 @@ class simulator:
         ''' Iterate over a bunch of patterns.  Outputs must be a list or generator of indeces '''
         N=len(outputs)
         amplitudes=np.zeros(N, dtype=complex)
-        for input in self.input_state.nonzero_terms:
-            cols=self.basis.modes_from_index(input)
+        for input_index, input_amplitude in self.input_state:
+            cols=self.basis(input_index)
             n1=self.basis.get_normalization_constant(cols)
             for index, output in enumerate(outputs):
                 rows=self.basis.modes_from_index(output)
@@ -88,6 +92,9 @@ class simulator:
         except TypeError:
             pass
 
+        # Helpful: check that the device has had its unitary calculated
+        if self.device.unitary==None: self.device.get_unitary()
+
         # Compute all the probabilities 
         probabilities=None
         if self.quantum_classical=='quantum':
@@ -128,32 +135,23 @@ class simulator:
         return s
 
 if __name__=='__main__':
-    b=basis(3,5)
-    s=b.get_state([1,2,3])
-    print s
+    ''' Test out the simulator '''
+    from beamsplitter_network import beamsplitter_network
 
+    # Make a beamsplitter device
+    device=beamsplitter_network(2)
+    device.add_beamsplitter(0,0)
 
-    #def get_component(self, input, rows, norm):
-        #''' Get a component of the state vector '''
-        #cols=self.basis.modes_from_index(input)
-        #n1=self.basis.get_normalization_constant(cols)
-        #norm=1/np.sqrt(n1*norm)
-        #submatrix=self.device.unitary[rows][:,cols]
-        #return norm*self.perm(submatrix)
+    # Make a simulator and set the input state
+    simulator=simulator(device, nphotons=2)
+    simulator.set_input_state([0,0])
+    print '\nSimulator summary:'
+    print simulator
+    print '\nInput state:'
+    print simulator.input_state
 
-    #def get_output_state_element(self, output):
-        #'''Get an element of the state vector, summing over terms in the input state '''
-        #rows=self.basis.modes_from_index(output)
-        #norm=self.basis.get_normalization_constant(rows)
-        #terms=[amplitude*self.get_component(input, rows, norm) for input, amplitude in self.input_state.get_nonzero_terms()]
-        #return np.sum(terms)
-
-    #def get_output_state(self, input_state=None):
-        #''' Compute the full state vector'''
-        #if input_state!=None: self.set_input_state(input_state)
-        #self.output_state=self.basis.get_state()
-        #for output in range(self.basis.hilbert_space_dimension):
-            #amplitude=self.get_output_state_element(output)
-            #self.output_state.add_by_index(amplitude, output) 
-        #return self.output_state
+    # Get some probabilities
+    print simulator.get_probabilities()
+    print simulator.get_probabilities(label=True)
+    print simulator.get_probabilities(patterns=[[0,0]])
 

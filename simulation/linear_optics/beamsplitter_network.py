@@ -5,7 +5,6 @@ from matplotlib import rc
 import numpy as np
 import json
 import components
-from misc import multikeysort
 
 class beamsplitter_network:
     '''an object which describes a beamsplitter network'''
@@ -16,6 +15,7 @@ class beamsplitter_network:
         self.phaseshifters=[]
         self.beamsplitters=[]
         self.input_modes=[]
+        self.unitary=None
         if json!=None: self.from_json(json)
 
     def from_json(self, json_filename):
@@ -26,7 +26,7 @@ class beamsplitter_network:
         self.name=jsondata['name']
         self.width=jsondata['width']
         things=jsondata['couplers']+jsondata['shifters']
-        #things=multikeysort(things, ['x', 'y'])
+        things=sorted(things, key=lambda thing: thing['x'])
         for thing in things:
             if 'phase' in thing:
                 self.add_phaseshifter(thing['x'], thing['y'])

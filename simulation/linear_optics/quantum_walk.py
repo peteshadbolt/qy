@@ -77,3 +77,23 @@ class quantum_walk:
         self.axes.set_aspect(.5)
         self.canvas.print_figure(filename, bbox_inches='tight')
         print 'done'
+
+
+if __name__=='__main__':
+    ''' Test out the quantum walk '''
+    w=quantum_walk(5)
+    print w
+    print
+    print w.unitary[0:2, 0:2]
+    w.set_time(4)
+    print
+    print w.unitary[0:2, 0:2]
+    w.set_diagonal(0.1)
+    w.set_off_diagonal(0.2)
+    print
+    print w.hamiltonian
+    w.set_diagonal([1,2,3,4,5])
+    w.set_off_diagonal(0.2)
+    print
+    print w.hamiltonian
+

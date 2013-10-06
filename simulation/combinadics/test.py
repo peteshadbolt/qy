@@ -57,7 +57,10 @@ def get_normalization(modes):
 # Check error reporting
 
 print combi.to_index([1,2,3], 3,1)
-print combi.to_index([1,2,3], 4,1)
+try:
+    print combi.to_index([1,2,3], 4,1)
+except ValueError:
+    print 'Got a value error'
 
 ###########################################
 
@@ -67,14 +70,14 @@ for qq in range(1000):
     for q in range(10):
         combi.factorial(q)
 t2=time.clock()
-print 'cython factorial', t2-t1
+print 'cython factorial', t2-t1, ' seconds'
 
 t1=time.clock()
 for qq in range(1000):
     for q in range(10):
         factorial(q)
 t2=time.clock()
-print 'scipy factorial', t2-t1
+print 'scipy factorial', t2-t1, ' seconds'
 print
 
 
@@ -86,7 +89,7 @@ for qq in range(1000):
         q=np.random.randint(0,6, size).tolist()
         combi.get_normalization(q)
 t2=time.clock()
-print 'cython normalization', t2-t1
+print 'cython normalization', t2-t1, ' seconds'
 
 t1=time.clock()
 for qq in range(1000):
@@ -94,7 +97,7 @@ for qq in range(1000):
         q=np.random.randint(0,6, size).tolist()
         get_normalization(q)
 t2=time.clock()
-print 'python normalization', t2-t1
+print 'python normalization', t2-t1, ' seconds'
 print
 
 
@@ -110,7 +113,7 @@ for qq in range(10):
             combi.from_index(index, p, m)
             #util.progress_bar(index, N)
 t2=time.clock()
-print 'cython basis mapping', t2-t1
+print 'cython basis mapping', t2-t1, ' seconds'
 
 t1=time.clock()
 for qq in range(10):
@@ -122,6 +125,6 @@ for qq in range(10):
             from_index(index, p, m)
             #util.progress_bar(index, N)
 t2=time.clock()
-print 'python basis mapping', t2-t1
+print 'python basis mapping', t2-t1, ' seconds'
 
 print
