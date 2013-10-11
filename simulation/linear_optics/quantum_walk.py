@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as sp
+from scipy import linalg
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
@@ -42,7 +43,7 @@ class quantum_walk:
 
     def get_unitary(self):
         ''' build the unitary '''
-        self.unitary=np.matrix(sp.linalg.expm(-1j*self.hamiltonian*self.time))
+        self.unitary=np.matrix(linalg.expm(-1j*self.hamiltonian*self.time))
         return self.unitary
     
     def __str__(self):

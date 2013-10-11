@@ -8,29 +8,23 @@ def dict_to_sorted_numpy(data):
     structure=[('labels', int, (N,)), ('counts', float)]
     return np.array(sorted_data, dtype=structure)
 
-#def copy_labelled_numpy_array(template):
-    #''' return a copy of some labelled numpy data '''
-    #out=np.copy(template)
-    #return out
-
 #def dict_to_sorted_numpy(x):
     #''' convert a dictionary to a sorted numpy array '''
     #data=sorted(x.items(), key=lambda x:x[0])
     #return np.array([list(item[0])+[item[1]] for item in data])
 
-def get_key(filename): return '_'.join(os.path.split(filename)[-1].split('.')[0].split('_')[:-1])
+#def get_key(filename): return '_'.join(os.path.split(filename)[-1].split('.')[0].split('_')[:-1])
 
-def get_groups(directory):
-    '''directory'''
-    files=map(lambda x: os.path.join(directory, x), os.listdir(directory))
-    keys=list(set(map(get_key, files)))
-    groups={k:[] for k in keys}
-    for file in files:
-        groups[get_key(file)].append(file)
-    return groups
+#def get_groups(directory):
+    #'''directory'''
+    #files=map(lambda x: os.path.join(directory, x), os.listdir(directory))
+    #keys=list(set(map(get_key, files)))
+    #groups={k:[] for k in keys}
+    #for file in files:
+        #groups[get_key(file)].append(file)
+    #return groups
 
 last_t=0
-
 def progress_bar(progress, divisor=None, label=''):
     ''' progress bar '''
     global last_t

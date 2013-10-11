@@ -3,7 +3,6 @@ from numpy.linalg import qr
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib import rc 
-rc('font', family='arial', size=8)
 
 def sym(w): return w.dot(inv(sqrtm(w.T.dot(w))))
 
