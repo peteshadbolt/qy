@@ -7,10 +7,9 @@ Quantum libraries all in one place. Control and automation, DAQ, IO, simulation,
 
 ####Windows
 I am periodically building windows installers. You can download them [here](https://github.com/peteshadbolt/qy/tree/master/dist).
-Under windows using [mingw32](http://www.mingw.org/), the following commands seem to do the job when building from source:
+Under windows using [mingw32](http://www.mingw.org/), the following command seems to do the job when building from source:
 
-    > python setup.py build --compiler mingw32
-    > python setup.py install
+    > python setup.py build --compiler mingw32 install
 
 ####Linux
 Under linux, this is the command that I am using to compile/build and install qy:
