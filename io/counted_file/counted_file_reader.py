@@ -38,13 +38,13 @@ class counted_file_reader:
     def load(self, patterns, callback=None, trim=True):
         ''' load all data in the file without a callback or anything '''
         self.set_patterns(patterns)
-        if not self.silent: print 'loading %s (%d kB)...' % (os.path.split(self.filename)[-1], self.filesize/1024.)
+        loading_messsage='loading %s (%d kB)...' % (os.path.split(self.filename)[-1], self.filesize/1024.)
         chunks_read=1
         total=0
         while chunks_read>0:
             chunks_read=self.read_chunk() 
             if callback!=None: callback(total)
-            if not self.silent: util.progress_bar(self.progress)
+            util.progress_bar(self.progress*100, 100, loading_messsage)
             total+=1
         if trim: self.trim()
         if not self.silent: print

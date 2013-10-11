@@ -45,9 +45,10 @@ def progress_bar(progress, divisor=None, label=''):
         sys.stdout.write('\r{2} [{0}] {1}%'.format('#'*(t/5), t, label))
         sys.stdout.flush()
 
-    if t==100: 
+    if t==100 or t<last_t: 
         sys.stdout.write('\r'+' '*150+'\033[F')
         sys.stdout.flush()
+        last_t=t
         print
 
 if __name__=='__main__':
