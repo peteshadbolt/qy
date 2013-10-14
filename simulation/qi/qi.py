@@ -76,6 +76,14 @@ def check_positive_semidefinite(x):
 	tol=-0.0000001
 	return all([x.real>tol and x.imag>tol for x in vals])
 
+def check_physical(chi):
+    ''' checks that a density matrix is physical '''
+    if check_hermitian(chi):
+        if check_positive_semidefinite(chi):
+            if abs(1-np.trace(chi).real) < 1.0/1e9:
+                return True
+    return False
+
 def mixed_mixed_fidelity(rho,sigma):
 	''' quantum state fidelity between mixed states as defined by paul kwiat '''	
 	print 'computing fidelity between two mixed states...'
