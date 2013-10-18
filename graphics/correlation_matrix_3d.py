@@ -16,9 +16,11 @@ def render(pov_filename, scale=2):
     #print image_filename
 
     output='Output_File_Name=%s' % image_filename
-    args=[r'C:\Program Files\megapov\bin\megapov.exe', pov_filename, '+FN', '+H%d' % h, '+W%d' % w, 'Antialias=On', output]
+    #args=[r'C:\Program Files\megapov\bin\megapov.exe', pov_filename, '+FN', '+H%d' % h, '+W%d' % w, 'Antialias=On', output]
+    args=[r'povray', pov_filename, '+FN', '+H%d' % h, '+W%d' % w, 'Antialias=On', output]
     out=open(os.devnull, 'w'); err=open(os.devnull, 'w')
-    p=subprocess.Popen(args, stdout=out, stderr=err)
+    #p=subprocess.Popen(args, stdout=out, stderr=err)
+    p=subprocess.Popen(args)
     out.close(); err.close()
     p.wait()
     print 'done'
