@@ -8,12 +8,8 @@ def render(pov_filename, scale=2):
     ''' call povray '''
     w, h=(640*scale,480*scale)
     print 'povray %s (%d x %d)...' % (pov_filename, w,h),
-    
     root, file=os.path.split(pov_filename)
     image_filename=os.path.join(root, file.split('.')[0])+'.png'
-
-    #print pov_filename
-    #print image_filename
 
     output='Output_File_Name=%s' % image_filename
     #args=[r'C:\Program Files\megapov\bin\megapov.exe', pov_filename, '+FN', '+H%d' % h, '+W%d' % w, 'Antialias=On', output]
@@ -27,8 +23,12 @@ def render(pov_filename, scale=2):
     
 def sphere(x,y,z,r,color=1):
     ''' generate povray code for a sphere at a point in space and with a certain radius '''
-    R,G,B=colorsys.hsv_to_rgb(color, 1, 1)
-    #R,G,B=1,0,0
+    if isinstance(color, tuple):
+        R,G,B = color
+    elif isinstance(color, float):
+        R,G,B=colorsys.hsv_to_rgb(color, 1, 1)
+    else:
+        R,G,B=1,0,0
     q=(x,y,z,r, R,G,B)
     return 'sphere {<%.9f, %.9f, %.9f> %.9f pigment{color rgb <%.5f,%.5f,%.5f>}}\n' % q
 
