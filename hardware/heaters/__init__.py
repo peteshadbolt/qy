@@ -1,2 +1,3 @@
-from heater_calibration_table import heater_calibration_table
+from calibration_table import calibration_table
 import fitting
+
