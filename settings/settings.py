@@ -1,55 +1,45 @@
 import os
+import json
 
-if 'APPDATA' in os.environ:
-    confighome = os.environ['APPDATA']
-elif 'XDG_CONFIG_HOME' in os.environ:
-    confighome = os.environ['XDG_CONFIG_HOME']
-else:
-    confighome = os.path.join(os.environ['HOME'], '.config')
-configpath = os.path.join(confighome, 'qython')
-print configpath
+def get_config_path():
+    ''' Platform-independent way to choose a location for qy settings '''
+    if 'APPDATA' in os.environ:
+        confighome = os.environ['APPDATA']
+    elif 'XDG_CONFIG_HOME' in os.environ:
+        confighome = os.environ['XDG_CONFIG_HOME']
+    else:
+        confighome = os.path.join(os.environ['HOME'], '.config')
+    configpath = os.path.join(confighome, 'qy')
+    return configpath
 
-
-print 'loading settings...',
-filename=os.path.join(configpath, 'qython.txt')
-f=open(filename, 'r')
-lines=f.readlines()
-f.close()
-main_dict={}
-keys=[]
-for line in lines:
-	p=line.find(':')
-	if p!=-1:		
-		key, value = line[:p].strip(), line[p+1:].strip()
-		
-		try:
-			value=float(value)
-			if int(value)==float(value): value=int(value)
-		except ValueError:
-			pass
-		
-		
-		keys.append(key)
-		main_dict[key]=value
-		
-print 'done'
+def load():
+    ''' Load the settings file into a dict '''
+    return json.loads(open(qy_filename).read())
 
 def lookup(search):
-	search=search.lower().strip()
-	if search in main_dict: return main_dict[search]
-	print '%s not found in settings file (%s)!' % (search, filename)
-	return None
-			
+    ''' Look up a search term and return its value'''
+    main_dict=load()
+    search=search.lower().strip()
+    if search in main_dict: return main_dict[search]
+    print '%s not found in settings file (%s)!' % (search, filename)
+    return None
+            
 def write(search, value):
-	search=search.lower().strip()
-	main_dict[search]=value
-	
+    ''' Write a value to the database '''
+    main_dict=load()
+    search=search.lower().strip()
+    main_dict[search]=value
+    f=open(qy_filename, 'w')
+    f.write(json.dumps(main_dict))
+    f.close()
+    
 def save():
-	return
-	f=open(filename, 'w')
-	for key in keys:
-		s='%s: %s\n' % (key, main_dict[key])
-		f.write(s)
-	f.close()
-		
-	
+    ''' Obsolete '''
+    print 'qy.settings.save is obsolete'
+
+# Lookup the filename automatically 
+qy_filename=os.path.join(get_config_path(), 'qy.json')
+
+if __name__=='__main__':
+    print load()
+
