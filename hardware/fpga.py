@@ -14,8 +14,8 @@ class fpga:
 	
 	def __init__(self, COM=None, callback=None):
 		""" Constructor for an FPGA object. Remember that python's COM port indexing starts at zero! """
-		if COM==None: COM=int(settings.lookup('fpga_com'))
-		self.labels=settings.lookup('fpga_labels').split(',')
+		if COM==None: COM=settings.lookup('fpga.com')
+		self.labels=settings.lookup('fpga.labels')
 		self.serial=serial.Serial()
 		self.serial.port=COM
 		self.serial.timeout=.1

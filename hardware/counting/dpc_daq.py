@@ -25,7 +25,7 @@ class dpc_daq:
 		self.photon_buffer=create_string_buffer(self.buffer_bytes+10)
 				
 		# connect to the DLL
-		self.dll_path=qy.settings.lookup('dll_path')
+		self.dll_path=qy.settings.lookup('dpc230.dll_path')
 		self.spc=CDLL(os.path.join(self.dll_path, 'spcm32x64.dll'))
 		
 		# set vars
