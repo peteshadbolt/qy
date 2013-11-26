@@ -7,18 +7,22 @@ from scipy.optimize import fmin
 # first two parameters are for the phase-voltage relation.
 # second two parameters are for the sinusoidal fit.
 
-def phasefunc(p, v): return p[0]+p[1]*(v**2)
-def countfunc(p, phase): return p[2]*(1-p[3]*np.sin(phase)*np.sin(phase))
-def fitfunc(p, voltage): return countfunc(p, phasefunc(p, voltage))
-def errfunc(p, voltage, count): return np.sum(np.power(fitfunc(p, voltage)-count, 2))
+def phase_voltage(p, v): return p[0]+p[1]*(v**2)
+def counts_phase(p, phase): return p[2]*(1-p[3]*np.sin(phase)*np.sin(phase))
+def counts_voltage(p, voltage): return counts_phase(p, phase_voltage(p, voltage))
+def errfunc(p, voltage, count): return np.sum(np.power(counts_voltage(p, voltage)-count, 2))
 
-def fit_fringe(voltages, counts, nfits=3, phase_guess=-0.6):
+def fit_fringe(voltages, counts, nfits=3, guess=None):
     ''' Fit a curve to some data '''
-    p0 = np.array([phase_guess, .07, max(counts), (max(counts)-min(counts))/float(max(counts))])
-    #for i in range(nfits):
-        #p0, best0, db, dc, warning = fmin(errfunc, p0, args=(voltages, counts), disp=0, full_output=1)
 
-    params=p0
+    # potentially choose a guess automatically
+    if guess==None:
+        p0 = np.array([0, .07, max(counts), (max(counts)-min(counts))/float(max(counts))])
+    else:
+        p0 = np.array(guess)
 
-    return params
+    # restart nelder-mead a few times
+    for i in range(nfits):
+        p0, best0, db, dc, warning = fmin(errfunc, p0, args=(voltages, counts), disp=0, full_output=1)
+    return p0
 

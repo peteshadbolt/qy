@@ -15,7 +15,7 @@ class calibration_table:
         if filename==None: filename=os.path.join(qy.settings.get_config_path(), 'heater_calibration.json')
         self.filename=filename
         self.heater_count=0
-        self.curve_parameters=[]
+        self.curve_parameters={}
         if os.path.exists(self.filename): self.load()
 
     def load(self, filename=None):
@@ -28,16 +28,21 @@ class calibration_table:
 
     def save(self, filename=None):
         ''' Save to a JSON file on disk '''
-        self.curve_parameters=map(tuple, self.curve_parameters)
+        if filename!=None: self.filename=filename
+        self.curve_parameters={key: tuple(value) for key, value in self.curve_parameters.items()}
         d={'heater_count':len(self.curve_parameters), 'curve_parameters':self.curve_parameters}
         f=open(self.filename, 'w')
         f.write(json.dumps(d))
         f.close()
         print 'saved %s' % self.filename
 
-    def set_curve_parameters(self, new_table):
+    def set_table(self, new_table):
         ''' Set the entire phase-voltage table '''
         self.curve_parameters=new_table
+
+    def set_curve(self, heater_index, fit_parameters):
+        ''' Set a single curve '''
+        self.curve_parameters[heater_index]=fit_parameters
 
     def get_parameters(self, heater_index):
         ''' Get the full set of parameters for a particular heater '''
@@ -57,5 +62,5 @@ class calibration_table:
 
 if __name__=='__main__':
     c=calibration_table()
-    c.curve_parameters=[[0,1],[1,2]]
+    c.curve_parameters={}
     c.save()
