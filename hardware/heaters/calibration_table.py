@@ -48,9 +48,13 @@ class calibration_table:
         ''' Get the full set of parameters for a particular heater '''
         return self.curve_parameters[heater_index]
 
-    def get_voltage_from_phase(self, phase):
+    def get_voltage_from_phase(self, heater_index, phase):
         ''' Get the appropriate voltage to set to the chip, given a phase '''
-        pass
+        p=get_parameters(heater_index)
+        phase=phase%(2*np.pi)
+        while p[0]>phase: phase=phase+2*np.pi
+        v=np.sqrt((phase-float(p[0]))/float(p[1]))
+        return v if v>=0 else -v
 
     def __str__(self):
         ''' Print the calibration table out as a string '''

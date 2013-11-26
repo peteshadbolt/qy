@@ -1,5 +1,33 @@
 import numpy as np
 
+class crossing:
+    def __init_(self,x,y,index):
+        self.x=x
+        self.y=y
+        self.index=index
+        
+    def get_unitary(self):
+        return np.matrix([[0,1],[1,0]])
+        
+    def draw(self, axis, text=True):
+        ''' draw the crossing '''
+        '''need to do the little kink in the middle'''
+        shape1x=np.array([0, 0.2, 0.8, 1])
+        shape1y=np.array([0, 0, 1, 1])
+        shape2x=np.array([0, 0.2, 0.8, 1])
+        shape2y=np.array([1, 1, 0, 0])
+        t=.2
+        axis.plot(shape1x+self.x, shape1y+self.y, 'k-')
+        axis.plot(shape2x+self.x, shape2y+self.y, 'k-')
+        if text:
+            color='#880000'
+            axis.text(self.x+.5, self.y+.2, 'C%d' % self.index, color=color, fontsize=5, ha='center', va='bottom')
+        
+    def __str__(self):
+        return 'crossing %d [%d,%d]' % (self.index, self.x, self.y)
+
+        
+
 class beamsplitter:
     def __init__(self, x, y, index, ratio=.5):
         ''' a splitter '''
