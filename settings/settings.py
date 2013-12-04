@@ -10,6 +10,8 @@ def get_config_path():
     else:
         confighome = os.path.join(os.environ['HOME'], '.config')
     configpath = os.path.join(confighome, 'qy')
+    if os.path.exists(configpath)==False:
+        os.makedirs(configpath)
     return configpath
 
 def load():

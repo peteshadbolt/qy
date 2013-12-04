@@ -1,3 +1,4 @@
+'''
 from smc100 import smc100
 from chameleon import chameleon
 from dummy_laser import dummy_laser
@@ -6,3 +7,4 @@ from fpga import fpga
 #import counting
 from flipper_mount import flipper_mount
 import parser
+'''

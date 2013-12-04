@@ -1,6 +1,6 @@
 import qy
 import qy.settings
-import numpy
+import numpy as np
 import os, json
 
 # These functions do not really get used here, they are just for reference
@@ -30,6 +30,7 @@ class calibration_table:
         ''' Save to a JSON file on disk '''
         if filename!=None: self.filename=filename
         self.curve_parameters={key: tuple(value) for key, value in self.curve_parameters.items()}
+        print self.curve_parameters
         d={'heater_count':len(self.curve_parameters), 'curve_parameters':self.curve_parameters}
         f=open(self.filename, 'w')
         f.write(json.dumps(d))
@@ -50,17 +51,22 @@ class calibration_table:
 
     def get_voltage_from_phase(self, heater_index, phase):
         ''' Get the appropriate voltage to set to the chip, given a phase '''
-        p=get_parameters(heater_index)
-        phase=phase%(2*np.pi)
+        p=self.get_parameters(heater_index)
+        phase=phase % (2*np.pi)
+        phase=phase-2*np.pi
         while p[0]>phase: phase=phase+2*np.pi
         v=np.sqrt((phase-float(p[0]))/float(p[1]))
+        if v>7:
+            phase=phase-2*np.pi
+            v=self.get_voltage_from_phase(heater_index,phase)
         return v if v>=0 else -v
 
     def __str__(self):
         ''' Print the calibration table out as a string '''
-        s='Heater calibration table [%s]\n' % self.filename
-        for index, params in enumerate(self.curve_parameters):
-            s+='Heater %d: %s\n' % (index, str(params))
+        s='Heater calibration table [%s]\n%s heaters\n' % (self.filename,str(self.heater_count))
+        #print self.curve_parameters
+        for index, params in self.curve_parameters.iteritems():
+            s+='Heater %s: %s\n' % (index, str(params))
         return s
 
 
