@@ -11,11 +11,10 @@ class crossing:
         
     def draw(self, axis, text=True):
         ''' draw the crossing '''
-        '''need to do the little kink in the middle'''
         shape1x=np.array([0, 0.2, 0.8, 1])
         shape1y=np.array([0, 0, 1, 1])
-        shape2x=np.array([0, 0.2, 0.8, 1])
-        shape2y=np.array([1, 1, 0, 0])
+        shape2x=np.array([0, 0.2, 0.4, 0.4, 0.6, 0.8, 1])
+        shape2y=np.array([1, 1, 0.666, 0.333, 0.333, 0, 0])
         t=.2
         axis.plot(shape1x+self.x, shape1y+self.y, 'k-')
         axis.plot(shape2x+self.x, shape2y+self.y, 'k-')
