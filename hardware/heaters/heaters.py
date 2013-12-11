@@ -4,11 +4,68 @@ import qy
 import qy.settings
 from nidaqmx import System
 from nidaqmx import AnalogOutputTask
-import socket
+
+###TODO:
+###-remove dependency on nidaqmx?
+###-make wrapper for heaters for TCP/IP
 
 '''the card which we want to use'''
 CARD_NAME='NI 9264'
 
+'''Everything needed to run an experiment is in heaters. dac and table just do background stuff'''
+class heaters:
+    def __init__(self):
+        self.dac=dac()
+        self.table=table()
+        self.dac.zero()
+        self.ontime=2
+        self.offtime=15
+        self.integration_time=1
+        
+    def pulse(phases,fpga,callback=None):
+        counts=zeros(22)
+        voltages=self.table.get_voltages(phases)
+        self.dac.write_voltages(voltages)
+        for i in range(self.integration_time):
+            print 'integrating [%.3f %% done]...' % (100*i/float(integration_time))
+            for _ in range(self.ontime): self.fpga.read()
+            c=fpga.read()
+            counts+=c
+            self.dac.zero()
+            for i in range(self.offtime):
+                callback('cooling, step %d' % i)
+        return counts
+        
+    def set_ontime(ontime):
+        if int(ontime)!=ontime: 
+            print 'Please provide an integer ontime'
+            self.ontime=1
+        if ontime>3:
+            print 'Cannot heat for longer than 3 seconds'
+            self.ontime=1
+        self.ontime=ontime
+        
+    def set_offtime(offtime):
+        if int(offtime)!=offtime: 
+            print 'Please provide an integer offtime'
+            self.offtime=15
+        if offtime<15:
+            print 'Cannot cool for less than 15 seconds'
+            self.offtime=15
+        self.offtime=offtime
+        
+    def set_integration_time(integration_time):
+        if int(integration_time)!=integration_time:
+            print 'please provide an integer integration time'
+            self.integration_time=1
+        self.integration_time=integration_time
+        
+    def __str__(self):
+        '''print out some information about the instance of heaters'''
+        s='Heater settings:\nIntegration time = %i\nHeater on-time = %i\nHeater off-time = %i\n' % (self.integration_time, self.ontime, self.offtime)
+        s+=str(self.table)
+        print s
+        
 class dac:
     def connect_nidaqmx(self):
         '''look at nidaqmx'''
@@ -40,36 +97,6 @@ class dac:
     def zero(self):
         self.write_voltages([0,0,0,0,0,0,0,0])
         
-    def listen(self):
-        while True:
-            '''wait for a connection from the client'''
-            s=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.bind(('localhost', 50007))
-            print 'waiting for connection from client...'
-            s.listen(1)
-            conn, addr = s.accept()
-            print 'connected by', addr
-            
-            '''wait for new data'''
-            connected=True
-            while connected:
-                try:
-                    data = conn.recv(4096)
-                    if data==0 or data=='':
-                        print 'connection closed'
-                        self.zero()
-                        connected=False
-                    else:
-                        voltages=[float(x) for x in data.split('\t')]
-                        if len(voltages)==8:
-                            self.write_voltages(voltages)
-                            conn.send('done')
-                        
-                except socket.error:
-                    print 'connection lost prematurely'
-                    self.zero()
-                    connected=False
-                            
     def __init__(self):
         print 'CNOT-MZ heater server\n'
         self.connect_nidaqmx()
@@ -143,61 +170,12 @@ class table:
     def __str__(self):
         ''' Print the calibration table out as a string '''
         s='Heater calibration table [%s]\n%s heaters\n' % (self.filename,str(self.heater_count))
-        #print self.curve_parameters
         for index, params in self.curve_parameters.iteritems():
             s+='Heater %s: %s\n' % (index, str(params))
         return s
-    
-class heaters:
-    def __init__():
-        self.dac=dac()
-        self.table=table()
-        self.dac.zero()
-        self.ontime=2
-        self.offtime=15
-        self.integration_time=1
-        
-    def pulse(phases,fpga,callback=None):
-        counts=zeros(22)
-        voltages=self.table.get_voltages(phases)
-        self.dac.write_voltages(voltages)
-        for i in range(self.integration_time):
-            print 'integrating [%.3f %% done]...' % (100*i/float(integration_time))
-            for _ in range(self.ontime): self.fpga.read()
-            c=fpga.read()
-            counts+=c
-            self.dac.zero()
-            for i in range(self.offtime):
-                callback('cooling, step %d' % i)
-        return counts
-        
-    def set_ontime(ontime):
-        if int(ontime)!=ontime: 
-            print 'Please provide an integer ontime'
-            self.ontime=1
-        if ontime>3:
-            print 'Cannot heat for longer than 3 seconds'
-            self.ontime=1
-        self.ontime=ontime
-        
-    def set_offtime(offtime):
-        if int(offtime)!=offtime: 
-            print 'Please provide an integer offtime'
-            self.offtime=15
-        if offtime<15:
-            print 'Cannot cool for less than 15 seconds'
-            self.offtime=15
-        self.offtime=offtime
-        
-    def set_integration_time(integration_time):
-        if int(integration_time)!=integration_time:
-            print 'please provide an integer integration time'
-            self.integration_time=1
-        self.integration_time=integration_time
         
         
 if __name__=='__main__':
-    t=table()
-    phases=np.zeros(8)
-    v = t.get_voltages(phases)
-    print v
+    h=heaters()
+    print h
+    
