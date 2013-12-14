@@ -50,7 +50,7 @@ def ketbra(a,b):
 	return np.matrix(np.outer(a,b.H))
 	
 def orth(a,b): 
-	''' determine whether two state vectors are orthogonal '''
+	''' Determine whether two state vectors are orthogonal '''
 	return np.abs(np.trace(a.T*b))<0.000001
 
 def density_matrix(psi): 
@@ -58,26 +58,26 @@ def density_matrix(psi):
 	return np.matrix(np.outer(psi,psi.H))
 
 def probability(a,b): 
-	''' the probability of finding the system in state a given state b '''
+	''' The probability of finding the system in state a given state b '''
 	return np.abs(braket(a,b))**2
 overlap=probability
 
 def eigenvectors(m): 
-	''' get the eigenvectors of a matrix '''
+	''' Get the eigenvectors of a matrix '''
 	return np.linalg.eigh(m)[1]
 
 def check_hermitian(x): 
-	''' check if a matrix is hermitian '''
+	''' Check if a matrix is hermitian '''
 	return np.allclose(x, x.H)
 
 def check_positive_semidefinite(x): 
-	''' check if an operator is positive semidefinite '''
+	''' Check if an operator is positive semidefinite '''
 	vals, vecs = np.linalg.eig(x)
 	tol=-0.0000001
 	return all([x.real>tol and x.imag>tol for x in vals])
 
 def check_physical(chi):
-    ''' checks that a density matrix is physical '''
+    ''' Checks that a density matrix is physical '''
     if check_hermitian(chi):
         if check_positive_semidefinite(chi):
             if abs(1-np.trace(chi).real) < 1.0/1e9:
@@ -85,7 +85,7 @@ def check_physical(chi):
     return False
 
 def mixed_mixed_fidelity(rho,sigma):
-	''' quantum state fidelity between mixed states as defined by paul kwiat '''	
+	''' Quantum state fidelity between mixed states as defined by paul kwiat '''	
 	print 'computing fidelity between two mixed states...'
 	x=np.matrix(sqrtm(rho))
 	return np.trace(sqrtm(x*sigma*x)).real**2
@@ -94,11 +94,11 @@ def pure_pure_fidelity(psi, phi):
 	return float(abs(braket(psi,phi))**2)
 
 def mixed_pure_fidelity(rho,target):
-	''' quantum state fidelity between a pure state and a mixed state [kwiat]'''	
+	''' Quantum state fidelity between a pure state and a mixed state [kwiat]'''	
 	return float((target.H*rho*target).real)
 	
 def fidelity(a, b):
-	''' quantum state fidelity between two states. 
+	''' Quantum state fidelity between two states. 
 	guesses whether these are expressed as density matrices or state vectors '''
 	aw,ah=a.shape
 	a_type='m' if aw==ah else 'v'
@@ -108,3 +108,23 @@ def fidelity(a, b):
 	if a_type=='m' and b_type=='v': return mixed_pure_fidelity(a,b)
 	if a_type=='v' and b_type=='m': return mixed_pure_fidelity(b,a)
 	if a_type=='v' and b_type=='v': return pure_pure_fidelity(a,b)
+
+def concurrence(rho):
+    ''' the concurrence of a general density matrix '''
+    yy=np.kron(py, py)
+    rho_tilde=yy*np.conjugate(rho)*yy
+    R=rho*rho_tilde
+    evals,evecs=np.linalg.eigh(R)
+    evals=np.sqrt(evals)
+    evals=sorted(evals, reverse=1)
+    signs=np.array([1,-1,-1,-1])
+    return max(0, np.sum(evals*signs)).real
+
+def purity(rho):
+    '''The purity of a general density matrix'''
+    return np.trace(rho*rho).real
+
+def werner_state(v): 
+    ''' A two-qubit werner state with visibility V '''
+    return v*qi.density_matrix(qi.psi_minus)+(1-v)*np.matrix(np.eye(4), dtype=complex)/4.
+
