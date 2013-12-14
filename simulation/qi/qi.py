@@ -126,5 +126,5 @@ def purity(rho):
 
 def werner_state(v): 
     ''' A two-qubit werner state with visibility V '''
-    return v*qi.density_matrix(qi.psi_minus)+(1-v)*np.matrix(np.eye(4), dtype=complex)/4.
+    return v*density_matrix(psi_minus)+(1-v)*np.matrix(np.eye(4), dtype=complex)/4.
 
