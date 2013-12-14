@@ -13,6 +13,7 @@ class beamsplitter_network:
         self.name='beamsplitter network'
         self.structure=[]
         self.phaseshifters=[]
+        self.crossings=[]
         self.beamsplitters=[]
         self.input_modes=[]
         self.unitary=None
@@ -47,6 +48,11 @@ class beamsplitter_network:
         bs=components.beamsplitter(x,y, len(self.beamsplitters), splitting_ratio)
         self.structure.append(bs)
         self.beamsplitters.append(bs)
+        
+    def add_crossing(self,x,y):
+        cross=components.crossing(x,y,len(self.crossings))
+        self.structure.append(cross)
+        self.crossings.append(cross)
 
     def add_phaseshifter(self, x, y, phase=0, invert=False):
         '''add a beamsplitter at position (x,y)'''
