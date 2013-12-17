@@ -27,7 +27,7 @@ Post-processing and analysis tools.
 - Quantum metrics: quantum state fidelity, process fidelity, CHSH ...
 - Classical metrics: Trace distance, statistical fidelity ...
 
-####IO
+####Formats
 Interface to non-standard binary formats.
 - Fast interface to binary `.counted` files from [DPC-230](http://www.becker-hickl.com/pdf/dbdpc3.pdf) timetagger
 
@@ -54,6 +54,8 @@ Useful wrappers for various bits of [wxPython](http://wxpython.org).
 - Easier file access, numpy tools, command line tools...
 
 ###TODO
+- Better handling of settings
+- Make cython-based libraries optional
 - Get rid of Scipy (`$ grep -rl "scipy" ./`) 
 - Stress test cython code in `linear_optics`
 - Tidy up `hardware` modules, get code from other people e.g. PicoHarp

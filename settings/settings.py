@@ -21,7 +21,7 @@ def lookup(search):
     main_dict=load()
     search=search.lower().strip()
     if search in main_dict: return main_dict[search]
-    print '%s not found in settings file (%s)!' % (search, filename)
+    print '%s not found in settings file (%s)!' % (search, qy_filename)
     return None
             
 def write(search, value):
