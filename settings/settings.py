@@ -36,6 +36,7 @@ def get_config_path():
     configpath = os.path.join(confighome, 'qy')
     return configpath
 
+<<<<<<< HEAD
 def save(main_dict):
     f=open(qy_filename, 'w')
     f.write(json.dumps(main_dict))
@@ -43,12 +44,26 @@ def save(main_dict):
 
 def initialize():
     save(defaults)
+=======
+def initialize():
+    main_dict=defaults.copy()
+    f=open(qy_filename, 'w')
+    f.write(json.dumps(main_dict))
+    f.close()
+>>>>>>> 2c75f629a2a65d762cb6966db99bc33aaa5e5289
     print 'Generated a new settings file for qy [%s]' % qy_filename
 
 def load():
     ''' Load the settings file into a dict '''
+<<<<<<< HEAD
     if not os.path.exists(qy_filename): initialize()
     return json.loads(open(qy_filename).read())
+=======
+    if os.path.exists(qy_filename):
+        return json.loads(open(qy_filename).read())
+    else:
+        initialize()
+>>>>>>> 2c75f629a2a65d762cb6966db99bc33aaa5e5289
 
 def get(search):
     ''' Look up a search term and return its value'''
