@@ -43,7 +43,6 @@ def save(main_dict):
 
 def initialize():
     save(defaults)
-    print 'Generated a new settings file for qy [%s]' % qy_filename
 
 def load():
     ''' Load the settings file into a dict '''
@@ -58,7 +57,7 @@ def get(search):
     print '%s not found in qy settings file [%s]!' % (search, qy_filename)
     return None
             
-def put(search, value):
+def set(search, value):
     ''' Write a value to the database '''
     main_dict=load()
     search=search.lower().strip()
