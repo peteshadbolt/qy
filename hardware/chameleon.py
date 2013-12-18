@@ -8,7 +8,7 @@ class chameleon:
 	def __init__(self, COM=None):	
 		''' Constructor for a chameleon object. Remember that python's COM port indexing starts at zero! '''
 		self.serial=serial.Serial()
-		if COM==None: COM=qy.settings.lookup('chameleon.com')
+		if COM==None: COM=qy.settings.get('chameleon.com')
 		print 'Connecting to Chameleom on COM%d...' % (COM+1),
 		self.serial.port=COM
 		self.serial.timeout=10

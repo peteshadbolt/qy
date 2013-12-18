@@ -14,7 +14,7 @@ class dpc_post:
 	def __init__(self, callback=None):
 		''' Constructor '''
 		# connect to the DLL
-		self.dll_path=qy.settings.lookup('dpc230.dll_path')
+		self.dll_path=qy.settings.get('dpc230.dll_path')
 		self.spc=CDLL(os.path.join(self.dll_path, 'spcm32x64.dll'))
 		
 		self.callback=nocallback if callback==None else callback		

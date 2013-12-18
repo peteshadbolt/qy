@@ -78,7 +78,7 @@ class smc100:
 		''' Constructor for an SMC100 object. Remember that python's COM port indexing starts at zero! '''
 		self.callback=callback if callback!=None else lambda x: x
 		self.serial=serial.Serial()
-		if COM==None: COM=qy.settings.lookup('motors.com')
+		if COM==None: COM=qy.settings.get('motors.com')
 		print 'Connecting to SMC100 on COM%d...' % (COM+1),
 		self.serial.port=COM
 		self.serial.timeout=10
@@ -95,7 +95,7 @@ class smc100:
 			print 'failed!'
 			print 'Using a dummy motor controller'
 		
-		self.motors_count=qy.settings.lookup('motors.count')
+		self.motors_count=qy.settings.get('motors.count')
 		self.state=mc_state(self.motors_count)
 		for i in range(1, self.motors_count+1):
 			self.get_info(i)

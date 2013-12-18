@@ -117,7 +117,7 @@ class counted_file_reader:
 		
 		# zero the positions
 		self.positions=[]
-		for i in range(qy.settings.lookup('motors.count')):
+		for i in range(qy.settings.get('motors.count')):
 			pos=position_handler(self.scan_nsteps, self.scan_nloops, self.filename, i)
 			self.positions.append(pos)
 
@@ -162,7 +162,7 @@ class counted_file_reader:
 			curve.add_rate(step, loop, rate)
 			
 		# and the position handler
-		for i in range(qy.settings.lookup('motors.count')):
+		for i in range(qy.settings.get('motors.count')):
 			position=counted_file_parser.get_motor_controller_position(i)
 			self.positions[i].add_position(step, loop, position)
 		return triplet_count
