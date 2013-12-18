@@ -57,7 +57,7 @@ def get(search):
     print '%s not found in qy settings file [%s]!' % (search, qy_filename)
     return None
             
-def set(search, value):
+def put(search, value):
     ''' Write a value to the database '''
     main_dict=load()
     search=search.lower().strip()
@@ -72,4 +72,6 @@ if __name__=='__main__':
     initialize()
     load()
     print get('realtime.scan.close_shutter')
+    put('motors.com', 5)
+    print get('motors.com')
 
