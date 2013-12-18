@@ -12,11 +12,24 @@ def get_config_path():
     configpath = os.path.join(confighome, 'qy')
     return configpath
 
+def initialize(prototype={}):
+    ''' Should only be called when you first install qy. This makes a blank JSON file '''
+    if not raw_input('You are about to overwrite all qy settings. Continue? ').startswith('y'):
+        print 'Cancelled.'
+        return
+    f=open(qy_filename, 'w')
+    f.write(json.dumps(prototype), sort_keys=True, indent=4)
+    f.close()
+    print 'Created a qy JSON settings file at %s' % qy_filename
+
 def load():
     ''' Load the settings file into a dict '''
-    return json.loads(open(qy_filename).read())
+    f=open(qy_filename)
+    s=f.read()
+    f.close()
+    return json.loads(s)
 
-def lookup(search):
+def get(search):
     ''' Look up a search term and return its value'''
     main_dict=load()
     search=search.lower().strip()
@@ -24,18 +37,14 @@ def lookup(search):
     print '%s not found in settings file (%s)!' % (search, qy_filename)
     return None
             
-def write(search, value):
+def put(search, value):
     ''' Write a value to the database '''
     main_dict=load()
     search=search.lower().strip()
     main_dict[search]=value
     f=open(qy_filename, 'w')
-    f.write(json.dumps(main_dict))
+    f.write(json.dumps(main_dict), indent=4, sort_keys=True)
     f.close()
-    
-def save():
-    ''' Obsolete '''
-    print 'qy.settings.save is obsolete'
 
 # Lookup the filename automatically 
 qy_filename=os.path.join(get_config_path(), 'qy.json')

@@ -16,8 +16,6 @@ for p in ['combinadics', 'linear_optics', 'bulk_optics', 'permanent', 'detection
 
 # other packages
 packages.append('qy.analysis')
-packages.append('qy.formats')
-packages.append('qy.formats.counted_file')
 packages.append('qy.util')
 packages.append('qy.graphics')
 packages.append('qy.settings')
@@ -27,7 +25,7 @@ packages.append('qy.hardware.heaters')
 packages.append('qy.graphics')
 packages.append('qy.wx')
 
-# SWIG/cython extensions
+# Cython extensions: fast permanennt and combinadics
 extensions=[]
 combi_path=os.path.join('simulation','combinadics', 'combi.pyx')
 extensions.append(Extension('qy.simulation.combinadics.combi', [combi_path]))
@@ -35,10 +33,17 @@ extensions.append(Extension('qy.simulation.combinadics.combi', [combi_path]))
 perm_path=os.path.join('simulation','permanent', 'perm.pyx')
 extensions.append(Extension('qy.simulation.permanent.perm', [perm_path]))
 
-parserc = os.path.join('formats', 'counted_file', 'counted_file_parser.c')
-parserwrapc = os.path.join('formats', 'counted_file', 'counted_file_parser_wrap.c')
-cf = Extension('qy.formats.counted_file._counted_file_parser', sources=[parserc, parserwrapc])
-extensions.append(cf)
+# SWIG extensions: dealing with the counting hardware. Should really convert these to cython
+path=os.path.join('hardware', 'counting', 'counted_file', 'writer.i')
+counted_file_writer=Extension('qy.hardware.counting.counted_file.writer', 
+    [path], 
+    swig_opts=['-modern', '-I../include']) 
+extensions.append(counted_file_writer)
+
+#parserc = os.path.join('hardware', 'counting', 'counted_file', 'counted_file_parser.c')
+#parserwrapc = os.path.join('hardware', 'counting', 'counted_file' 'counted_file_parser_wrap.c')
+#cf = Extension('qy.formats.counted_file._counted_file_parser', sources=[parserc, parserwrapc])
+#extensions.append(cf)
 
 # setup
 setup(name='qy',

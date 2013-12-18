@@ -1,3 +1,0 @@
-LIBRARY _counted_file_writer.pyd
-EXPORTS
-init_counted_file_writer
