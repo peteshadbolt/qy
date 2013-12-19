@@ -38,6 +38,8 @@ class heaters:
             self.dac.zero()
             for i in range(self.offtime):
                 if callback!=None: callback('cooling, step %d' % i)
+                self.fpga.read()  # added by pete!
+                
         return counts
         
     def set_ontime(self,ontime=2):
