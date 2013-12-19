@@ -3,6 +3,9 @@ import json
 
 # the default settings, used when creating a settings file for the first time
 defaults={  \
+'fpga.com': 5,
+'toptica.com': 6,
+'fpga.labels': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'AB', 'AD', 'BC', 'CD', 'EF', 'GH', 'DE', 'CF', 'FG', 'EH', 'ABCD', 'CDEF', 'EFGH', 'ABCDEFGH'],
 'motors.com': 3,
 'motors.count': 2,
 'dpc320.photon_buffer_1': 'F:\photon_buffer_1',
@@ -37,11 +40,13 @@ def get_config_path():
     return configpath
 
 def save(main_dict):
+    ''' Save settings '''
     f=open(qy_filename, 'w')
     f.write(json.dumps(main_dict))
     f.close()
 
 def initialize():
+    ''' Initialize with the default settings '''
     save(defaults)
 
 def load():

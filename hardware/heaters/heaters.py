@@ -13,14 +13,15 @@ from nidaqmx import AnalogOutputTask
 '''the card which we want to use'''
 CARD_NAME='NI 9264'
 
-
+def test_callback(s):
+    print 'got this information: %s' % s
 '''Everything needed to run an experiment is in heaters. dac and table just do background stuff'''
 class heaters:
     def __init__(self):
         self.dac=dac()
         self.table=table()
         self.dac.zero()
-        self.fpga=fpga(COM=5)
+        self.fpga=fpga(COM=5,callback=test_callback)
         self.ontime=2
         self.offtime=15
         self.integration_time=1
