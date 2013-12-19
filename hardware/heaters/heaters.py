@@ -24,23 +24,19 @@ class heaters:
         self.ontime=2
         self.offtime=15
         self.integration_time=1
-        
-    def a_callback(self, string):
-        print string
-        
-        
+                
     def pulse(self,phases,callback=None):
         counts=np.zeros(22)
         voltages=self.table.get_voltages(phases)
         self.dac.write_voltages(voltages)
         for i in range(self.integration_time):
-            print 'integrating [%.3f %% done]...' % (100*i/float(self.integration_time))
+            if callback!=None: callback('integrating [%.3f %% done]...' % (100*i/float(self.integration_time)))
             for _ in range(self.ontime): self.fpga.read()
             c=self.fpga.read()
             counts+=c
             self.dac.zero()
             for i in range(self.offtime):
-                callback('cooling, step %d' % i)
+                if callback!=None: callback('cooling, step %d' % i)
         return counts
         
     def set_ontime(self,ontime=2):
