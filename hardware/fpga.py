@@ -106,7 +106,7 @@ class fpga:
 		out=''
 		while len(out)==0:
 			out=self.serial.read(1)
-			self.callback('FPGA is waiting for data...')
+            if self.callback!=None: self.callback('FPGA is waiting for data...')
 		return out
 		
 	def count(self,op=0):
@@ -149,7 +149,7 @@ class fpga:
 			return [0]*22
 		return counts
 		
-	def get_dict(self,callback=None, op=0):
+	def get_dict(self, op=0):
 		""" Main function to read a set of values from the FPGA. Returns a list of numbers corresponding to the counts in fpga.labels """
 		counts=self.read()
 		return dict(zip(self.labels,counts))
