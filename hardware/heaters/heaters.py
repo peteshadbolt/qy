@@ -2,6 +2,7 @@ import numpy as np
 import os, json, sys
 import qy
 import qy.settings
+from qy.hardware import *
 from nidaqmx import System
 from nidaqmx import AnalogOutputTask
 
@@ -18,6 +19,7 @@ class heaters:
         self.dac=dac()
         self.table=table()
         self.dac.zero()
+        #self.fpga=fpga(COM=5)
         self.ontime=2
         self.offtime=15
         self.integration_time=1
@@ -64,7 +66,7 @@ class heaters:
         '''print out some information about the instance of heaters'''
         s='Heater settings:\nIntegration time = %i\nHeater on-time = %i\nHeater off-time = %i\n' % (self.integration_time, self.ontime, self.offtime)
         s+=str(self.table)
-        print s
+        return s
         
 class dac:
     def connect_nidaqmx(self):
@@ -91,6 +93,7 @@ class dac:
         if max(av)>7.0:
             print 'CANNOT WRITE VOLTAGES GREATER THAN 7.0V'
             voltages=[0,0,0,0,0,0,0,0]
+            av=voltages
         self.task.write(voltages)
         print 'wrote', av.round(2)
         
