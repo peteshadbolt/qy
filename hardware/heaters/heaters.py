@@ -19,35 +19,38 @@ class heaters:
         self.dac=dac()
         self.table=table()
         self.dac.zero()
-        #self.fpga=fpga(COM=5)
+        self.fpga=fpga(COM=5)
         self.ontime=2
         self.offtime=15
         self.integration_time=1
         
-    def pulse(phases,fpga,callback=None):
-        counts=zeros(22)
+    def pulse(self,phases,callback=None):
+        counts=np.zeros(22)
         voltages=self.table.get_voltages(phases)
         self.dac.write_voltages(voltages)
         for i in range(self.integration_time):
-            print 'integrating [%.3f %% done]...' % (100*i/float(integration_time))
+            print 'integrating [%.3f %% done]...' % (100*i/float(self.integration_time))
             for _ in range(self.ontime): self.fpga.read()
-            c=fpga.read()
+            c=self.fpga.read()
             counts+=c
             self.dac.zero()
             for i in range(self.offtime):
                 callback('cooling, step %d' % i)
         return counts
         
-    def set_ontime(ontime):
+    def set_ontime(self,ontime=2):
         if int(ontime)!=ontime: 
             print 'Please provide an integer ontime'
-            self.ontime=1
+            self.ontime=2
         if ontime>3:
             print 'Cannot heat for longer than 3 seconds'
-            self.ontime=1
+            self.ontime=2
+        if ontime<1:
+            print 'Cannot heat for less than a second'
+            self.ontime=2
         self.ontime=ontime
         
-    def set_offtime(offtime):
+    def set_offtime(self,offtime=15):
         if int(offtime)!=offtime: 
             print 'Please provide an integer offtime'
             self.offtime=15
@@ -56,7 +59,7 @@ class heaters:
             self.offtime=15
         self.offtime=offtime
         
-    def set_integration_time(integration_time):
+    def set_integration_time(self,integration_time=1):
         if int(integration_time)!=integration_time:
             print 'please provide an integer integration time'
             self.integration_time=1
@@ -67,6 +70,16 @@ class heaters:
         s='Heater settings:\nIntegration time = %i\nHeater on-time = %i\nHeater off-time = %i\n' % (self.integration_time, self.ontime, self.offtime)
         s+=str(self.table)
         return s
+        
+    def kill(self):
+        self.fpga.kill()
+    
+    def zero(self):
+        self.dac.zero()
+        
+    def write_voltages(self,voltages):
+        self.dac.write_voltages(voltages)
+        
         
 class dac:
     def connect_nidaqmx(self):
