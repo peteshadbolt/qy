@@ -13,6 +13,7 @@ from nidaqmx import AnalogOutputTask
 '''the card which we want to use'''
 CARD_NAME='NI 9264'
 
+
 '''Everything needed to run an experiment is in heaters. dac and table just do background stuff'''
 class heaters:
     def __init__(self):
@@ -23,6 +24,10 @@ class heaters:
         self.ontime=2
         self.offtime=15
         self.integration_time=1
+        
+    def a_callback(self, string):
+        print string
+        
         
     def pulse(self,phases,callback=None):
         counts=np.zeros(22)
