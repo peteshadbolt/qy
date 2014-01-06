@@ -7,6 +7,7 @@ from nidaqmx import System
 from nidaqmx import AnalogOutputTask
 
 ###TODO:
+###-return counts before cooling?
 ###-remove dependency on nidaqmx?
 ###-make wrapper for heaters for TCP/IP
 
@@ -21,25 +22,27 @@ class heaters:
         self.dac=dac()
         self.table=table()
         self.dac.zero()
-        self.fpga=fpga(COM=5,callback=test_callback)
+        self.fpga=fpga(COM=5)
         self.ontime=2
         self.offtime=15
         self.integration_time=1
-                
+
+    def cool(self, callback=None):
+        self.dac.zero()
+        for i in range(self.offtime):
+            if callback!=None: callback('cooling, step %d of %d' % (i+1,self.offtime))
+            s=self.fpga.read()
+            
     def pulse(self,phases,callback=None):
         counts=np.zeros(22)
         voltages=self.table.get_voltages(phases)
         self.dac.write_voltages(voltages)
         for i in range(self.integration_time):
-            if callback!=None: callback('integrating [%.3f %% done]...' % (100*i/float(self.integration_time)))
+            if callback!=None: callback('integrating [%.3f %% done]...' % (100*(i+1)/float(self.integration_time)))
             for _ in range(self.ontime): self.fpga.read()
             c=self.fpga.read()
             counts+=c
-            self.dac.zero()
-            for i in range(self.offtime):
-                if callback!=None: callback('cooling, step %d' % i)
-                self.fpga.read()  # added by pete!
-                
+            self.cool(callback)
         return counts
         
     def set_ontime(self,ontime=2):
@@ -194,8 +197,13 @@ class table:
             s+='Heater %s: %s\n' % (index, str(params))
         return s
         
-        
+def callback_print_string(s):
+    print s
+    
 if __name__=='__main__':
     h=heaters()
     print h
+    phases=[np.pi for i in range(8)]
+    counts=h.pulse(phases, callback=callback_print_string)
+    print counts
     
