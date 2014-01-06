@@ -16,6 +16,10 @@ CARD_NAME='NI 9264'
 
 def test_callback(s):
     print 'got this information: %s' % s
+    
+def callback_print_string(s):
+    print s
+    
 '''Everything needed to run an experiment is in heaters. dac and table just do background stuff'''
 class heaters:
     def __init__(self):
@@ -30,19 +34,20 @@ class heaters:
     def cool(self, callback=None):
         self.dac.zero()
         for i in range(self.offtime):
-            if callback!=None: callback('cooling, step %d of %d' % (i+1,self.offtime))
+            if callback!=None: callback('Cooling, step %d of %d' % (i+1,self.offtime))
             s=self.fpga.read()
             
-    def pulse(self,phases,callback=None):
+    def pulse(self,phases,callback=callback_print_string):
         counts=np.zeros(22)
         voltages=self.table.get_voltages(phases)
         self.dac.write_voltages(voltages)
         for i in range(self.integration_time):
-            if callback!=None: callback('integrating [%.3f %% done]...' % (100*(i+1)/float(self.integration_time)))
+            if callback!=None: callback('Integrating [%.3f %% done]...' % (100*(i)/float(self.integration_time)))
             for _ in range(self.ontime): self.fpga.read()
             c=self.fpga.read()
             counts+=c
             self.cool(callback)
+            if i == (self.integration_time-1) and callback!=None: callback('Integrating [100 % done]')
         return counts
         
     def set_ontime(self,ontime=2):
@@ -68,7 +73,7 @@ class heaters:
         
     def set_integration_time(self,integration_time=1):
         if int(integration_time)!=integration_time:
-            print 'please provide an integer integration time'
+            print 'Please provide an integer integration time'
             self.integration_time=1
         self.integration_time=integration_time
         
@@ -84,9 +89,10 @@ class heaters:
     def zero(self):
         self.dac.zero()
         
+    '''
     def write_voltages(self,voltages):
         self.dac.write_voltages(voltages)
-        
+    '''
         
 class dac:
     def connect_nidaqmx(self):
@@ -197,8 +203,6 @@ class table:
             s+='Heater %s: %s\n' % (index, str(params))
         return s
         
-def callback_print_string(s):
-    print s
     
 if __name__=='__main__':
     h=heaters()
