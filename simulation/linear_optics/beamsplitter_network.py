@@ -22,8 +22,9 @@ class beamsplitter_network:
 
     def from_json(self, json_filename):
         ''' build the structure '''
-        f=open(json_filename); s=f.read(); f.close();
-        jsondata=json.loads(s, object_hook=json_no_unicode)
+        f=open(json_filename)
+        jsondata=json.load(f, object_hook=json_no_unicode)
+        f.close()
         self.nmodes=jsondata['modes']
         self.name=jsondata['name']
         self.width=jsondata['width']

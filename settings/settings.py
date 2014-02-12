@@ -39,7 +39,7 @@ def get_config_path():
 
 def save(main_dict):
     f=open(qy_filename, 'w')
-    f.write(json.dumps(main_dict))
+    json.dump(main_dict, f, indent=4, sort_keys=True)
     f.close()
 
 def initialize():
@@ -48,7 +48,7 @@ def initialize():
 def load():
     ''' Load the settings file into a dict '''
     if not os.path.exists(qy_filename): initialize()
-    return json.loads(open(qy_filename).read(), object_hook=json_no_unicode)
+    return json.load(open(qy_filename), object_hook=json_no_unicode)
 
 def get(search):
     ''' Look up a search term and return its value'''
@@ -70,6 +70,7 @@ qy_filename=os.path.join(get_config_path(), 'qy.json')
 main_dict=None
 
 if __name__=='__main__':
+    print get_config_path()
     initialize()
     load()
     print get('realtime.scan.close_shutter')
