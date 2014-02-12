@@ -1,5 +1,6 @@
 import qy
 import qy.settings
+from qy.util import json_no_unicode
 import numpy
 import os, json
 
@@ -21,7 +22,7 @@ class calibration_table:
     def load(self, filename=None):
         ''' Load the table from a JSON file on disk '''
         f=open(self.filename, 'r')
-        data=json.loads(f.read())
+        data=json.loads(f.read(), object_hook=json_no_unicode)
         f.close()
         self.curve_parameters=data['curve_parameters']
         self.heater_count=len(self.curve_parameters)

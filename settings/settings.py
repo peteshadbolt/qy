@@ -1,5 +1,6 @@
 import os
 import json
+from qy.util import json_no_unicode
 
 # the default settings, used when creating a settings file for the first time
 defaults={  \
@@ -47,7 +48,7 @@ def initialize():
 def load():
     ''' Load the settings file into a dict '''
     if not os.path.exists(qy_filename): initialize()
-    return json.loads(open(qy_filename).read())
+    return json.loads(open(qy_filename).read(), object_hook=json_no_unicode)
 
 def get(search):
     ''' Look up a search term and return its value'''

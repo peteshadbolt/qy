@@ -86,7 +86,7 @@ def check_physical(chi):
 
 def mixed_mixed_fidelity(rho,sigma):
 	''' Quantum state fidelity between mixed states as defined by paul kwiat '''	
-	print 'computing fidelity between two mixed states...'
+	#print 'computing fidelity between two mixed states...'
 	x=np.matrix(sqrtm(rho))
 	return np.trace(sqrtm(x*sigma*x)).real**2
 	

@@ -1,6 +1,7 @@
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib import rc 
+from qy.util import json_no_unicode
 
 import numpy as np
 import json
@@ -22,7 +23,7 @@ class beamsplitter_network:
     def from_json(self, json_filename):
         ''' build the structure '''
         f=open(json_filename); s=f.read(); f.close();
-        jsondata=json.loads(s)
+        jsondata=json.loads(s, object_hook=json_no_unicode)
         self.nmodes=jsondata['modes']
         self.name=jsondata['name']
         self.width=jsondata['width']
