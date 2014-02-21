@@ -63,7 +63,6 @@ class calibration_table:
             s+='Heater %d: %s\n' % (index, str(params))
         return s
 
-
 if __name__=='__main__':
     c=calibration_table()
     c.curve_parameters={}
