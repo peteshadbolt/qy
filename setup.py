@@ -16,8 +16,8 @@ for p in ['combinadics', 'linear_optics', 'bulk_optics', 'permanent', 'detection
 
 # other packages
 packages.append('qy.analysis')
-packages.append('qy.formats')
-packages.append('qy.formats.counted_file')
+#packages.append('qy.formats')
+#packages.append('qy.formats.counted_file')
 packages.append('qy.util')
 packages.append('qy.graphics')
 packages.append('qy.settings')
@@ -35,10 +35,10 @@ extensions.append(Extension('qy.simulation.combinadics.combi', [combi_path]))
 perm_path=os.path.join('simulation','permanent', 'perm.pyx')
 extensions.append(Extension('qy.simulation.permanent.perm', [perm_path]))
 
-parserc = os.path.join('formats', 'counted_file', 'counted_file_parser.c')
-parserwrapc = os.path.join('formats', 'counted_file', 'counted_file_parser_wrap.c')
-cf = Extension('qy.formats.counted_file._counted_file_parser', sources=[parserc, parserwrapc])
-extensions.append(cf)
+#parserc = os.path.join('formats', 'counted_file', 'counted_file_parser.c')
+#parserwrapc = os.path.join('formats', 'counted_file', 'counted_file_parser_wrap.c')
+#cf = Extension('qy.formats.counted_file._counted_file_parser', sources=[parserc, parserwrapc])
+#extensions.append(cf)
 
 # setup
 setup(name='qy',
