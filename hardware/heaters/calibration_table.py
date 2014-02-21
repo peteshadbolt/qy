@@ -31,12 +31,11 @@ class calibration_table:
         ''' Save to a JSON file on disk '''
         if filename!=None: self.filename=filename
         self.curve_parameters={key: tuple(value) for key, value in self.curve_parameters.items()}
-        print self.curve_parameters
         d={'heater_count':len(self.curve_parameters), 'curve_parameters':self.curve_parameters}
         f=open(self.filename, 'w')
-        f.write(json.dumps(d), indent=4, sort_keys=True)
+        f.write(json.dumps(d, indent=4, sort_keys=True))
         f.close()
-        print 'saved %s' % self.filename
+        #print 'saved %s' % self.filename
 
     def set_table(self, new_table):
         ''' Set the entire phase-voltage table '''
@@ -65,10 +64,6 @@ class calibration_table:
         
     def get_voltages(self, phases):
         '''Turn a list of (8) phases in to a list of voltages'''
-        if len(phases)!=8:
-            print 'Please provide 8 phases'
-            '''Is this the best way?'''
-            exit()
         v=[self.get_voltage_from_phase(heater_index,phase) for heater_index, phase in enumerate(phases)]
         return v
     
@@ -81,6 +76,11 @@ class calibration_table:
 
 if __name__=='__main__':
     c=calibration_table()
-    print c.curve_parameters
+
+    for i in range(100):
+        for heater in range(8):
+            v=c.get_voltage_from_phase(heater, np.random.uniform(-np.pi*4, np.pi*4))
+            if not 0<=v<=7:
+                print 'fail'
+
     c.save()
-    print c

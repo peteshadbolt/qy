@@ -24,6 +24,7 @@ packages.append('qy.settings')
 packages.append('qy.hardware')
 packages.append('qy.hardware.counting')
 packages.append('qy.hardware.heaters')
+packages.append('qy.hardware.heaters.nidaqmx')
 packages.append('qy.graphics')
 packages.append('qy.wx')
 
