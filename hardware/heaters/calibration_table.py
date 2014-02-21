@@ -54,16 +54,13 @@ class calibration_table:
             p=self.curve_parameters[unicode(heater_index)]
         return p
 
-    def get_voltage(self, heater_index, phase):
+    def get_voltage_from_phase(self, heater_index, phase):
         ''' Get the appropriate voltage to set to the chip, given a phase '''
         p=self.get_parameters(heater_index)
-        phase=phase % (2*np.pi)
+        phase=phase%(2*np.pi)
         phase=phase-2*np.pi
         while p[0]>phase: phase=phase+2*np.pi
         v=np.sqrt((phase-float(p[0]))/float(p[1]))
-        if v>7:
-            phase=phase-2*np.pi
-            v=self.get_voltage(heater_index,phase)
         return v if v>=0 else -v
         
     def get_voltages(self, phases):
@@ -72,7 +69,7 @@ class calibration_table:
             print 'Please provide 8 phases'
             '''Is this the best way?'''
             exit()
-        v=[self.get_voltage(heater_index,phase) for heater_index, phase in enumerate(phases)]
+        v=[self.get_voltage_from_phase(heater_index,phase) for heater_index, phase in enumerate(phases)]
         return v
     
     def __str__(self):
