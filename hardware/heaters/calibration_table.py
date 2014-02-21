@@ -78,7 +78,6 @@ class calibration_table:
         for index, params in self.curve_parameters.iteritems():
             s+='Heater %s: %s\n' % (index, str(params))
         return s
-        
 
 if __name__=='__main__':
     c=calibration_table()
