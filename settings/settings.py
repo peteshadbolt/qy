@@ -26,6 +26,33 @@ defaults={  \
 'realtime.watcher.coincidence_patterns': ('AB',)
 }
 
+# the default settings, used when creating a settings file for the first time
+defaults={  \
+'fpga.com': 5,
+'toptica.com': 6,
+'fpga.labels': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'AB', 'AD', 'BC', 'CD', 'EF', 'GH', 'DE', 'CF', 'FG', 'EH', 'ABCD', 'CDEF', 'EFGH', 'ABCDEFGH'],
+'motors.com': 3,
+'motors.count': 2,
+'dpc320.photon_buffer_1': 'F:\photon_buffer_1',
+'dpc320.photon_buffer_2': 'F:\photon_buffer_2',
+'data.directory': 'C:\Documents and Settings\phpjss\Desktop\test_data',
+'data.temp': 'F:\temporary_data',
+'chameleon.com': 7,
+'realtime.coincidence_window': 30,
+'realtime.sound': 1,
+'realtime.browser_searches': ('A', 'B', 'C'),
+'realtime.scan.start_position': 0.0,
+'realtime.scan.stop_position': 5.0,
+'realtime.scan.npoints': 5,
+'realtime.scan.nloops': 3,
+'realtime.scan.integration_time': 2,
+'realtime.scan.motor_controller': 2,
+'realtime.scan.dont_move': 0,
+'realtime.scan.close_shutter': 0,
+'realtime.watcher.singles_patterns': ('A',),
+'realtime.watcher.coincidence_patterns': ('AB',)
+}
+
 def get_config_path():
     ''' Platform-independent way to choose a location for qy settings '''
     if 'APPDATA' in os.environ:

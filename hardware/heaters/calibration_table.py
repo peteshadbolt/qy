@@ -1,7 +1,7 @@
 import qy
 import qy.settings
 from qy.util import json_no_unicode
-import numpy
+import numpy as np
 import os, json
 
 # These functions do not really get used here, they are just for reference
@@ -51,8 +51,9 @@ class calibration_table:
 
     def get_voltage_from_phase(self, heater_index, phase):
         ''' Get the appropriate voltage to set to the chip, given a phase '''
-        p=get_parameters(heater_index)
+        p=self.get_parameters(heater_index)
         phase=phase%(2*np.pi)
+        phase=phase-2*np.pi
         while p[0]>phase: phase=phase+2*np.pi
         v=np.sqrt((phase-float(p[0]))/float(p[1]))
         return v if v>=0 else -v
@@ -60,12 +61,13 @@ class calibration_table:
     def __str__(self):
         ''' Print the calibration table out as a string '''
         s='Heater calibration table [%s]\n' % self.filename
-        for index, params in enumerate(self.curve_parameters):
-            s+='Heater %d: %s\n' % (index, str(params))
+        for index, params in self.curve_parameters.iteritems():
+            s+='Heater %s: %s\n' % (str(index), str(params))
         return s
 
 
 if __name__=='__main__':
     c=calibration_table()
-    c.curve_parameters={}
+    print c.curve_parameters
     c.save()
+    print c
