@@ -2,57 +2,57 @@ import serial
 from qy import settings
 
 class fpga:
-	"""	
-	This class talks to a "first generation" Bristol (CQP) FPGA coincidence counter.
-	Counts are as follows:
-	'A','B','C','D','E','F','G','H','AB','AD','BC','CD','EF','GH','DE','CF','FG','EH','ABCD','CDEF','EFGH','ABCDEFGH'
-	"""
-	
-	delays=[0]*8
-	finedelays=[0]*8
-	modes=[0]*14
-	
-	def __init__(self, COM=None, callback=None):
-		""" Constructor for an FPGA object. Remember that python's COM port indexing starts at zero! """
-		if COM==None: COM=settings.get('fpga.com')
-		self.labels=settings.get('fpga.labels')
-		self.serial=serial.Serial()
-		self.serial.port=COM
-		self.serial.timeout=.1
-		self.serial.baudrate=9600
-		self.serial.bytesize=serial.EIGHTBITS
-		self.serial.parity=serial.PARITY_NONE
-		self.serial.stopbits=serial.STOPBITS_ONE
-		self.callback=callback
-		self.initialize()
-		
-	def lookup(self, labels, counts):
-		""" Pass a list of strings and look up the corresponding coincidences from a list returned by fpga.read(). Order-agnostic (AB=BA) """
-		out=[]
-		for label in labels:
-			for i in range(len(self.labels)):
-				if label.upper() == self.labels[i]: out.append(counts[i])
-				if len(label)==2:
-					q=label.upper()
-					q=q[1]+q[0]
-					if q == self.labels[i]: out.append(counts[i])
-		if len(out)==len(labels):
-			return out
-		else:
-			print 'get_coincidences: Some labels were not found'
-			return None
-					
-		
-	def initialize(self):	
-		""" Connects to the serial port, sets up the FPGA. You shouldn't ever need to call this """
-		print 'initializing FPGA...',
-		self.openSerial()
-		for i in range(14):
-			self.setMode(i,1)
-		for i in range(8):
-			self.setDelay(i,20,0)
-		self.writeDelays()
-		print 'done'
+    """ 
+    This class talks to a "first generation" Bristol (CQP) FPGA coincidence counter.
+    Counts are as follows:
+    'A','B','C','D','E','F','G','H','AB','AD','BC','CD','EF','GH','DE','CF','FG','EH','ABCD','CDEF','EFGH','ABCDEFGH'
+    """
+    
+    delays=[0]*8
+    finedelays=[0]*8
+    modes=[0]*14
+    
+    def __init__(self, COM=None, callback=None):
+        """ Constructor for an FPGA object. Remember that python's COM port indexing starts at zero! """
+        if COM==None: COM=settings.get('fpga.com')
+        self.labels=settings.get('fpga.labels')
+        self.serial=serial.Serial()
+        self.serial.port=COM
+        self.serial.timeout=.1
+        self.serial.baudrate=9600
+        self.serial.bytesize=serial.EIGHTBITS
+        self.serial.parity=serial.PARITY_NONE
+        self.serial.stopbits=serial.STOPBITS_ONE
+        self.callback=callback
+        self.initialize()
+        
+    def lookup(self, labels, counts):
+        """ Pass a list of strings and look up the corresponding coincidences from a list returned by fpga.read(). Order-agnostic (AB=BA) """
+        out=[]
+        for label in labels:
+            for i in range(len(self.labels)):
+                if label.upper() == self.labels[i]: out.append(counts[i])
+                if len(label)==2:
+                    q=label.upper()
+                    q=q[1]+q[0]
+                    if q == self.labels[i]: out.append(counts[i])
+        if len(out)==len(labels):
+            return out
+        else:
+            print 'get_coincidences: Some labels were not found'
+            return None
+                    
+        
+    def initialize(self):   
+        """ Connects to the serial port, sets up the FPGA. You shouldn't ever need to call this """
+        print 'initializing FPGA...',
+        self.openSerial()
+        for i in range(14):
+            self.setMode(i,1)
+        for i in range(8):
+            self.setDelay(i,20,0)
+        self.writeDelays()
+        print 'done'
 
     def setMode(self,combination=0,mode=0):
         """ Sets a counting mode to the FPGA"""
