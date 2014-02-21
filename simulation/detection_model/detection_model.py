@@ -24,8 +24,8 @@ class detection_model:
         ''' a model of some detection scheme '''
         self.nmodes=nmodes
         self.scheme_string=''
-        self.all_splitters=[[] for i in range(16)]
-        self.available_splitters=[[] for i in range(16)]
+        self.all_splitters=[[] for i in range(30)]
+        self.available_splitters=[[] for i in range(30)]
         self.all_detectors=[]
         self.available_detectors=[]
         self.detectors=[]

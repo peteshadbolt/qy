@@ -1,6 +1,7 @@
 import qy
 import qy.settings
-import numpy
+from qy.util import json_no_unicode
+import numpy as np
 import os, json
 
 # These functions do not really get used here, they are just for reference
@@ -21,7 +22,7 @@ class calibration_table:
     def load(self, filename=None):
         ''' Load the table from a JSON file on disk '''
         f=open(self.filename, 'r')
-        data=json.loads(f.read())
+        data=json.loads(f.read(), object_hook=json_no_unicode)
         f.close()
         self.curve_parameters=data['curve_parameters']
         self.heater_count=len(self.curve_parameters)
@@ -30,9 +31,10 @@ class calibration_table:
         ''' Save to a JSON file on disk '''
         if filename!=None: self.filename=filename
         self.curve_parameters={key: tuple(value) for key, value in self.curve_parameters.items()}
+        print self.curve_parameters
         d={'heater_count':len(self.curve_parameters), 'curve_parameters':self.curve_parameters}
         f=open(self.filename, 'w')
-        f.write(json.dumps(d))
+        f.write(json.dumps(d), indent=4, sort_keys=True)
         f.close()
         print 'saved %s' % self.filename
 
@@ -46,24 +48,42 @@ class calibration_table:
 
     def get_parameters(self, heater_index):
         ''' Get the full set of parameters for a particular heater '''
-        return self.curve_parameters[heater_index]
+        try:
+            p=self.curve_parameters[heater_index]
+        except KeyError:
+            p=self.curve_parameters[unicode(heater_index)]
+        return p
 
-    def get_voltage_from_phase(self, heater_index, phase):
+    def get_voltage(self, heater_index, phase):
         ''' Get the appropriate voltage to set to the chip, given a phase '''
-        p=get_parameters(heater_index)
-        phase=phase%(2*np.pi)
+        p=self.get_parameters(heater_index)
+        phase=phase % (2*np.pi)
+        phase=phase-2*np.pi
         while p[0]>phase: phase=phase+2*np.pi
         v=np.sqrt((phase-float(p[0]))/float(p[1]))
+        if v>7:
+            phase=phase-2*np.pi
+            v=self.get_voltage(heater_index,phase)
         return v if v>=0 else -v
-
+        
+    def get_voltages(self, phases):
+        '''Turn a list of (8) phases in to a list of voltages'''
+        if len(phases)!=8:
+            print 'Please provide 8 phases'
+            '''Is this the best way?'''
+            exit()
+        v=[self.get_voltage(heater_index,phase) for heater_index, phase in enumerate(phases)]
+        return v
+    
     def __str__(self):
         ''' Print the calibration table out as a string '''
-        s='Heater calibration table [%s]\n' % self.filename
-        for index, params in enumerate(self.curve_parameters):
-            s+='Heater %d: %s\n' % (index, str(params))
+        s='Heater calibration table [%s]\n%s heaters\n' % (self.filename,str(self.heater_count))
+        for index, params in self.curve_parameters.iteritems():
+            s+='Heater %s: %s\n' % (index, str(params))
         return s
 
 if __name__=='__main__':
     c=calibration_table()
-    c.curve_parameters={}
+    print c.curve_parameters
     c.save()
+    print c
