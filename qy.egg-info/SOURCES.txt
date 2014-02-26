@@ -1,0 +1,8 @@
+setup.py
+qy/__init__.py
+qy/old_setup.py
+qy.egg-info/PKG-INFO
+qy.egg-info/SOURCES.txt
+qy.egg-info/dependency_links.txt
+qy.egg-info/top_level.txt
+tests/__init__.py

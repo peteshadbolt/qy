@@ -1,0 +1,8 @@
+{
+"name": "beamsplitter", 
+"modes": 2,
+"width": 4,
+"couplers": [{"x": 0, "y": 0, "ratio": 0.5}],  
+"shifters": []
+}
+

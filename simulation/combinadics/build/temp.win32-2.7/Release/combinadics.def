@@ -1,3 +1,0 @@
-LIBRARY combinadics.pyd
-EXPORTS
-initcombinadics
