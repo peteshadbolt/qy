@@ -14,6 +14,7 @@ setup(
         #'hello': ['*.msg'],
     #},
     # metadata for upload to PyPI
+    test_suite='tests',
     author = "Pete Shadbolt",
     author_email = "pete.shadbolt@gmail.com",
     description = "Quantum photonics with python",

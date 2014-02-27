@@ -151,6 +151,7 @@ class ctx:
         while line!='end_metadata':
             line = f.readline().strip()
 
+        # Load all the events
         self.event_list=[]
         pb=progressbar(self.filesize, label='Loading %s' % self.filename)
         while line!='':
@@ -179,12 +180,29 @@ class ctx:
                 data=decode_counts(data)
                 data=('count_rates', data)
                 self.event_list.append(data)
-
             else:
                 pass
 
         pb.finish()
         f.close()
+        self.iterator_index=0
+
+
+    def __len__(self):
+        ''' Number of events '''
+        return len(self.event_list)
+
+
+    def __iter__(self): return self
+    def next(self):
+        ''' Allow use as an iterator (for index, modes in basis)'''
+        if self.iterator_index < len(self.event_list)-1:
+            cur, self.iterator_index = self.iterator_index, self.iterator_index+1
+            return self.event_list[self.iterator_index]
+        else:
+            self.iterator_index=0
+            raise StopIteration()
+
 
     def __str__(self):
         ''' Convert to a string '''
@@ -192,34 +210,6 @@ class ctx:
         s += ' [%s] [%s]\n' % (self.filename, self.mode)
         s += '\n'.join(map(lambda x: '%s: %s' % x, self.metadata.items()))
         if len(self.event_list)>0:
-            s += '\nLoaded %d events.' % len(self.event_list)
+            s += '\n%d events.' % len(self.event_list)
         return s
-
-if __name__=='__main__':
-
-    # Try building a CTX file
-    c = ctx('test.CTX', 'write')
-    c.write_metadata({'scan_type':'scan', 'scan_label':'test label', 'scan_npoints':5})
-
-    # How fast can we write 100 chunks? (Answer: fast enough)
-    from random import randint
-    
-    for i in range(1000):
-        # Generate dummy data
-        s=''
-        for i in range(100):
-            s+=struct.pack('HI', randint(1, 2**8), randint(0,10))
-            s+=struct.pack('HI', randint(1, 16), randint(0,1000))
-
-        # Dump it to disk
-        c.write_list(['scan_step', 1])
-        c.write_list(['motor_controller_update', 0, i/200.])
-        c.write_list(['motor_controller_update', 1, i/100.])
-        c.write_list(['motor_controller_update', 1, i/100.])
-        c.write_counts(s)
-
-    # Try loading a CTX file
-    c = ctx('test.CTX', mode='read')
-    print c
-
 

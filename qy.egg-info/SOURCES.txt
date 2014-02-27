@@ -1,6 +1,5 @@
 setup.py
 qy/__init__.py
-qy/old_setup.py
 qy.egg-info/PKG-INFO
 qy.egg-info/SOURCES.txt
 qy.egg-info/dependency_links.txt
@@ -8,11 +7,7 @@ qy.egg-info/top_level.txt
 qy/analysis/__init__.py
 qy/analysis/metrics.py
 qy/formats/__init__.py
-qy/formats/counted_file/__init__.py
-qy/formats/counted_file/counted_file_parser.py
-qy/formats/counted_file/counted_file_reader.py
-qy/formats/counted_file/defs.py
-qy/formats/counted_file/parser.py
+qy/formats/counted_file.py
 qy/graphics/__init__.py
 qy/graphics/colors.py
 qy/graphics/correlation_matrix_3d.py
@@ -28,15 +23,7 @@ qy/hardware/flipper_mount.py
 qy/hardware/fpga.py
 qy/hardware/parser.py
 qy/hardware/smc100.py
-qy/hardware/counting/__init__.py
-qy/hardware/counting/counted_file_parser.py
-qy/hardware/counting/counted_file_reader.py
-qy/hardware/counting/counted_file_writer.py
-qy/hardware/counting/defs.py
-qy/hardware/counting/dpc_daq.py
-qy/hardware/counting/dpc_post.py
-qy/hardware/counting/dpc_structs.py
-qy/hardware/counting/parser.py
+qy/hardware/toptica.py
 qy/hardware/heaters/__init__.py
 qy/hardware/heaters/calibration_table.py
 qy/hardware/heaters/dac.py
@@ -92,3 +79,4 @@ qy/util/progressbar/widgets.py
 qy/wx/__init__.py
 qy/wx/wxbasics.py
 tests/__init__.py
+tests/formats.py
