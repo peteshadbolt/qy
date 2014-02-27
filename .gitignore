@@ -1,3 +1,4 @@
 *.pyc
 qy.egg-info/*
 build/*
+*.counted
