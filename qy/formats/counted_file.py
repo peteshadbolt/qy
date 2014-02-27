@@ -3,32 +3,35 @@ from StringIO import StringIO
 import base64
 import gzip
 import struct
+from qy.util import progressbar
 
 required_metadata = set(['scan_type', 'scan_label'])
 data_formats = {
-'scan_npoints':int,
-'scan_nloops':int,
-'scan_integration_time':float,
-'scan_close_shutter':bool,
-'scan_dont_move':bool,
-'scan_motor_controller':int,
-'scan_start_position':float,
-'scan_stop_position':float,
-'scan_loop':int,
-'scan_step':int,
-'integration_step':int,
+'scan_npoints':[int],
+'scan_nloops':[int],
+'scan_integration_time':[float],
+'scan_close_shutter':[bool],
+'scan_dont_move':[bool],
+'scan_motor_controller':[int],
+'scan_start_position':[float],
+'scan_stop_position':[float],
+'scan_loop':[int],
+'scan_step':[int],
+'integration_step': [int],
+'motor_controller_update': [int, float]
 }
 
 class CountedFileException(Exception):
     ''' A generic exception for the counted file class '''
     pass
 
-def format_key_value(key, value):
+def format_key_value(key, values):
     ''' Try to format a key-value pair, converting strings to ints etc '''
     try:
-        return key, data_formats[key](value)
+        values=[f(v) for f, v in zip(data_formats[key], values)]
+        return key, values
     except KeyError:
-        return key, value
+        return key, values
 
 def encode_counts(binary_string):
     ''' Encodes a binary blob of countrates to a text format for storage '''
@@ -41,6 +44,13 @@ def encode_counts(binary_string):
     # Base 64 encode the string
     s = base64.b64encode(zipped.getvalue())
     return s
+
+def binary_pattern_to_alphanumeric(pattern):
+    ''' Convert a binary-encoded detection event to an alphanumeric string'''
+    alphabet='abcdefghijklmnop'
+    letters = [alphabet[i] for i in range(16) if (1<<i & pattern)>0]
+    if len(letters)==0: print bin(pattern)
+    return ''.join(letters)
 
 def decode_counts(data_string):
     ''' Decodes a text blob to a dictionary of count rates '''
@@ -56,12 +66,15 @@ def decode_counts(data_string):
     while True:
         data=zipper.read(8)
         if data=='': return output
-        data=struct.unpack('hi', data)
+        key,value=struct.unpack('HI', data)
+        key = binary_pattern_to_alphanumeric(key)
+        output[key]=value
 
 class counted_file:
     ''' a .COUNTED file '''
     def __init__(self, filename, mode=None):
         self.filename=filename
+        self.event_list=[]
 
         # Choose mode automatically 
         self.mode=mode
@@ -117,6 +130,7 @@ class counted_file:
 
     def load_metadata(self):
         ''' Load the metadata '''
+        self.filesize=os.path.getsize(self.filename)
         self.metadata={}
         f=open(self.filename, 'r')
         for line in f:
@@ -129,26 +143,47 @@ class counted_file:
                 return
         f.close()
 
-
     def load_in_full(self):
         ''' Load the file in full, with an optional callback for progress '''
         # Jump to the end of the metadata
         f=open(self.filename, 'r')
-        self.events=[]
         line=''
         while line!='end_metadata':
             line = f.readline().strip()
 
+        self.event_list=[]
+        pb=progressbar(self.filesize, label='Loading %s' % self.filename)
         while line!='':
             line=f.readline()
-            entries=map(lambda x: x.strip(), line.split(','))
+            pb.update(f.tell())
+            items=map(lambda x: x.strip(), line.split(','))
 
-            if entries[0]=='motor_controller_update':
-                pass
-            if entries[0]=='start_counts':
+            if items[0]=='motor_controller_update':
+                data=(items[0], int(items[1]), float(items[2]))
+                self.event_list.append(data)
+
+            elif items[0]=='scan_loop':
+                data=(items[0], int(items[1]))
+                self.event_list.append(data)
+
+            elif items[0]=='scan_step':
+                data=(items[0], int(items[1]))
+                self.event_list.append(data)
+
+            elif items[0]=='integration_step':
+                data=(items[0], int(items[1]))
+                self.event_list.append(data)
+
+            elif items[0]=='start_counts':
                 data=f.readline()
                 data=decode_counts(data)
+                data=('count_rates', data)
+                self.event_list.append(data)
 
+            else:
+                pass
+
+        pb.finish()
         f.close()
 
     def __str__(self):
@@ -156,8 +191,9 @@ class counted_file:
         s = 'COUNTED file'
         s += ' [%s] [%s]\n' % (self.filename, self.mode)
         s += '\n'.join(map(lambda x: '%s: %s' % x, self.metadata.items()))
+        if len(self.event_list)>0:
+            s += '\nLoaded %d events.' % len(self.event_list)
         return s
-
 
 if __name__=='__main__':
 
@@ -169,18 +205,18 @@ if __name__=='__main__':
     from random import randint
     # Generate dummy data
     s=''
-    for i in range(10):
-        s+=struct.pack('hi', 0, 0)
+    for i in range(100):
+        s+=struct.pack('HI', randint(1, 2**16), randint(0,10))
+        s+=struct.pack('HI', randint(1, 16), randint(0,1000))
     
     # Dump it to disk
-    for i in range(100):
-        c.write_list(['motor_controller_update', 0, .5])
-        c.write_list(['motor_controller_update', 0, .5])
+    for i in range(1000):
+        c.write_list(['motor_controller_update', 0, i/200.])
+        c.write_list(['motor_controller_update', 1, i/100.])
         c.write_counts(s)
 
     # Try loading a counted file
     c = counted_file('test.counted', mode='read')
     print c
-
 
 

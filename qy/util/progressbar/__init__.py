@@ -349,7 +349,8 @@ class ProgressBar(object):
 
         self.finished = True
         self.update(self.maxval)
-        self.fd.write('\n')
+
+        self.fd.write('\r')
         if self.signal_set:
             signal.signal(signal.SIGWINCH, signal.SIG_DFL)
 

@@ -101,7 +101,6 @@ def decode_chan_enable(code):
 	for i in range(22):
 		if i%4 == 0 : s+=' ' 
 		s+='1' if (1<<i)&code>0 else '0'
-		
 	return s
 	
 def decode_operation_mode(mode):
