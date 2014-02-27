@@ -203,14 +203,15 @@ if __name__=='__main__':
 
     # How fast can we write 100 chunks? (Answer: fast enough)
     from random import randint
-    # Generate dummy data
-    s=''
-    for i in range(100):
-        s+=struct.pack('HI', randint(1, 2**16), randint(0,10))
-        s+=struct.pack('HI', randint(1, 16), randint(0,1000))
     
-    # Dump it to disk
     for i in range(1000):
+        # Generate dummy data
+        s=''
+        for i in range(100):
+            s+=struct.pack('HI', randint(1, 2**8), randint(0,10))
+            s+=struct.pack('HI', randint(1, 16), randint(0,1000))
+
+        # Dump it to disk
         c.write_list(['scan_step', 1])
         c.write_list(['motor_controller_update', 0, i/200.])
         c.write_list(['motor_controller_update', 1, i/100.])
