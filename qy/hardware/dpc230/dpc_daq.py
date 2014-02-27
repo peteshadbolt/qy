@@ -1,18 +1,75 @@
-'''
-This code provides an interface to spcm32x64.dll, pulling timetags off the DPC230 time tagger.
-'''
-
 from ctypes import *
 import sys, time, os
-import qy
+import qy.settings
+import dpc_structs
 
-def nocallback(s): pass
+param_names_list=['CFD_LIMIT_LOW','CFD_LIMIT_HIGH','CFD_ZC_LEVEL','CFD_HOLDOFF',
+		'SYNC_ZC_LEVEL','SYNC_FREQ_DIV','SYNC_HOLDOFF','SYNC_THRESHOLD',
+		'TAC_RANGE','TAC_GAIN','TAC_OFFSET','TAC_LIMIT_LOW',
+		'TAC_LIMIT_HIGH','ADC_RESOLUTION','EXT_LATCH_DELAY','COLLECT_TIME',
+		'DISPLAY_TIME',	'REPEAT_TIME','STOP_ON_TIME','STOP_ON_OVFL',
+		'DITHER_RANGE','COUNT_INCR','MEM_BANK','DEAD_TIME_COMP',
+		'SCAN_CONTROL','ROUTING_MODE','TAC_ENABLE_HOLD','MODE',
+		'SCAN_SIZE_X','SCAN_SIZE_Y','SCAN_ROUT_X','SCAN_ROUT_Y',
+		'SCAN_POLARITY','SCAN_FLYBACK','SCAN_BORDERS','PIXEL_TIME',
+		'PIXEL_CLOCK','LINE_COMPRESSION','TRIGGER','EXT_PIXCLK_DIV',
+		'RATE_COUNT_TIME','MACRO_TIME_CLK','ADD_SELECT','ADC_ZOOM',
+		'XY_GAIN','IMG_SIZE_X','IMG_SIZE_Y','IMG_ROUT_X',
+		'IMG_ROUT_Y','MASTER_CLOCK','ADC_SAMPLE_DELAY','DETECTOR_TYPE',
+		'X_AXIS_TYPE','CHAN_ENABLE','CHAN_SLOPE','CHAN_SPEC_NO']
+
+
+param_id_dict=dict([(param_names_list[i].lower(), i) for i in range(len(param_names_list))])
+
+
+state_bits=((0x80, 'TDC1'), 
+			(0x4000, 'TDC2'), 
+			(0x80, 'measuring'), 
+			(0x100, 'FIFO1 empty'), 
+			(0x200, 'FIFO2 empty'), 
+			(0x400, 'FIFO1 overflow'), 
+			(0x800, 'FIFO1 overflow'), 
+			(0x8, 'TDC1 timeout'), 
+			(0x20, 'TDC2 timeout'), 
+			(0x4, 'stopped'), 
+			(0x2000, 'wait for frame signal to stop'), 
+			(0x1000, 'wait for trigger'))
+
+			
+def decode_chan_enable(code):
+	s=''
+	for i in range(22):
+		if i%4 == 0 : s+=' ' 
+		s+='1' if (1<<i)&code>0 else '0'
+		
+	return s
+
+	
+def decode_operation_mode(mode):
+	qq={6:'TCSPC FIFO', 7:'TCSPC FIFO', 8:'Absolute time FIFO mode', 9:'Absolute time FIFO Image mode'}
+	return qq[mode]
+
+	
+def decode_memory_bank(bank):
+	qq={6:'both DPCs active'}
+	return qq[bank]
+
+	
+def decode_boolean(code):
+	return 'yes' if code else 'no'
+
+	
+def decode_detector_type(type):
+	if type==6: return '6 [LVTTL on TDC1&2]'
+	return '%d [probably using some CFD inputs]' % type
+
 
 class dpc_daq:
-	def __init__(self, callback=None):
+    ''' Provides an interface to spcm32x64.dll, pulling timetags off the DPC230 time tagger.  '''
+	def __init__(self, callback):
 		''' Constructor '''
 		# tell the gui what we are up to
-		self.callback=nocallback if callback==None else callback		
+		self.callback=callback
 		self.callback('Connecting to DPC-230...')
 		
 		# we only have one card at the moment, so we always communicate with card #0
@@ -274,7 +331,7 @@ class dpc_daq:
 		
 	def read_rates(self):
 		''' Reads photon rate counts, calculates rate values '''
-		rates=qy.hardware.counting.dpc_structs.spcrates()
+		rates=dpc_structs.spcrates()
 		ret = self.spc.SPC_read_rates(self.module_no, byref(rates))
 		if ret!=0: print 'something went wrong when trying to read rates.'
 		return rates

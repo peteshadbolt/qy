@@ -2,3 +2,5 @@
 qy.egg-info/*
 build/*
 *.counted
+*.ctx
+*.spc
