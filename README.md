@@ -1,23 +1,10 @@
 ##Qy for Python
 
-Quantum libraries all in one place. Control and automation, DAQ, IO, simulation, graphics, GUI, analysis.
+Quantum photonics with Python. Control and automation, DAQ, IO, simulation, graphics, GUI, analysis.
 
-###Installing 
-`qy` depends on [numpy](http://numpy.org) and [matplotlib](http://matplotlib.org). I am trying to avoid dependency on [SciPy](http://scipy.org), but some functions still need it. You will need [cython](http://cython.org) and [SWIG](http://swig.org) if you want to compile from source.
+### Installing
 
-####Windows
-I am periodically building windows installers. You can download them [here](https://github.com/peteshadbolt/qy/tree/master/dist).
-Under windows using [mingw32](http://www.mingw.org/), the following commands seem to do the job when building from source:
-
-    > python setup.py build --compiler mingw32
-    > python setup.py install
-
-####Linux
-Under linux, this is the command that I am using to compile/build and install qy:
-
-    $ python setup.py  install --user
-
-The `--user` is optional.
+I recently moved from disutils to setuptools. I'm sure this will create headaches...
 
 ### Contents
 
@@ -28,9 +15,8 @@ Post-processing and analysis tools.
 - Quantum metrics: quantum state fidelity, process fidelity, CHSH ...
 - Classical metrics: Trace distance, statistical fidelity ...
 
-####IO
-Interface to non-standard binary formats.
-- Fast interface to binary `.counted` files from [DPC-230](http://www.becker-hickl.com/pdf/dbdpc3.pdf) timetagger
+####Formats
+Non-standard file formats. In particular, a serial file format for long-running experiments.
 
 ####Simulation
 Optimized code for simulating linear quantum optics and quantum information, some of which is written using [cython](http://www.cython.org).
