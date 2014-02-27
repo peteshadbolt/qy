@@ -1,5 +1,5 @@
 '''
-This code provides an interface to spcm32x64.dll, pulling timetags of the DPC230 time tagger.
+This code provides an interface to spcm32x64.dll, pulling timetags off the DPC230 time tagger.
 '''
 
 from ctypes import *

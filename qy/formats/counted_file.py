@@ -211,7 +211,9 @@ if __name__=='__main__':
     
     # Dump it to disk
     for i in range(1000):
+        c.write_list(['scan_step', 1])
         c.write_list(['motor_controller_update', 0, i/200.])
+        c.write_list(['motor_controller_update', 1, i/100.])
         c.write_list(['motor_controller_update', 1, i/100.])
         c.write_counts(s)
 
