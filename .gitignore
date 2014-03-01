@@ -1,5 +1,5 @@
 *.pyc
-qy.egg-info/*
+qy.egg-info/
 build/*
 *.counted
 *.ctx
