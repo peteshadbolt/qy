@@ -171,8 +171,16 @@ class dpc_daq:
     def init_defaults(self):
         self.connect_to_board()
         if self.get_init_status()==-6: 
-            print 'fix this now'
-            sys.exit(0)
+            user = raw_input('Do you want to try to force the connection? [y/N] ')
+            if user.lower().startswith('y'):
+                self.set_mode(0, 1)
+                self.kill()
+                self.connect_to_board()
+                if self.get_init_status()==-6: 
+                    print 'Still failed to connect :('
+                    sys.exit(0)
+            else:
+                sys.exit(0)
     
         self.set_parameter('collect_time', 1)
         self.set_parameter('mem_bank', 6)
@@ -184,7 +192,8 @@ class dpc_daq:
     def get_init_status(self):
         ''' gets the initialization status of the board '''
         ret=self.spc.SPC_get_init_status(self.module_no);
-        if ret<0: print 'warning: unexpected spc init status'
+        if ret<0: print 'Warning: unexpected spc init status. \n\
+This usually means that another process has control of the DPC-230.'
         return ret
             
     def get_module_info(self):
@@ -216,7 +225,7 @@ class dpc_daq:
         '''
         mode_c=c_short(mode)
         force_use_c=c_short(force_use)
-        in_use_c=c_int(0)
+        in_use_c=c_int(1)
         ret=self.spc.SPC_set_mode(mode_c, force_use_c, byref(in_use_c));
         return ret
         
@@ -238,7 +247,7 @@ class dpc_daq:
 
     def set_parameter(self, par_name, value):
         ''' writes a particular setup parameter '''
-        par_id=qy.hardware.counting.defs.param_id_dict[par_name]
+        par_id=param_id_dict[par_name]
         par_id_c=c_short(par_id)
         value_c=c_float(value)
         ret=self.spc.SPC_set_parameter(self.module_no, par_id_c, value_c);

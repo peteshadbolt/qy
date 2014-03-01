@@ -17,6 +17,7 @@ class CountedTests(unittest.TestCase):
         # How fast can we write 100 chunks? (Answer: fast enough)
         from random import randint
 
+        print 'Writing...'
         for i in range(N):
             # Generate dummy data
             s=''
@@ -33,6 +34,7 @@ class CountedTests(unittest.TestCase):
             c.write_counts(s)
 
         # Try loading a CTX file
+        print 'Reading...'
         c = ctx(test_filename, mode='read')
         nmcs=0
         for event in c:
