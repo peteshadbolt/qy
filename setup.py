@@ -1,19 +1,17 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
+import os
+
+extensions=[]
+cc_path=os.path.join('qy', 'hardware', 'dpc230', 'count_coincidences', 'count_coincidences.i')
+cc_name='qy.hardware.dpc230._count_coincidences'
+count_coincidences = Extension(cc_name, [cc_path], swig_opts=['-modern', '-I../include'])
+extensions.append(count_coincidences)
+
 setup(
     name = "qy",
     version = "0.1",
     packages = find_packages(),
-    #scripts = ['say_hello.py'],
-     #Project uses reStructuredText, so ensure that the docutils get
-     #installed or upgraded on the target machine
-    #install_requires = ['docutils>=0.3'],
-    #package_data = {
-         #If any package contains *.txt or *.rst files, include them:
-        #'': ['*.txt', '*.rst'],
-         #And include any *.msg files found in the 'hello' package, too:
-        #'hello': ['*.msg'],
-    #},
-    # metadata for upload to PyPI
+    ext_modules=extensions,
     test_suite='tests',
     author = "Pete Shadbolt",
     author_email = "pete.shadbolt@gmail.com",

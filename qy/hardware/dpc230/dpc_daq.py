@@ -171,8 +171,8 @@ class dpc_daq:
     def init_defaults(self):
         self.connect_to_board()
         if self.get_init_status()==-6: 
-            user = raw_input('Do you want to try to force the connection? [y/N] ')
-            if user.lower().startswith('y'):
+            #user = raw_input('Do you want to try to force the connection? [y/N] ')
+            if qy.settings.get('dpc.force_connection'):
                 self.set_mode(0, 1)
                 self.kill()
                 self.connect_to_board()
@@ -263,18 +263,21 @@ This usually means that another process has control of the DPC-230.'
         if ret!=0: print 'something went wrong when trying to read device parameter.'
         return value_c.value
         
-    def print_setup_summary(self):
+    def get_setup_summary(self):
         ''' pretty-prints a summary of the setup parameters of the board. '''
-        print 'Setup info:'
-        print '  operation mode:   %d [%s]' % (self.get_parameter('mode'), decode_operation_mode(self.get_parameter('mode')))
-        print '  memory bank:      %d [%s]' % (self.get_parameter('mem_bank'), decode_memory_bank(self.get_parameter('mem_bank')))
-        print '  detector type:    %s' % decode_detector_type(self.get_parameter('detector_type'))
-        print '  enabled channels:%s' % decode_chan_enable(int(self.get_parameter('chan_enable')))      
-        print '  channel slope:   %s' % decode_chan_enable(int(self.get_parameter('chan_slope')))       
-        print '  collection time:  %s' % self.get_parameter('collect_time')
-        print '  stop at end:      %s' % decode_boolean(self.get_parameter('stop_on_time'))
-        print '  time bin size:    %.20f fs' % (self.get_parameter('tac_enable_hold')*1e3)
-        print
+        s= 'Setup info:'
+        s+= '  operation mode:   %d [%s]' % (self.get_parameter('mode'), decode_operation_mode(self.get_parameter('mode'))) + '\n'
+        s+= '  memory bank:      %d [%s]' % (self.get_parameter('mem_bank'), decode_memory_bank(self.get_parameter('mem_bank'))) + '\n'
+        s+= '  detector type:    %s' % decode_detector_type(self.get_parameter('detector_type')) + '\n'
+        s+= '  enabled channels:%s' % decode_chan_enable(int(self.get_parameter('chan_enable'))) + '\n'
+        s+= '  channel slope:   %s' % decode_chan_enable(int(self.get_parameter('chan_slope'))) + '\n'
+        s+= '  collection time:  %s' % self.get_parameter('collect_time') + '\n'
+        s+= '  stop at end:      %s' % decode_boolean(self.get_parameter('stop_on_time')) + '\n'
+        s+= '  time bin size:    %.20f fs' % (self.get_parameter('tac_enable_hold')*1e3) + '\n'
+        return s
+
+    def print_setup_summary(self):
+        print self.get_setup_summary()
         
     #################################
     # status functions              #
