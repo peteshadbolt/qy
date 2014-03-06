@@ -4,7 +4,8 @@ import os
 extensions=[]
 cc_path=os.path.join('count_coincidences.i')
 cc_name='_count_coincidences'
-count_coincidences = Extension(cc_name, [cc_path], swig_opts=['-I./'],  include_dirs=['/'])
+swig_opts=['-modern']
+count_coincidences = Extension(cc_name, [cc_path], swig_opts=swig_opts)
 extensions.append(count_coincidences)
 
 setup(
