@@ -1,0 +1,3 @@
+LIBRARY _count_coincidences.pyd
+EXPORTS
+init_count_coincidences

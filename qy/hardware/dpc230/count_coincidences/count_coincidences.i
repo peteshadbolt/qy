@@ -1,8 +1,8 @@
 %module count_coincidences
-%include <stdint.i>
-%include "carrays.i"
-%array_class(int, array);
-%inline 
+/*%include <stdint.i>*/
+/*%include "carrays.i"*/
+/*%array_class(int, array);*/
+/*%inline */
 
 %{
 
@@ -13,3 +13,4 @@ extern void set_window(int new_window);
 extern void set_time_cutoff_ms(int new_time_cutoff_ms);
 
 %}
+
