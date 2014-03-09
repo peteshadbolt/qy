@@ -4,6 +4,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "dpc.h"
+#include "delays.h"
 
 // Global vars
 #define CHUNK_SIZE 2097152
@@ -18,55 +20,16 @@ long fifo_gap=0;						// tells us whether any data went missing due to a FIFO ga
 long long int photon_time=0;			// the arrival time of this photon
 int photon_channel=0;					// the channel of the current photon
 long long int time_cutoff;				// how many chunks we should process
-
-#include "uthash.h"
-#include "dpc.h"
-#include "delays.h"
+int pattern_rates[65536];				// table of count rates
+int nonzero_pattern_count=0;			// the number of nonzero count rates
 
 
-// Prepare for new data
-void zero_rates()
+// A count rate, stored as a struct
+typedef struct 
 {
-	fifo_gap=0;
-    //TODO: something else here
-}
-
-
-// Sets the coincidence window
-void set_window(int new_window){
-	window=new_window; 
-	printf("Set the coincidence window to %d tb\n", window);
-}
-
-
-// Sets the time cutoff
-void set_time_cutoff_ms(int new_time_cutoff_ms) {
-	time_cutoff=new_time_cutoff_ms*1e12/TPB;
-	printf("Set the time cutoff to %d ms\n", new_time_cutoff_ms);
-}
-
- 
-// Process a particular integration step
-int process_spc(char* spc_filename) {
-	printf("Processing %s\n", spc_filename);
-
-	// Load the SPC file
-	spc_file=fopen(spc_filename, "rb");
-	if (spc_file==0){return -1;}
-		
-	// Process all of the photons in the file.
-	int finished=0;
-	grab_chunk();
-	while (nrecords>0 && finished!=-1) {	
-		finished=split_channels();
-		count_coincidences();
-		if (finished!=-1){grab_chunk();}
-	}
-	
-	// Close the SPC file 
-	fclose(spc_file);
-	return 1;
-}
+    int pattern; // The count rates
+    long count;  // The number of events            
+} COUNTRATE;
 
 
 // Implements the coincidence window
@@ -101,7 +64,7 @@ int split_channels()
 			photon_time=photon_to_time(this_record);
 			photon_time+=delays[photon_channel];
 			photon_time=photon_time ^ high_time;
-			if (photon_time>time_cutoff && time_cutoff>0){/*printf("Bailed due to time cutoff.\n");*/ return -1;}
+			if (photon_time>time_cutoff && time_cutoff>0) {return -1;}
 			channels[photon_channel][channel_count[photon_channel]]=photon_time;
 			channel_count[photon_channel]+=1;
 		}
@@ -112,6 +75,7 @@ int split_channels()
 			high_time=high_time << 24;
 		}
 	}
+    if (fifo_gap){printf("WARNING: FIFO gap. You are missing photons!");}
 	return 0;
 }
 
@@ -141,23 +105,103 @@ void get_next_photon()
 // Counts coincidences in the current chunk of data
 void count_coincidences()
 {
-	int pattern=0;					// stores which coincidences we have
-	long long int window_time=0;	// the quantized time of this window
+	short pattern=0;				// Stores which coincidences we have
+	long long int window_time=0;	// The quantized time of this window
 	get_next_photon();
 	while(photon_time!=-1)
 	{
 		photon_time=quantize(photon_time, window);
 		if ((photon_time==window_time) ^ (photon_time==window_time+window))
 		{
-			pattern=pattern ^ (1 << photon_channel);
+            // Update the picture of the event
+			pattern = pattern ^ (1 << photon_channel);
 		}
 		else
 		{
-			//if ((pattern_rates[pattern]==0) && pattern!=0){nonzero_pattern_count+=1;}
-			//pattern_rates[pattern]+=1;
-			pattern=(1 << photon_channel);
+            // Store the event in the main table
+            if ((pattern_rates[pattern]==0) && pattern!=0){nonzero_pattern_count+=1;}
+            pattern_rates[pattern]+=1;
+            // Get ready for the next event
+			pattern = (1 << photon_channel);
 		}
 		window_time=photon_time;
 		get_next_photon();
 	}
 }
+
+
+// Prepare for new data
+void reset()
+{
+    int i;
+	fifo_gap=0;
+	nonzero_pattern_count=0;
+	for (i=0; i<65536; i+=1){pattern_rates[i]=0;}
+}
+
+// Build the sparse table of data for output to the client
+void build_output()
+{
+    // Reallocate space for the nonzero rates
+	int data_nbytes=sizeof(countrate)*(nonzero_pattern_count);
+    //TODO: rename this and make it a struct
+    SOMETHING sparse_data=(int *)malloc(data_nbytes);
+	if (sparse_data==NULL){printf("Out of memory error!\n"); return -1;}
+
+	// Pull out the nonzero data
+	int pattern=1; int i=0;
+	for (pattern=1; pattern<65536; pattern+=1) {
+		if (pattern_rates[pattern]>0) {
+            COUNTRATE rate = {pattern, pattern_rates[pattern]};
+			sparse_data[i]=rate;
+			i+=1;
+		}
+	}
+    return sparse_data
+}
+
+
+// Process an SPC file. This is the main function to call
+int process_spc(char* spc_filename) {
+	printf("Processing %s ... ", spc_filename);
+
+    // Reset count rates, etc
+    reset();
+
+	// Load the SPC file
+	spc_file=fopen(spc_filename, "rb");
+	if (spc_file==0){return -1;}
+		
+	// Process all of the photons in the file.
+	int finished=0;
+	grab_chunk();
+	while (nrecords>0 && finished!=-1) {	
+		finished=split_channels();
+		count_coincidences();
+		if (finished!=-1){grab_chunk();}
+	}
+	
+	// Close the SPC file 
+	fclose(spc_file);
+	printf("done.\n" );
+
+    // Prepare the data to return
+    build_output();
+	return 1;
+}
+
+
+// Sets the coincidence window
+void set_window(int new_window){
+	window=new_window; 
+	printf("Set the coincidence window to %d tb\n", window);
+}
+
+
+// Sets the time cutoff
+void set_time_cutoff_ms(int new_time_cutoff_ms) {
+	time_cutoff=new_time_cutoff_ms*1e12/TPB;
+	printf("Set the time cutoff to %d ms\n", new_time_cutoff_ms);
+}
+
+
