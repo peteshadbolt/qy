@@ -1,4 +1,4 @@
-// delays across 16 channels, in timebins
+// Delays across 16 channels, in timebins
 int delays[16];
 
 // Set the delays to some array
