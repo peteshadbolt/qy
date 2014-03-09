@@ -6,9 +6,17 @@
 #include <stdlib.h>
 #include "dpc.h"
 #include "delays.h"
+//
+// A count rate, stored as a struct
+typedef struct 
+{
+    int pattern; // The count rates
+    long count;  // The number of events            
+} COUNTRATE;
+
 
 // Global vars
-#define CHUNK_SIZE 2097152
+#define CHUNK_SIZE 200000
 FILE *spc_file;							// the SPC file
 int buffer[CHUNK_SIZE];					// the photon buffer
 long long int channels[16][CHUNK_SIZE];	// data, split up into channels
@@ -22,14 +30,7 @@ int photon_channel=0;					// the channel of the current photon
 long long int time_cutoff;				// how many chunks we should process
 int pattern_rates[65536];				// table of count rates
 int nonzero_pattern_count=0;			// the number of nonzero count rates
-
-
-// A count rate, stored as a struct
-typedef struct 
-{
-    int pattern; // The count rates
-    long count;  // The number of events            
-} COUNTRATE;
+COUNTRATE *output_data=NULL;			// output data
 
 
 // Implements the coincidence window
@@ -129,6 +130,12 @@ void count_coincidences()
 	}
 }
 
+// Utility
+int get_nonzero_pattern_count()
+{
+    return nonzero_pattern_count;
+}
+
 
 // Prepare for new data
 void reset()
@@ -137,32 +144,33 @@ void reset()
 	fifo_gap=0;
 	nonzero_pattern_count=0;
 	for (i=0; i<65536; i+=1){pattern_rates[i]=0;}
+    if (output_data!=NULL){free(output_data);}
+    output_data=NULL;
 }
 
 // Build the sparse table of data for output to the client
-void build_output()
+COUNTRATE *build_output()
 {
     // Reallocate space for the nonzero rates
-	int data_nbytes=sizeof(countrate)*(nonzero_pattern_count);
+	int data_nbytes=sizeof(COUNTRATE)*(nonzero_pattern_count);
     //TODO: rename this and make it a struct
-    SOMETHING sparse_data=(int *)malloc(data_nbytes);
-	if (sparse_data==NULL){printf("Out of memory error!\n"); return -1;}
+    output_data=(COUNTRATE *)malloc(data_nbytes);
+	if (output_data==NULL){printf("Out of memory error!\n"); return NULL;}
 
 	// Pull out the nonzero data
 	int pattern=1; int i=0;
 	for (pattern=1; pattern<65536; pattern+=1) {
 		if (pattern_rates[pattern]>0) {
             COUNTRATE rate = {pattern, pattern_rates[pattern]};
-			sparse_data[i]=rate;
+			output_data[i]=rate;
 			i+=1;
 		}
 	}
-    return sparse_data
+    return output_data;
 }
 
-
 // Process an SPC file. This is the main function to call
-int process_spc(char* spc_filename) {
+COUNTRATE *process_spc(char* spc_filename) {
 	printf("Processing %s ... ", spc_filename);
 
     // Reset count rates, etc
@@ -170,7 +178,7 @@ int process_spc(char* spc_filename) {
 
 	// Load the SPC file
 	spc_file=fopen(spc_filename, "rb");
-	if (spc_file==0){return -1;}
+	if (spc_file==0){return NULL;}
 		
 	// Process all of the photons in the file.
 	int finished=0;
@@ -186,8 +194,7 @@ int process_spc(char* spc_filename) {
 	printf("done.\n" );
 
     // Prepare the data to return
-    build_output();
-	return 1;
+    return build_output();
 }
 
 
@@ -203,5 +210,4 @@ void set_time_cutoff_ms(int new_time_cutoff_ms) {
 	time_cutoff=new_time_cutoff_ms*1e12/TPB;
 	printf("Set the time cutoff to %d ms\n", new_time_cutoff_ms);
 }
-
 
