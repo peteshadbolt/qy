@@ -67,15 +67,22 @@ except AttributeError:
     _newclass = 0
 
 
-def _swig_setattr_nondynamic_method(set):
-    def set_attr(self,name,value):
-        if (name == "thisown"): return self.this.own(value)
-        if hasattr(self,name) or (name == "this"):
-            set(self,name,value)
-        else:
-            raise AttributeError("You cannot add attributes to %s" % self)
-    return set_attr
 
+def process_spc(*args):
+  return _count_coincidences.process_spc(*args)
+process_spc = _count_coincidences.process_spc
 
+def set_delays(*args):
+  return _count_coincidences.set_delays(*args)
+set_delays = _count_coincidences.set_delays
+
+def set_window(*args):
+  return _count_coincidences.set_window(*args)
+set_window = _count_coincidences.set_window
+
+def set_time_cutoff_ms(*args):
+  return _count_coincidences.set_time_cutoff_ms(*args)
+set_time_cutoff_ms = _count_coincidences.set_time_cutoff_ms
+# This file is compatible with both classic and new-style classes.
 
 
