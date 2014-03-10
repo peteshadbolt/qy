@@ -6,7 +6,7 @@
 #include <Python.h>
 #include "dpc.h"
 #include "delays.h"
-#include "alphabet.h"
+char ALPHABET[16] = "abcdefghijklmnop";
 
 // Global vars
 #define CHUNK_SIZE 200000
