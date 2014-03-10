@@ -1,7 +1,7 @@
 // Delays across 16 channels, in timebins
 int delays[16];
 
-char set_delays_docs[] = "set_delays(delays): Set the delay for each channel, in TB units (1 TB = 0.082 ns)";
+char set_delays_docs[] = "set_delays(delays): Set the delay for each channel in TB";
 static PyObject* set_delays(PyObject* self, PyObject* args)
 { 
     PyObject *input;
@@ -9,6 +9,7 @@ static PyObject* set_delays(PyObject* self, PyObject* args)
 
     int i;
     int size=(int)PyList_Size(input);
+    if (size>16){size=16;}
     int total=0;
     for (i = 0; i < size; i++) {
        int delay = (int)PyInt_AsLong(PyList_GetItem(input, (Py_ssize_t)i));
@@ -20,13 +21,6 @@ static PyObject* set_delays(PyObject* self, PyObject* args)
     return response;
 }
 
-// Set the delays to some array
-//void set_delays(int *new_delays) 
-//{
-    //int i; 
-    //for (i=0; i<16; i+=1) {delays[i]=new_delays[i];}
-    //printf("Changed the delays\n");
-//}
 
 // Just set the delays to zero
 void zero_delays() 
@@ -34,6 +28,7 @@ void zero_delays()
     int i; 
     for (i=0; i<16; i+=1) {delays[i]=0;}
 }
+
 
 // Show the current delay settings
 void show_delays() 

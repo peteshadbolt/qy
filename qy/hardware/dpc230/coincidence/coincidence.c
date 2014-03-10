@@ -32,6 +32,17 @@ long long int quantize(long long int t, int win) {return t-(t % win);}
 void grab_chunk(){nrecords=fread(&buffer, 4, CHUNK_SIZE, spc_file);}
 
 
+// Count bits in a string
+int bitcount (int n)  {
+   int count = 0 ;
+   while (n)  {
+      count++ ;
+      n &= (n - 1) ;
+   }
+   return count ;
+}
+
+
 // Splits the current chunk of data into seperate buffers for each channel
 int split_channels()
 {
@@ -136,6 +147,18 @@ static PyObject* label_from_binary_pattern(int pattern)
     return response;
 }
 
+static PyObject* label_from_photon_number(int photon_number)
+{
+    char label[17];
+    int i=0;
+    for (i=0; i<photon_number; i+=1) 
+    {
+        label[i]='*';
+    }
+    PyObject *response = Py_BuildValue("s#", label, i);
+    return response;
+}
+
 
 // Builds the dictionary of count rates, to be returned to the user
 static PyObject* build_output_dict()
@@ -145,12 +168,13 @@ static PyObject* build_output_dict()
     int i=0;
     for (pattern=1; pattern<65536; pattern+=1) {
         if (pattern_rates[pattern]>0) {
-            PyObject *key = label_from_binary_pattern(pattern);;
+            PyObject *key = label_from_binary_pattern(pattern);
             PyObject *value = Py_BuildValue("i", pattern_rates[pattern]);
             PyDict_SetItem(output_dict, key, value);
             i+=1;
         }
     }
+
     return output_dict;
 }
 
@@ -187,7 +211,7 @@ static PyObject* process_spc(PyObject* self, PyObject* args)
 }
 
 
-static char set_window_docs[] = "set_window(window): Set the coincidence window in timebin units (1TB = 0.082 ns)";
+static char set_window_docs[] = "set_window(window): Set the coincidence window TB";
 static PyObject* set_window(PyObject* self, PyObject* args)
 { 
     if (!PyArg_ParseTuple(args, "i", &window)) { return NULL; }
@@ -195,7 +219,7 @@ static PyObject* set_window(PyObject* self, PyObject* args)
     return response;
 }
 
-static char set_time_cutoff_ms_docs[] = "set_time_cutoff_ms(cutoff): Set the coincidence window in timebin units (1TB = 0.082 ns)";
+static char set_time_cutoff_ms_docs[] = "set_time_cutoff_ms(cutoff): Set the cutoff point in milliseconds";
 static PyObject* set_time_cutoff_ms(PyObject* self, PyObject* args)
 { 
     int new_time_cutoff_ms;
@@ -217,5 +241,5 @@ static PyMethodDef coincidence_funcs[] = {
 void initcoincidence(void)
 {
     Py_InitModule3("coincidence", coincidence_funcs,
-                   "Fast coincidence counting for DPC230 timetag data.");
+                   "Fast coincidence counting for DPC230 timetag data. Unless otherwise stated, all units are in timebins (1 TB = 0.082 ns)");
 }
