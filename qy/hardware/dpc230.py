@@ -1,7 +1,6 @@
 from ctypes import *
 import sys, time, os
 import qy.settings
-import dpc_structs
 
 param_names_list=['CFD_LIMIT_LOW','CFD_LIMIT_HIGH','CFD_ZC_LEVEL','CFD_HOLDOFF',
         'SYNC_ZC_LEVEL','SYNC_FREQ_DIV','SYNC_HOLDOFF','SYNC_THRESHOLD',
@@ -18,8 +17,43 @@ param_names_list=['CFD_LIMIT_LOW','CFD_LIMIT_HIGH','CFD_ZC_LEVEL','CFD_HOLDOFF',
         'IMG_ROUT_Y','MASTER_CLOCK','ADC_SAMPLE_DELAY','DETECTOR_TYPE',
         'X_AXIS_TYPE','CHAN_ENABLE','CHAN_SLOPE','CHAN_SPEC_NO']
 
+param_id_dict=dict(zip(map(str.lower, param_names_list), range(len(param_names_list))))
 
-param_id_dict=dict([(param_names_list[i].lower(), i) for i in range(len(param_names_list))])
+class spcmodinfo(Structure):
+    _fields_=[('module_type', c_short),
+              ('bus_no', c_short),
+              ('slot_no', c_short),
+              ('in_use', c_short),
+              ('init', c_short),
+              ('base_adr', c_ushort)]
+              
+class spcrates(Structure):
+    _fields_=[('sync_rate', c_float),
+              ('cfd_rate', c_float),
+              ('tac_rate', c_float),
+              ('adc_rate', c_float)]
+
+spcinfo_comments=['base I/O address on PCI bus', 'set to initialisation result code', '= CFD_TH1 threshold of CFD1', 
+                '= CFD_TH2 threshold of CFD2', '= CFD_TH3 threshold of CFD3', '= CFD_TH4 threshold of CFD4', 
+                '= CFD_ZC1 Zero Cross level of CFD1', '= CFD_ZC2 Zero Cross level of CFD2', '= CFD_ZC3 Zero Cross level of CFD3', 
+                'DPC range in TCSPC and Multiscaler mode', '1,2,4', 'not used for DPC230', 
+                'TDC offset in TCSPC and Multiscaler mode', 'not used for DPC230', '= CFD_ZC4 Zero Cross level of CFD4', 
+                'no of points of decay curve', 'not used for DPC230', '0.0001 .. 100000s , default 2.0s', 
+                'not used for DPC230', 'not used for DPC230', '1 (stop) or 0 (no stop)', 
+                'not used for DPC230', 'not used for DPC230', 'not used for DPC230', 
+                'DPC/TDC active', 'not used for DPC230', 'not used for DPC230', 
+                'DPC230  bits 0-7 - control bits', 'macro time clock in ps', 'module no on PCI bus ( 0-7)', 
+                'module\'s operation mode', 'not used for DPC230', 'not used for DPC230', 
+                'not used for DPC230', 'not used for DPC230', 'not used for DPC230', 
+                'not used for DPC230', 'not used for DPC230', 'source of pixel clock in Image modes', 
+                'not used for DPC230', 'external trigger condition', 'not used for DPC230', 
+                'not used for DPC230', 'rate counting time in sec', 'not used for DPC230', 
+                'not used for DPC230', 'EEPROM', 'not used for DPC230', 
+                'not used for DPC230', 'not used for DPC230', 'not used for DPC230', 
+                'not used for DPC230', 'not used for DPC230', 'not used for DPC230', 
+                'not used for DPC230', 'type of active inputs', 'not used for DPC230', 
+                'enable(1)/disable(0) input channels', 'active slope of input channels', 'channel numbers of special inputs']
+
 
 
 state_bits=((0x80, 'TDC1'), 
@@ -64,32 +98,38 @@ def decode_detector_type(type):
     return '%d [probably using some CFD inputs]' % type
 
 
-class dpc_daq:
+def nocallback(s): pass
+
+class dpc230:
     ''' Provides an interface to spcm32x64.dll, pulling timetags off the DPC230 time tagger.  '''
-    def __init__(self, callback):
+    def __init__(self, mode, callback=None):
         ''' Constructor '''
-        # tell the gui what we are up to
-        self.callback=callback
+        # Set up
+        self.mode=mode
+        self.callback=callback if callback!=None else nocallback
         self.callback('Connecting to DPC-230...')
         
-        # we only have one card at the moment, so we always communicate with card #0
+        # We only have one card at the moment, so we always communicate with card #0
         self.module_no=c_short(0)
         
-        # create the photon buffer
+        # Create the photon buffer
         self.buffer_frames=int(1e6)                                 # one million photons ought to do it!
         self.buffer_words=self.buffer_frames*2                      # each photon is a word
         self.buffer_bytes=self.buffer_words*2                       # each photon is a word
         self.photon_buffer=create_string_buffer(self.buffer_bytes+10)
                 
-        # connect to the DLL
+        # Connect to the DLL
         self.dll_path=qy.settings.get('dpc230.dll_path')
         self.spc=CDLL(os.path.join(self.dll_path, 'spcm32x64.dll'))
         
-        # set vars
+        # Set vars
         self.refresh_rate=0.2   # this decides how often we should send status updates.
         
-        # initialize
-        self.init_defaults()
+        # Initialize
+        if self.mode=='hardware':
+            self.init_hardware_mode()
+        else:
+            self.init_software_mode()
         
     ###########################
     # really useful functions #
@@ -165,14 +205,31 @@ class dpc_daq:
         if ret<0:
             self.callback('Error connecting to DPC-230!')
         else:
-            self.callback('Initialized the DPC-230 OK. using INI file "%s"' % os.path.split(ini_file)[1])
+            self.callback('Initialized the DPC-230 OK, using INI file "%s"' % os.path.split(ini_file)[1])
         return ret
+
+
+    def init_software_mode(self, ini_file=None):
+        ''' Initializes spcm32x64.dll in simulation mode. Pass the name of the INI configuration file to use. '''
+        if ini_file==None: ini_file=os.path.join(self.dll_path, 'simulate.ini')
+        ini_file_c=create_string_buffer(ini_file, 256)  # ctypes ini name
+        ret = self.spc.SPC_init(ini_file_c)             # connect to the board
+                
+        # if the return code is <0, we couldn't initialize the board for some reason
+        if ret<0:
+            print 'error: python couldn\'t initialize spcm32x64.dll'
+            sys.exit(0)
+        else:
+            self.callback('Initialized the DPC-230 OK, using INI file "%s"' % os.path.split(ini_file)[1])
+        return ret
+
         
-    def init_defaults(self):
+    def init_hardware_mode(self):
+        ''' Initialize the system in hardware control mode '''
         self.connect_to_board()
         if self.get_init_status()==-6: 
-            #user = raw_input('Do you want to try to force the connection? [y/N] ')
             if qy.settings.get('dpc.force_connection'):
+                print 'Forcing connection to DPC230 ... (enable/disable using qy.settings)'
                 self.set_mode(0, 1)
                 self.kill()
                 self.connect_to_board()
@@ -200,13 +257,13 @@ This usually means that another process has control of the DPC-230.'
         ''' gets loads of info about the board as a string '''
         info=spcmodinfo()
         self.spc.SPC_get_module_info(self.module_no, byref(info));
-        s='module info:\n'
+        s='Module info:\n'
         s+='  type: %d\n' % info.module_type
         s+='  bus number: %d\n' % info.bus_no
         s+='  in use: %s\n' % decode_boolean(info.in_use)
         init_desc='error' if info.init<0 else 'no error'
         s+='  initialization result code: %d [%s]\n' % (info.init, init_desc)
-        s+='  PCI bus bus I/O address: %s' % info.base_adr
+        s+='  PCI bus bus I/O address: %s\n' % info.base_adr
         return s
         
     def test_id(self):
@@ -229,17 +286,20 @@ This usually means that another process has control of the DPC-230.'
         ret=self.spc.SPC_set_mode(mode_c, force_use_c, byref(in_use_c));
         return ret
         
-    def print_board_summary(self):
+    def get_board_summary(self):
         ''' pretty-prints a summary of the status of the initialized board '''
-        print 'board info:'
-        print '  init status: %d' % self.get_init_status()
-        print '  genuine DPC-230 board' if self.test_id()==230 else 'warning: something about this board is fishy'
+
+        s='DPC230 interface, %s mode\n' % self.mode
+        s +=  'Board info:\n'
+        s+= '  init status: %d\n' % self.get_init_status()
+        s+= '  genuine DPC-230 board\n' if self.test_id()==230 else 'warning: something about this board is fishy\n'
         mode=self.get_mode()
         mode_desc='hardware' if mode==0 else 'warning: simulation'
-        print '  mode: %d [%s]' % (mode, mode_desc)
-        print
-        print self.get_module_info()
-        print
+        s+= '  mode: %d [%s]\n' % (mode, mode_desc)
+        s+= '\n'
+        s+= self.get_module_info()
+        s+= '\n'
+        return s
         
     #################################
     # setup functions               #
@@ -343,7 +403,7 @@ This usually means that another process has control of the DPC-230.'
         
     def read_rates(self):
         ''' Reads photon rate counts, calculates rate values '''
-        rates=dpc_structs.spcrates()
+        rates=spcrates()
         ret = self.spc.SPC_read_rates(self.module_no, byref(rates))
         if ret!=0: print 'something went wrong when trying to read rates.'
         return rates
@@ -480,4 +540,57 @@ This usually means that another process has control of the DPC-230.'
         ret = self.spc.SPC_init_phot_stream(fifo_type, spc_file, files_to_use, stream_type, what_to_read)
         return c_short(ret)
     
-    
+    def convert_raw_data(self, tdc1_filename, tdc2_filename):
+        ''' converts a raw FIFO data file to SPC format '''
+            
+        # initialize photon streams
+        tdc1_stream_hndl=self.init_phot_stream(tdc1_filename, 1)
+        tdc2_stream_hndl=self.init_phot_stream(tdc2_filename, 2)
+        
+        # prepare for conversion
+        if tdc1_stream_hndl.value<0 or tdc2_stream_hndl.value<0: print 'error loading raw data streams'; sys.exit(0)
+        spc_file=os.path.join(os.path.dirname(tdc1_filename), 'photons.spc')
+        
+        # empty the spc file
+        q=open(spc_file, 'wb')
+        q.write('')
+        q.close()
+        
+        spc_file=c_char_p(spc_file)
+        max_per_call=c_int(int(4e6))        # how many?
+        
+        # initialize and convert first chunk
+        self.callback('Converting raw data...')
+        ret=self.spc.SPC_convert_dpc_raw_data(tdc1_stream_hndl, tdc2_stream_hndl, c_short(1), spc_file, max_per_call)
+        
+        # convert remaining chunks
+        while ret>0: 
+            ret=self.spc.SPC_convert_dpc_raw_data(tdc1_stream_hndl, tdc2_stream_hndl, c_short(0), spc_file, max_per_call)
+            self.callback('Converting raw data...')
+        self.callback('Finished converting raw data.')
+        
+        # check for errors
+        if ret<0: 
+            self.callback('Error converting raw data file to SPC format')
+            print 'Error converting raw data file to SPC format';   sys.exit(0)
+                
+        # close streams
+        self.spc.SPC_close_phot_stream(tdc1_stream_hndl)
+        self.spc.SPC_close_phot_stream(tdc2_stream_hndl)
+
+        # empty those files to save space
+        f=open(tdc1_filename, 'wb'); f.close()
+        f=open(tdc2_filename, 'wb'); f.close()
+        
+        # return the name of the new spc file
+        return spc_file.value
+
+
+    def __str__(self):
+        ''' Return a string, describing state '''
+        return self.get_board_summary()+self.get_setup_summary()
+
+
+if __name__=='__main__':
+    x=dpc230('hardware')
+

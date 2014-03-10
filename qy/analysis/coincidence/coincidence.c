@@ -147,19 +147,6 @@ static PyObject* label_from_binary_pattern(int pattern)
     return response;
 }
 
-static PyObject* label_from_photon_number(int photon_number)
-{
-    char label[17];
-    int i=0;
-    for (i=0; i<photon_number; i+=1) 
-    {
-        label[i]='*';
-    }
-    PyObject *response = Py_BuildValue("s#", label, i);
-    return response;
-}
-
-
 // Builds the dictionary of count rates, to be returned to the user
 static PyObject* build_output_dict()
 {
