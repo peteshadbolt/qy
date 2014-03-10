@@ -1,19 +1,18 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
+import os
+
+
+# Fast coincidence-counting code
+path=os.path.join('qy', 'analysis', 'coincidence', 'coincidence.c')
+coincidence = Extension('qy.analysis.coincidence', [path])
+
+extensions = [coincidence]
+
 setup(
     name = "qy",
     version = "0.1",
     packages = find_packages(),
-    #scripts = ['say_hello.py'],
-     #Project uses reStructuredText, so ensure that the docutils get
-     #installed or upgraded on the target machine
-    #install_requires = ['docutils>=0.3'],
-    #package_data = {
-         #If any package contains *.txt or *.rst files, include them:
-        #'': ['*.txt', '*.rst'],
-         #And include any *.msg files found in the 'hello' package, too:
-        #'hello': ['*.msg'],
-    #},
-    # metadata for upload to PyPI
+    ext_modules=extensions,
     test_suite='tests',
     author = "Pete Shadbolt",
     author_email = "pete.shadbolt@gmail.com",

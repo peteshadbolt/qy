@@ -4,3 +4,6 @@ build/
 *.counted
 *.ctx
 *.spc
+*.so
+*.pyd
+*/build/*
