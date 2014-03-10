@@ -24,6 +24,10 @@ qy/hardware/fpga.py
 qy/hardware/parser.py
 qy/hardware/smc100.py
 qy/hardware/toptica.py
+qy/hardware/dpc230/__init__.py
+qy/hardware/dpc230/dpc_daq.py
+qy/hardware/dpc230/dpc_post.py
+qy/hardware/dpc230/dpc_structs.py
 qy/hardware/heaters/__init__.py
 qy/hardware/heaters/calibration_table.py
 qy/hardware/heaters/dac.py

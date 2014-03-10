@@ -1,6 +1,6 @@
 *.pyc
-qy.egg-info/*
-build/*
+qy.egg-info/
+build/
 *.counted
 *.ctx
 *.spc
