@@ -132,8 +132,8 @@ static PyObject* label_from_binary_pattern(int pattern)
             j+=1;
         }
     }
-    PyObject *key = Py_BuildValue("s#", label, j);
-    return key;
+    PyObject *response = Py_BuildValue("s#", label, j);
+    return response;
 }
 
 
@@ -153,6 +153,7 @@ static PyObject* build_output_dict()
     }
     return output_dict;
 }
+
 
 // The main coincidence-counting process
 static char process_spc_docs[] = "process_spc(filename): Process an SPC file";
@@ -190,8 +191,8 @@ static char set_window_docs[] = "set_window(window): Set the coincidence window 
 static PyObject* set_window(PyObject* self, PyObject* args)
 { 
     if (!PyArg_ParseTuple(args, "i", &window)) { return NULL; }
-    PyObject *key = Py_BuildValue("i", window);
-    return key;
+    PyObject *response = Py_BuildValue("i", window);
+    return response;
 }
 
 static char set_time_cutoff_ms_docs[] = "set_time_cutoff_ms(cutoff): Set the coincidence window in timebin units (1TB = 0.082 ns)";
@@ -200,14 +201,16 @@ static PyObject* set_time_cutoff_ms(PyObject* self, PyObject* args)
     int new_time_cutoff_ms;
     if (!PyArg_ParseTuple(args, "i", &new_time_cutoff_ms)) { return NULL; }
     time_cutoff=new_time_cutoff_ms*1e12/TPB; 
-    PyObject *key = Py_BuildValue("L", time_cutoff);
-    return key;
+    PyObject *response = Py_BuildValue("L", time_cutoff);
+    return response;
 }
+
 
 static PyMethodDef coincidence_funcs[] = {
     {"process_spc", (PyCFunction)process_spc, METH_VARARGS, process_spc_docs},
     {"set_window", (PyCFunction)set_window, METH_VARARGS, set_window_docs},
     {"set_time_cutoff_ms", (PyCFunction)set_time_cutoff_ms, METH_VARARGS, set_time_cutoff_ms_docs},
+    {"set_delays", (PyCFunction)set_delays, METH_VARARGS, set_delays_docs},
     {NULL}
 };
 
