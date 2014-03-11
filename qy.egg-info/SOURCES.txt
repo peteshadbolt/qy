@@ -6,6 +6,7 @@ qy.egg-info/dependency_links.txt
 qy.egg-info/top_level.txt
 qy/analysis/__init__.py
 qy/analysis/metrics.py
+qy/analysis/coincidence/coincidence.c
 qy/formats/__init__.py
 qy/formats/ctx.py
 qy/graphics/__init__.py
@@ -19,15 +20,12 @@ qy/graphics/old_plotting_stuff/pilgraph.py
 qy/hardware/__init__.py
 qy/hardware/arduino_powermeter.py
 qy/hardware/chameleon.py
+qy/hardware/dpc230.py
 qy/hardware/flipper_mount.py
 qy/hardware/fpga.py
 qy/hardware/parser.py
 qy/hardware/smc100.py
 qy/hardware/toptica.py
-qy/hardware/dpc230/__init__.py
-qy/hardware/dpc230/dpc_daq.py
-qy/hardware/dpc230/dpc_post.py
-qy/hardware/dpc230/dpc_structs.py
 qy/hardware/heaters/__init__.py
 qy/hardware/heaters/calibration_table.py
 qy/hardware/heaters/dac.py
@@ -83,4 +81,6 @@ qy/util/progressbar/widgets.py
 qy/wx/__init__.py
 qy/wx/wxbasics.py
 tests/__init__.py
+tests/coincidence.py
+tests/coincidence_test.py
 tests/formats.py
