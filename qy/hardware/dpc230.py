@@ -123,7 +123,7 @@ class dpc230:
         self.spc=CDLL(os.path.join(self.dll_path, 'spcm32x64.dll'))
         
         # Set vars
-        self.refresh_rate=0.2   # this decides how often we should send status updates.
+        self.refresh_rate=0.2   # Important for reading off disk
         
         # Initialize
         if self.mode=='hardware':
@@ -135,17 +135,22 @@ class dpc230:
     # really useful functions #
     ###########################
             
-    def count(self, file_buffer, collect_time=1):
+
+    def count(self, collect_time=1, file_buffer=None):
         ''' 
         Acquires data from the card for the chosen collection time, writes raw FIFO data to disk
         Returns the path of the output SPC photon file, ready for coincidence counting.
         '''
+        # Automatically choose a buffer
+        if file_buffer==None:
+            file_buffer=self.photon_buffer_2 if self.photon_buffer_switch else self.photon_buffer_1
+            self.photon_buffer_switch = not self.photon_buffer_switch
         
-        # we want to write data into two files in the target directory
+        # We want to write data into two files in the target directory
         tdc1_filename=os.path.join(file_buffer, 'tdc1.raw')
         tdc2_filename=os.path.join(file_buffer, 'tdc2.raw')
         
-        # get ready for measurement
+        # Get ready for measurement
         tdc1_file=open(tdc1_filename, 'wb')
         tdc2_file=open(tdc2_filename, 'wb')
         self.clear_rates()
@@ -154,11 +159,11 @@ class dpc230:
         measurement_time=time.clock()
         self.set_parameter('collect_time', collect_time)
 
-        # start the measurement
+        # Start the measurement
         self.start_measurement()
         #self.callback('Collecting photons...')
         
-        # keep grabbing data and dumping it to the file
+        # Keep grabbing data and dumping it to the file
         while both_armed:
             # see whether there is any data in the fifos, if so grab a chunk and write to disk
             empty=self.fifos_empty()
@@ -175,7 +180,7 @@ class dpc230:
                 if stay_alive==False: both_armed=False
                 measurement_time=time.clock()
             
-        # collect the last photons and tidy up
+        # Collect the last photons and tidy up
         empty=self.fifos_empty()
         if not empty[0]: self.read_fifo_chunk(0, tdc1_file)
         if not empty[1]: self.read_fifo_chunk(1, tdc2_file)
@@ -183,10 +188,11 @@ class dpc230:
         tdc1_file.close()
         tdc2_file.close()
                 
-        # return the filenames of the two photon buffers
+        # Return the filenames of the two photon buffers
         self.callback('%s photons/s -- %.2fs remaining' % (total, 0))
         return tdc1_filename, tdc2_filename
         
+
     def kill(self):
         ''' we have finished '''
         self.spc_close()
@@ -195,6 +201,7 @@ class dpc230:
     # initialization functions      #
     #################################
         
+
     def connect_to_board(self, ini_file=None):
         ''' Initializes the time tagger. Pass the name of the INI configuration file to use. '''
         if ini_file==None: ini_file=os.path.join(self.dll_path, 'spcm.ini')
@@ -226,33 +233,43 @@ class dpc230:
         
     def init_hardware_mode(self):
         ''' Initialize the system in hardware control mode '''
+        # Connect to the board. Be robust!
         self.connect_to_board()
         if self.get_init_status()==-6: 
             if qy.settings.get('dpc.force_connection'):
-                print 'Forcing connection to DPC230 ... (enable/disable using qy.settings)'
+                self.callback('Forcing connection to DPC230 ... (enable/disable using qy.settings)')
                 self.set_mode(0, 1)
                 self.kill()
                 self.connect_to_board()
                 if self.get_init_status()==-6: 
-                    print 'Still failed to connect :('
+                    self.callback('Still failed to connect :(')
                     sys.exit(0)
             else:
                 sys.exit(0)
+
+        # Figure out where we should put timetags
+        # IMPORTANT! These paths MUST point to RAMDISKS!!!!!!
+        self.photon_buffer_switch=False
+        self.photon_buffer_1=qy.settings.get('photon_buffer_1')
+        self.photon_buffer_2=qy.settings.get('photon_buffer_2')
     
+        # Set up the discriminators etc.
         self.set_parameter('collect_time', 1)
         self.set_parameter('mem_bank', 6)
         self.set_parameter('mode', 8)
         self.set_parameter('detector_type', 6)
         self.set_parameter('chan_enable', 1044735)
         self.set_parameter('chan_slope', 1044735)
+
         
     def get_init_status(self):
         ''' gets the initialization status of the board '''
         ret=self.spc.SPC_get_init_status(self.module_no);
-        if ret<0: print 'Warning: unexpected spc init status. \n\
-This usually means that another process has control of the DPC-230.'
+        if ret<0: self.callback('Warning: unexpected spc init status. \n\
+This usually means that another process has control of the DPC-230.')
         return ret
             
+
     def get_module_info(self):
         ''' gets loads of info about the board as a string '''
         info=spcmodinfo()
@@ -266,16 +283,19 @@ This usually means that another process has control of the DPC-230.'
         s+='  PCI bus bus I/O address: %s\n' % info.base_adr
         return s
         
+
     def test_id(self):
         ''' gets the serial number of the board: should be 230 as this is a DPC-230'''
         ret=self.spc.SPC_test_id(self.module_no);
         return ret
         
+
     def get_mode(self):
         ''' determine which DLL mode we are in: should be 0, indicating hardware mode '''
         ret=self.spc.SPC_get_mode();
         return ret
         
+
     def set_mode(self, mode=0, force_use=0):
         ''' 
         set which DLL mode we are in: should be 0, indicating hardware mode 
@@ -286,6 +306,7 @@ This usually means that another process has control of the DPC-230.'
         ret=self.spc.SPC_set_mode(mode_c, force_use_c, byref(in_use_c));
         return ret
         
+
     def get_board_summary(self):
         ''' pretty-prints a summary of the status of the initialized board '''
 
@@ -305,6 +326,7 @@ This usually means that another process has control of the DPC-230.'
     # setup functions               #
     #################################
 
+
     def set_parameter(self, par_name, value):
         ''' writes a particular setup parameter '''
         par_id=param_id_dict[par_name]
@@ -314,6 +336,7 @@ This usually means that another process has control of the DPC-230.'
         if ret!=0: print 'something went wrong when trying to write device parameter.'
         return ret
         
+
     def get_parameter(self, par_name):
         ''' reads a particular setup parameter '''
         par_id=param_id_dict[par_name]
@@ -323,6 +346,7 @@ This usually means that another process has control of the DPC-230.'
         if ret!=0: print 'something went wrong when trying to read device parameter.'
         return value_c.value
         
+
     def get_setup_summary(self):
         ''' pretty-prints a summary of the setup parameters of the board. '''
         s= 'Setup info:'
@@ -336,6 +360,7 @@ This usually means that another process has control of the DPC-230.'
         s+= '  time bin size:    %.20f fs' % (self.get_parameter('tac_enable_hold')*1e3) + '\n'
         return s
 
+
     def print_setup_summary(self):
         print self.get_setup_summary()
         
@@ -343,6 +368,7 @@ This usually means that another process has control of the DPC-230.'
     # status functions              #
     #################################
             
+
     def test_state(self):
         ''' sets a variable according to the current state of the measurement. controls the measurement loop '''
         state=c_short()
@@ -350,6 +376,7 @@ This usually means that another process has control of the DPC-230.'
         if ret!=0: print 'something went wrong when trying to test the system state.'
         return state.value
         
+
     def print_state(self):
         ''' sets a variable according to the current state of the measurement. controls the measurement loop '''
         state=self.test_state()
@@ -358,21 +385,25 @@ This usually means that another process has control of the DPC-230.'
             if state & pair[0]: s+='%s / ' % pair[1]
         print s
         
+
     def fifos_armed(self):
         ''' tell us if the FIFOs are empty or not... '''
         state=self.test_state()
         return (state & 0x80!=0, state & 0x4000!=0)
         
+
     def both_fifos_armed(self):
         ''' tell us if both FIFOs are empty or not... '''
         state=self.test_state()
         return state&0x80!=0 and state&0x4000!=0
         
+
     def fifos_empty(self):
         ''' tell us if the FIFOs are empty or not... '''
         state=self.test_state()
         return (state & 0x100!=0, state & 0x200!=0)
         
+
     def get_sync_state(self):
         ''' In relative timing mode, tests for a signal in the reference channel '''
         sync_state=c_short(0)
@@ -380,6 +411,7 @@ This usually means that another process has control of the DPC-230.'
         if ret!=0: print 'something went wrong when trying to get the sync state.'
         return sync_state.value
                 
+
     def get_time_from_start(self):
         ''' Reads the DPC collection timer '''
         time=c_float(0)
@@ -387,6 +419,7 @@ This usually means that another process has control of the DPC-230.'
         if ret!=0: print 'something went wrong when trying get the time from the start of the experiment.'
         return time.value
         
+
     def get_break_time(self):
         ''' Finds the moment of a measurement interrupt '''
         time=c_float(0)
@@ -394,6 +427,7 @@ This usually means that another process has control of the DPC-230.'
         if ret!=0: print 'something went wrong when trying get the break time.'
         return time.value
         
+
     def get_actual_coltime(self):
         ''' Actual collection time '''
         time=c_float(0)
@@ -401,6 +435,7 @@ This usually means that another process has control of the DPC-230.'
         if ret!=0: print 'something went wrong when trying get the collection time.'
         return time.value
         
+
     def read_rates(self):
         ''' Reads photon rate counts, calculates rate values '''
         rates=spcrates()
@@ -408,6 +443,7 @@ This usually means that another process has control of the DPC-230.'
         if ret!=0: print 'something went wrong when trying to read rates.'
         return rates
         
+
     def print_rates(self):
         ''' Pretty prints photon count rates '''
         rates=self.read_rates()
@@ -415,12 +451,14 @@ This usually means that another process has control of the DPC-230.'
         s+=' / TDC2 rate: %.0f' % rates.cfd_rate
         print s
         
+
     def clear_rates(self):
         ''' Clears all rate counters '''
         ret = self.spc.SPC_clear_rates(self.module_no)
         if ret!=0: print 'something went wrong when trying to clear count rates'
         return ret
         
+
     def get_fifo_usage(self):
         ''' Tells us how full the FIFO is - a float between 0 and 1 '''
         usage_degree_1=c_float()
@@ -435,12 +473,14 @@ This usually means that another process has control of the DPC-230.'
     # measurement control functions #
     #################################
         
+
     def start_measurement(self):
         ''' Clears FIFO and buffers, and arms active TDCs '''
         ret = self.spc.SPC_start_measurement(self.module_no)
         if ret!=0: print 'something went wrong when trying to start the measurement.'
         return ret
         
+
     def stop_measurement(self):
         ''' Stops the measurement '''
         ret = self.spc.SPC_start_measurement(self.module_no)
@@ -451,6 +491,7 @@ This usually means that another process has control of the DPC-230.'
     # memory transfer functions     #
     #################################
     
+
     def read_fifo(self, which_tdc, count):
         ''' Reads photon time tags from the FIFO into memory, returns the number of 16 bit words read '''
         count_c=c_long(count)
@@ -459,15 +500,17 @@ This usually means that another process has control of the DPC-230.'
         if ret!=0: print 'something went wrong when trying to read a FIFO.'
         return count_c.value
         
+
     def spc_close(self):
         ''' Close the connection to the DPC230 '''
         self.spc.SPC_close()
-        print 'Closed connection to DPC230'
+        self.callback('Closed connection to DPC230')
         
     #################################
     # other functions               #
     #################################
         
+
     def read_fifo_chunk(self, which, target):
         ''' read a chunk of data from a FIFO '''
         nwords=self.read_fifo(which, self.buffer_words)
@@ -478,6 +521,7 @@ This usually means that another process has control of the DPC-230.'
     # conversion functions          #
     #################################
         
+
     def convert_raw_data(self, tdc1_filename, tdc2_filename):
         ''' converts a raw FIFO data file to SPC format '''
             
@@ -527,6 +571,7 @@ This usually means that another process has control of the DPC-230.'
     # other functions               #
     #################################
     
+
     def init_phot_stream(self, spc_filename, which_tdc):
         ''' initiate a photon stream for conversion to spc format '''
         fifo_type=c_short(8)
@@ -540,6 +585,7 @@ This usually means that another process has control of the DPC-230.'
         ret = self.spc.SPC_init_phot_stream(fifo_type, spc_file, files_to_use, stream_type, what_to_read)
         return c_short(ret)
     
+
     def convert_raw_data(self, tdc1_filename, tdc2_filename):
         ''' converts a raw FIFO data file to SPC format '''
             
@@ -584,6 +630,7 @@ This usually means that another process has control of the DPC-230.'
         
         # return the name of the new spc file
         return spc_file.value
+
 
 
     def __str__(self):
