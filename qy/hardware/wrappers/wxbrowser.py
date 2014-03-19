@@ -24,7 +24,7 @@ class browser_block(wx.Panel):
         self.input_box.SetValue(value)
 
     def set_output(self, value):
-        self.output_box.SetLabel('{:,}'.format(value) if value else '--') 
+        self.output_box.SetLabel('{:,}'.format(value) if value!=None else '--') 
 
     def get_input(self):
         return self.input_box.GetValue() 
