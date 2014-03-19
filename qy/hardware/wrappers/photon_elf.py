@@ -9,15 +9,36 @@ class photon_elf(wx.Frame):
     def __init__(self, pipe=None):
         ''' Constructor '''
         # Figure out where we should send/recieve data
+        self.pipe=pipe
+        self.poll = None if pipe==None else pipe.poll
         self.send = (lambda x: x) if pipe==None else pipe.send
         self.recv = (lambda x: x) if pipe==None else pipe.recv
 
-        # Start building
+        # Build the interface
         self.app = wx.App(False)
         self.build()
         self.load_defaults()
+
+        # Periodically check for messages
+        self.timer=wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.ontimer, self.timer)
+        self.timer.Start(250)
         self.app.MainLoop()
 
+    def handle_input(self, key, value):
+        ''' Handle a key/value pair '''
+        if key=='status': 
+            self.status.SetLabel(value)
+        elif key=='count_rates': 
+            self.browser.update_count_rates(value['count_rates'])
+
+    def ontimer(self, arg):
+        ''' This function is called four times per second '''
+        # Look for messages coming down the pipe
+        while self.pipe.poll():
+            key, value=self.recv()
+            self.handle_input(key, value)
+        self.Update()
 
     def build(self):
         ''' Builds the various pieces of the GUI ''' 
@@ -82,7 +103,7 @@ class photon_elf(wx.Frame):
         settings.put('realtime.browser_searches', self.browser.get_patterns())
 
 
-class threaded_gui:
+class threaded_photon_elf:
     ''' A multithreaded handler for the coincidence-count GUI '''
     def __init__(self):
         ''' Constructor '''
@@ -91,22 +112,15 @@ class threaded_gui:
         self.gui = Process(target=photon_elf, name='photon_elf', args=(their_pipe,))
         self.gui.start()
 
-    def send(self, message):
+    def send(self, key, value):
         ''' Send a message asynchrously to the GUI '''
-        self.pipe.send(message)
+        self.pipe.send((key, value))
 
-    def recv(self, timeout=1):
+    def recv(self, timeout=.5):
         ''' Try to get a message from the GUI, else timeout '''
         if self.pipe.poll(timeout):
             return self.pipe.recv()
 
-
-if __name__=='__main__':
-    main=threaded_gui()
-    while True:
-        out=main.recv()
-        if out:
-            print out
 
 
 

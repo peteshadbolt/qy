@@ -1,5 +1,6 @@
 import wx
 import qy.graphics
+from qy.analysis.coincidence_counting import parse_coincidence_pattern
 
 class browser_block(wx.Panel):
     def __init__(self, parent, colour):
@@ -23,7 +24,7 @@ class browser_block(wx.Panel):
         self.input_box.SetValue(value)
 
     def set_output(self, value):
-        self.output_box.SetValue(value) 
+        self.output_box.SetLabel('{:,}'.format(value) if value else '--') 
 
     def get_input(self):
         return self.input_box.GetValue() 
@@ -62,23 +63,22 @@ class browser(wx.Panel):
         ''' Bind a function to be called when anything is changed by the user '''
         self.on_change=function
         
-    def update_counts(self, counts):
+    def update_count_rates(self, count_rates):
         ''' 
         The postprocessing system sent us new count rates. 
         Process them, and forward the filtered counts onto the graph 
         '''
-        text_patterns=self.get_text_patterns()
-        normalize = lambda x: ''.join(sorted(x.lower().strip()))
-        data=[]
 
-        for request_index, pattern in enumerate(text_patterns):
-            for count_index, label, value in counts:
-                if normalize(label)==normalize(pattern):
-                    self.blocks[request_index].set_value(int(value))
-                    data.append((request_index, label, value))
-
-
-        return data
+        filtered_count_rates={}
+        for block in self.blocks:
+            pattern = block.get_input().strip()
+            if len(pattern)>0:
+                value = parse_coincidence_pattern(pattern, count_rates)
+                block.set_output(value)
+                filtered_count_rates[pattern] = value
+            else:
+                block.set_output(None)
+        return filtered_count_rates
 
                     
         

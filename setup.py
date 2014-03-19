@@ -3,8 +3,8 @@ import os
 
 
 # Fast coincidence-counting code
-path=os.path.join('qy', 'analysis', 'coincidence', 'coincidence.c')
-coincidence = Extension('qy.analysis.coincidence', [path])
+path=os.path.join('qy', 'analysis', 'coincidence_counting', 'coincidence', 'coincidence.c')
+coincidence = Extension('qy.analysis.coincidence_counting.coincidence', [path])
 
 extensions = [coincidence]
 
