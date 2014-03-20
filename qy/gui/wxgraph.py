@@ -20,7 +20,7 @@ class curve:
         self.ydata=np.ones([HISTORY_SIZE])*-1
         self.plot_curve=axes.plot([], [], color=self.color, lw=2, linestyle='-')[0]
         self.max_line=axes.plot([], [], color=self.color, lw=.5, linestyle=':')[0]
-        
+
 
     def add_point(self, value):
         ''' Add a point to the curve and wrap around when we run out of history '''
@@ -35,17 +35,18 @@ class curve:
         self.plot_curve.set_ydata(self.ydata[mask])
         self.max_line.set_xdata([0, HISTORY_SIZE])
         self.max_line.set_ydata([max(self.ydata)]*2)
-        if sum(mask)==0: 
+        if sum(mask)==0:
             self.alive=False
             self.plot_curve.remove()
             self.max_line.remove()
+
 
 class graph_panel(wx.Panel):
     def __init__(self, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
         self.curves={}
         self.build()
-        
+
 
     def build(self):
         ''' build the whole thing '''
@@ -76,7 +77,7 @@ class graph_panel(wx.Panel):
         ax.tick_params(axis='y', colors='white')
         ax.yaxis.get_offset_text().set_color('white')
         return ax
-    
+
 
     def draw(self):
         ''' Draw/update all of the curves '''
@@ -96,8 +97,8 @@ class graph_panel(wx.Panel):
     def sizeHandler(self, *args, **kwargs):
         ''' Makes sure that the canvas is properly resized '''
         self.canvas.SetSize(self.GetSize())
-        
-        
+
+
     def add_counts(self, data):
         ''' Add a set of counts '''
         # Process the data, and generate new curves if appropriate
