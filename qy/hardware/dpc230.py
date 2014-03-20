@@ -1,7 +1,7 @@
 from ctypes import *
 import sys, time, os
 import qy.settings
-from qy.analysis import coincidence
+from qy.analysis.coincidence_counting import coincidence
 from multiprocessing import Process, Pipe
 
 param_names_list = ['CFD_LIMIT_LOW', 'CFD_LIMIT_HIGH', 'CFD_ZC_LEVEL', 'CFD_HOLDOFF',
@@ -398,7 +398,7 @@ This usually means that another process has control of the DPC-230.')
     def both_fifos_armed(self):
         ''' tell us if both FIFOs are empty or not... '''
         state = self.test_state()
-        return state & 0x80 != 0 and state & 0x4000 ! = 0
+        return state & 0x80 != 0 and state & 0x4000 != 0
 
 
     def fifos_empty(self):
@@ -691,7 +691,7 @@ class postprocessor:
         self.send(('count_rates', data))
 
 
-class dpc230_coincidence_counter:
+class coincidence_counter:
     '''
     An asynchrous coincidence counting system.
     Wraps the dpc230 class.
