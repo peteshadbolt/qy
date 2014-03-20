@@ -123,7 +123,7 @@ class dpc230:
         self.spc=CDLL(os.path.join(self.dll_path, 'spcm32x64.dll'))
         
         # Set vars
-        self.refresh_rate=0.2   # Important for reading off disk
+        self.refresh_rate=0.3 # Important for reading off disk
         
         # Initialize
         if self.mode=='hardware':
@@ -176,7 +176,7 @@ class dpc230:
                 total=int(rates.sync_rate+rates.cfd_rate)
                 total=format(total, ",d")
                 actual_collection_time=self.get_actual_coltime()
-                stay_alive=self.callback('%s photons/s -- %.2fs remaining' % (total,actual_collection_time))
+                stay_alive=self.callback('%s photons/s (%.2fs)' % (total,actual_collection_time))
                 if stay_alive==False: both_armed=False
                 measurement_time=time.clock()
             
@@ -189,7 +189,7 @@ class dpc230:
         tdc2_file.close()
                 
         # Return the filenames of the two photon buffers
-        self.callback('%s photons/s -- %.2fs remaining' % (total, 0))
+        self.callback('%s photons/s (%.2fs)' % (total, 0))
         return tdc1_filename, tdc2_filename
         
 
@@ -237,7 +237,8 @@ class dpc230:
         self.connect_to_board()
         if self.get_init_status()==-6: 
             if qy.settings.get('dpc.force_connection'):
-                self.callback('Forcing connection to DPC230 ... (enable/disable using qy.settings)')
+                # TODO: this is still dodgy. Why can't we close the connection?
+                print 'Forcing connection to DPC230 ... (enable/disable using qy.settings)'
                 self.set_mode(0, 1)
                 self.kill()
                 self.connect_to_board()

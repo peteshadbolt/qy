@@ -2,6 +2,7 @@ from multiprocessing import Process, Pipe
 import time, sys
 from qy.hardware import dpc230
 from qy.analysis import coincidence
+import winsound
 
 
 class postprocessor:
@@ -11,7 +12,7 @@ class postprocessor:
         ''' Constructor '''
         # Set up
         self.pipe=pipe
-        self.poll = False if pipe==None else pipe.send
+        self.poll = (lambda x:False) if pipe==None else pipe.poll
         self.send = (lambda x: x) if pipe==None else pipe.send
         self.recv = (lambda x: x) if pipe==None else pipe.recv
 
@@ -63,10 +64,10 @@ class threaded_coincidence_counter:
     An asynchrous coincidence counting system.
     Data aquisition and postprocessing run in parallel subprocesses.
     '''
-    def __init__(self, callback=None, timeout=2):
+    def __init__(self, callback=None, dpc_callback=None, timeout=2):
         ''' Initialize both sub-processes '''
         # Connect to the DPC230
-        self.dpc230 = dpc230('hardware')
+        self.dpc230 = dpc230('hardware', dpc_callback)
 
         # Interface
         self.callback=callback if callback else sys.stderr.write
@@ -79,12 +80,6 @@ class threaded_coincidence_counter:
 
     def count(self, integration_time, context):
         ''' Count coincidences '''
-        print 'count'
-        # Check that they are not asking for huge integration times
-        if integration_time>1:
-            print 'This is not the right way to deal with integration times!'
-            integration_time=1
-
         # Count for the specified amount of time
         tdc1, tdc2 = self.dpc230.count(integration_time)
 
@@ -99,7 +94,7 @@ class threaded_coincidence_counter:
         if self.pipe.poll(self.timeout):
             data = self.pipe.recv()
             if data[0]=='count_rates': self.callback(data)
-        #self.collect()
+
 
     def shutdown(self, *args):
         ''' Shut down carefully '''

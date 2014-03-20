@@ -4,8 +4,9 @@ import base64
 import gzip
 import struct
 from qy.util import progressbar
+from qy.util import timestamp
 
-required_metadata = set(['scan_type', 'scan_label'])
+required_metadata = set(['scan_label'])
 data_formats = {
 'scan_npoints':[int],
 'scan_nloops':[int],
@@ -71,8 +72,11 @@ def decode_counts(data_string):
 
 class ctx:
     ''' a .CTX file '''
-    def __init__(self, filename, mode=None):
-        self.filename=filename
+    def __init__(self, filename=None, mode=None):
+        if filename:
+            self.filename=filename
+        else:
+            self.filename=timestamp()
         self.event_list=[]
 
         # Choose mode automatically 
@@ -113,13 +117,21 @@ class ctx:
         s=', '.join(map(str, data))+'\n'
         f.write(s)
         f.close()
+    
+    def write_key_value(self, key, value):
+        ''' Write '''
+        f=open(self.filename, 'a')
+        s='%s, %s\n' % (key, value)
+        f.write(s)
+        f.close()
 
 
-    def write_counts(self, binary_string):
+    def write_counts(self, counts_dict):
         ''' Write down some countrates as a binary string '''
-        # TODO: should probably wrap this in a micro-format
-        # Compress the data
-        s=encode_counts(binary_string)
+        # TODO: THIS IS FUCKED UP!
+        #binary_string=str(counts_dict)
+        #s=encode_counts(binary_string)
+        s='count_rates, '+str(counts_dict)
 
         # Write it to disk
         f=open(self.filename, 'a')

@@ -22,7 +22,7 @@ class photon_elf(wx.Frame):
         # Periodically check for messages
         self.timer=wx.Timer(self)
         self.Bind(wx.EVT_TIMER, self.ontimer, self.timer)
-        self.timer.Start(250)
+        self.timer.Start(100)
         self.app.MainLoop()
 
     def handle_input(self, key, value):
@@ -30,7 +30,10 @@ class photon_elf(wx.Frame):
         if key=='status': 
             self.status.SetLabel(value)
         elif key=='count_rates': 
-            self.browser.update_count_rates(value['count_rates'])
+            filtered_counts=self.browser.update_count_rates(value)
+            self.graph.add_counts(filtered_counts)
+        elif key=='shutdown': 
+            self.quit()
 
     def ontimer(self, arg):
         ''' This function is called four times per second '''
@@ -44,6 +47,7 @@ class photon_elf(wx.Frame):
         ''' Builds the various pieces of the GUI ''' 
         wx.Frame.__init__(self, None, title='PHOTON ELF', size=(500,100))
         self.Bind(wx.EVT_CLOSE, self.quit)
+        self.SetBackgroundColour((220,220,220))
 
         # Build both panels
         self.graph=wxgraph.graph_panel(self)
@@ -66,8 +70,9 @@ class photon_elf(wx.Frame):
         # Prepare the panel
         self.left_panel_sizer=wx.BoxSizer(wx.VERTICAL)
         self.left_panel=wx.Panel(self)
+        self.left_panel.SetDoubleBuffered(True)
         self.left_panel.SetSizer(self.left_panel_sizer)
-        self.left_panel.SetMinSize((200, 100))
+        self.left_panel.SetMinSize((250, 100))
 
         # Status boxes
         self.status=wx.StaticText(self.left_panel, label='DPC230 status', style=wx.ST_NO_AUTORESIZE)
@@ -76,7 +81,7 @@ class photon_elf(wx.Frame):
 
         # Browser
         self.browser=wxbrowser.browser(self.left_panel)
-        self.browser.bind_change(self.graph.clear)
+        #self.browser.bind_change(self.graph.clear)
         self.left_panel_sizer.Add(self.browser, 0, wx.EXPAND|wx.ALL)
         
         # Graph configuration
@@ -116,10 +121,14 @@ class threaded_photon_elf:
         ''' Send a message asynchrously to the GUI '''
         self.pipe.send((key, value))
 
-    def recv(self, timeout=.5):
+    def recv(self, timeout=0):
         ''' Try to get a message from the GUI, else timeout '''
         if self.pipe.poll(timeout):
             return self.pipe.recv()
+
+    def shutdown(self):
+        self.send('shutdown', None)
+
 
 
 

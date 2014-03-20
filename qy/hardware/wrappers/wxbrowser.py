@@ -3,10 +3,12 @@ import qy.graphics
 from qy.analysis.coincidence_counting import parse_coincidence_pattern
 
 class browser_block(wx.Panel):
-    def __init__(self, parent, colour):
+    def __init__(self, parent, index):
         ''' An input/output pair '''
         wx.Panel.__init__(self, parent)
-        self.SetBackgroundColour(colour)
+        self.index=index
+        self.colour=qy.graphics.colors.get_pastel_rgb(index)
+        self.SetBackgroundColour(self.colour)
         sizer=wx.BoxSizer(wx.HORIZONTAL)
         self.input_box=wx.TextCtrl(self)
         self.input_box.SetFont(wx.Font(15, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
@@ -17,17 +19,30 @@ class browser_block(wx.Panel):
         self.SetSizerAndFit(sizer)
         self.Fit()
         
+    
     def bind(self, function):
+        ''' Call a function evey time the user types something '''
         self.input_box.Bind(wx.EVT_TEXT, function)
 
+
     def set_input(self, value):
+        ''' Set the search term '''
         self.input_box.SetValue(value)
 
+
     def set_output(self, value):
-        self.output_box.SetLabel('{:,}'.format(value) if value!=None else '--') 
+        ''' Set the output value '''
+        try:
+            self.output_box.SetLabel('{:,}'.format(value))
+        except ValueError:
+            self.output_box.SetLabel('')
+
 
     def get_input(self):
-        return self.input_box.GetValue() 
+        ''' Get the current search '''
+        return self.input_box.GetValue().encode('ascii', 'ignore')
+
+
 
 class browser(wx.Panel):
     ''' A wx GUI component to efficiently look at many count rates '''
@@ -42,8 +57,7 @@ class browser(wx.Panel):
         mainsizer=wx.BoxSizer(wx.VERTICAL)
         self.blocks=[]
         for i in range(self.number):
-            colour=qy.graphics.colors.get_pastel_rgb(i)
-            block=browser_block(parent=self, colour=colour)
+            block=browser_block(parent=self, index=i)
             #block.bind(self.patterns_changed)
             self.blocks.append(block)
             mainsizer.Add(block, 0, wx.TOP|wx.EXPAND, border=0)
@@ -69,15 +83,17 @@ class browser(wx.Panel):
         Process them, and forward the filtered counts onto the graph 
         '''
 
-        filtered_count_rates={}
+        filtered_count_rates=[]
         for block in self.blocks:
             pattern = block.get_input().strip()
             if len(pattern)>0:
                 value = parse_coincidence_pattern(pattern, count_rates)
                 block.set_output(value)
-                filtered_count_rates[pattern] = value
+                filtered_count_rates.append({'pattern':pattern, \
+                    'count':value, 'index':block.index})
             else:
                 block.set_output(None)
+
         return filtered_count_rates
 
                     
