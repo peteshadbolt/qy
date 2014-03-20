@@ -51,7 +51,12 @@ class gui_head(wx.Frame):
 
         # Build both panels
         self.graph=wxgraph.graph_panel(self)
-        self.build_left_panel()
+        self.left_panel_sizer=wx.BoxSizer(wx.VERTICAL)
+        self.left_panel=wx.Panel(self)
+        self.left_panel.SetDoubleBuffered(True)
+        self.left_panel.SetSizer(self.left_panel_sizer)
+        self.left_panel.SetMinSize((250, 100))
+        self.populate_left_panel()
 
         # The main sizer
         self.mainsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -65,29 +70,16 @@ class gui_head(wx.Frame):
         self.SetSize((700,500))
 
 
-    def build_left_panel(self):
-        ''' Build the left panel '''
-        # Prepare the panel
-        self.left_panel_sizer=wx.BoxSizer(wx.VERTICAL)
-        self.left_panel=wx.Panel(self)
-        self.left_panel.SetDoubleBuffered(True)
-        self.left_panel.SetSizer(self.left_panel_sizer)
-        self.left_panel.SetMinSize((250, 100))
-
+    def populate_left_panel(self):
+        ''' Populate the left panel '''
         # Status boxes
-        self.status=wx.StaticText(self.left_panel, label='DPC230 status', style=wx.ST_NO_AUTORESIZE)
+        self.status=wx.StaticText(self.left_panel, label='PHOTON ELF', style=wx.ST_NO_AUTORESIZE)
         self.status.SetFont(wx.Font(10, wx.MODERN, wx.NORMAL, wx.NORMAL))
         self.left_panel_sizer.Add(self.status, 0, wx.EXPAND|wx.TOP, 5)
 
         # Browser
         self.browser=wxbrowser.browser(self.left_panel)
-        #self.browser.bind_change(self.graph.clear)
         self.left_panel_sizer.Add(self.browser, 0, wx.EXPAND|wx.ALL)
-
-        # Graph configuration
-        #graph_config_sizer=wx.BoxSizer(wx.HORIZONTAL)
-        #graph_config_sizer.Add((0,0), 1)
-        #self.left_panel_sizer.Add(graph_config_sizer, 0, wx.BOTTOM, 8)
 
 
     def quit(self, *args):
@@ -99,13 +91,13 @@ class gui_head(wx.Frame):
 
     def load_defaults(self):
         ''' Load the most recently used settings '''
-        patterns=settings.get('realtime.browser_searches')
+        patterns=settings.get('realtime.patterns')
         self.browser.set_patterns(patterns)
 
 
     def save_defaults(self):
         ''' Save the settings for next time '''
-        settings.put('realtime.browser_searches', self.browser.get_patterns())
+        settings.put('realtime.patterns', self.browser.get_patterns())
 
 
 class gui:

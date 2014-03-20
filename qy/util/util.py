@@ -9,7 +9,7 @@ def dict_to_sorted_numpy(data):
     return np.array(sorted_data, dtype=structure)
 
 def json_no_unicode(data):
-    ''' 
+    '''
     Decode a JSON file into strings instead of unicodes.
     Usage: json.loads(data, object_hook=json_no_unicode)
     '''
@@ -22,7 +22,10 @@ def json_no_unicode(data):
     else:
         return data
 
+alphabet_upper='ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+alphabet_lower='abcdefghijklmnopqrstuvwxyz'
+
 if __name__=='__main__':
-    awd
-    
-    
+    pass
+
+

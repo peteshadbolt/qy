@@ -12,14 +12,15 @@ class browser_block(wx.Panel):
         sizer=wx.BoxSizer(wx.HORIZONTAL)
         self.input_box=wx.TextCtrl(self)
         self.input_box.SetFont(wx.Font(15, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
-        self.output_box=wx.StaticText(self, label='--', style=wx.ST_NO_AUTORESIZE|wx.ALIGN_RIGHT)
+        self.output_box=wx.StaticText(self, label='--', \
+                style=wx.ST_NO_AUTORESIZE|wx.ALIGN_RIGHT|wx.SIMPLE_BORDER)
         self.output_box.SetFont(wx.Font(18, wx.DEFAULT, wx.NORMAL, wx.NORMAL))
-        sizer.Add(self.input_box, 0, wx.RIGHT|wx.LEFT, 2)
-        sizer.Add(self.output_box, 1, wx.EXPAND|wx.RIGHT|wx.LEFT, 2)
+        sizer.Add(self.input_box, 0, wx.RIGHT|wx.LEFT, 0)
+        sizer.Add(self.output_box, 1, wx.EXPAND|wx.RIGHT|wx.LEFT, 0)
         self.SetSizerAndFit(sizer)
         self.Fit()
-        
-    
+
+
     def bind(self, function):
         ''' Call a function evey time the user types something '''
         self.input_box.Bind(wx.EVT_TEXT, function)
@@ -51,7 +52,7 @@ class browser(wx.Panel):
         wx.Panel.__init__(self, parent)
         self.number=number
         self.build()
-        
+
     def build(self):
         ''' Build the widget '''
         mainsizer=wx.BoxSizer(wx.VERTICAL)
@@ -63,24 +64,24 @@ class browser(wx.Panel):
             mainsizer.Add(block, 0, wx.TOP|wx.EXPAND, border=0)
 
         self.SetSizerAndFit(mainsizer)
-        
+
     def set_patterns(self, patterns):
         ''' Set all of the patterns (inputs) at once'''
         for i in range(min(len(patterns), len(self.blocks))):
             self.blocks[i].set_input(patterns[i])
-        
-    def get_patterns(self):    
+
+    def get_patterns(self):
         ''' Get all of the patterns as text '''
         return [b.get_input() for b in self.blocks]
 
     def bind_change(self, function):
         ''' Bind a function to be called when anything is changed by the user '''
         self.on_change=function
-        
+
     def update_count_rates(self, count_rates):
-        ''' 
-        The postprocessing system sent us new count rates. 
-        Process them, and forward the filtered counts onto the graph 
+        '''
+        The postprocessing system sent us new count rates.
+        Process them, and forward the filtered counts onto the graph
         '''
 
         filtered_count_rates=[]
@@ -96,5 +97,5 @@ class browser(wx.Panel):
 
         return filtered_count_rates
 
-                    
-        
+
+
