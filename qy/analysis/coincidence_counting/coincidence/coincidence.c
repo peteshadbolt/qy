@@ -67,7 +67,10 @@ int split_channels()
             photon_time=photon_to_time(this_record);
             photon_time+=delays[photon_channel];
             photon_time=photon_time ^ high_time;
-            if (photon_time>time_cutoff && time_cutoff>0) {return -1;}
+            if (photon_time>time_cutoff && time_cutoff>0) {
+                /*printf("Bailed due to time cutoff");*/
+                return -1;
+            }
             channels[photon_channel][channel_count[photon_channel]]=photon_time;
             channel_count[photon_channel]+=1;
         }
@@ -210,9 +213,9 @@ static PyObject* set_window(PyObject* self, PyObject* args)
 static char set_time_cutoff_docs[] = "set_time_cutoff(cutoff): Set the cutoff point in seconds";
 static PyObject* set_time_cutoff(PyObject* self, PyObject* args)
 { 
-    int new_time_cutoff;
+    float new_time_cutoff;
     if (!PyArg_ParseTuple(args, "f", &new_time_cutoff)) { return NULL; }
-    if (new_time_cutoff>500) 
+    if (new_time_cutoff>.1) 
     { 
         time_cutoff=(long long)(new_time_cutoff*TPB_INV_SECS); 
     }
