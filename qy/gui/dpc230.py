@@ -16,8 +16,10 @@ class dpc230_settings(wx.Dialog):
         ''' Is called when the dialog is closed '''
         delays=[q.GetValue() for q in self.delay_lines]
         window=self.coincidence_window.GetValue()
+        integration_time=self.integration_time.GetValue()
         qy.settings.put('dpc230.delays', delays)
         qy.settings.put('dpc230.coincidence_window', window)
+        qy.settings.put('realtime.integration_time', integration_time)
         self.timer.Stop()
         self.Destroy()
 
@@ -31,6 +33,12 @@ class dpc230_settings(wx.Dialog):
         ''' Construct the body of the GUI '''
         wx.Dialog.__init__(self, parent, title='DPC230 Options', size=(350,300))
         self.mainsizer=wx.BoxSizer(wx.VERTICAL)
+
+        # Make the integration time 
+        self.simple_label('Integration time')
+        default = qy.settings.get('realtime.integration_time')
+        self.integration_time = misc.integrationSlider(self, default)
+        self.mainsizer.Add(self.integration_time, 0, wx.ALL, 2)
 
         # Make the coincidence window
         self.simple_label('Coincidence window')
@@ -61,8 +69,10 @@ class dpc230_settings(wx.Dialog):
         ''' Every timer event, send the delays '''
         delays=[q.GetValue() for q in self.delay_lines]
         window=self.coincidence_window.GetValue()
+        integration_time=self.integration_time.GetValue()
         self.callback(['delays', delays])
         self.callback(['coincidence_window', window])
+        self.callback(['integration_time', integration_time])
 
 
 class gui_head(coincidence_counting.gui_head):
@@ -76,7 +86,11 @@ class gui_head(coincidence_counting.gui_head):
         ''' Show the delay dialog '''
         dialog=dpc230_settings(parent=self, callback=self.send)
         dialog.Show()
-        #dialog.ShowModal()
+
+    def save_defaults(self):
+        ''' Save the settings for next time '''
+        coincidence_counting.gui_head.save_defaults(self)
+        qy.settings.put('realtime.sound', self.beep.GetValue())
 
 
     def populate_left_panel(self):
@@ -90,8 +104,9 @@ class gui_head(coincidence_counting.gui_head):
         self.hi_contrast = wx.CheckBox(self.left_panel, label='Goggles')
         self.left_panel_sizer.Add(self.hi_contrast, 0, wx.BOTTOM, 5)
         self.hi_contrast.Bind(wx.EVT_CHECKBOX, self.graph.toggle_hi_contrast)
-        self.sound = wx.CheckBox(self.left_panel, label='Sound')
-        self.left_panel_sizer.Add(self.sound, 0, wx.BOTTOM, 5)
+        self.beep = wx.CheckBox(self.left_panel, label='Sound')
+        self.beep.SetValue(qy.settings.get('realtime.sound'))
+        self.left_panel_sizer.Add(self.beep, 0, wx.BOTTOM, 5)
 
         # Button
         self.configure_button=wx.Button(self.left_panel, label='Options')
@@ -101,6 +116,7 @@ class gui_head(coincidence_counting.gui_head):
         # Browser
         self.browser=wxbrowser.browser(self.left_panel)
         self.left_panel_sizer.Add(self.browser, 0, wx.EXPAND|wx.ALL)
+        self.beep.Bind(wx.EVT_CHECKBOX, self.browser.toggle_beep)
 
 
 class gui(coincidence_counting.gui):

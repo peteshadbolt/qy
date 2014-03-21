@@ -714,6 +714,8 @@ class coincidence_counter:
         self.callback = callback if callback else sys.stderr.write
         self.timeout = timeout
 
+        self.buffers_in_use=0
+
         # Start up the postprocessing process and build the communication network
         self.pipe, post_pipe = Pipe()
         self.post = Process(target = postprocessor, name = 'post', args = (post_pipe,))
@@ -724,13 +726,16 @@ class coincidence_counter:
         ''' Count coincidences '''
         #TODO: there is a race condition in here
         # Count for the specified amount of time
+        self.buffers_in_use+=1
         tdc1, tdc2 = self.dpc230.count(self.integration_time)
 
         # Send those timetags off to the postprocessor
         self.pipe.send(('tdc', {'tdc1':tdc1, 'tdc2':tdc2, 'context':context}))
         while self.pipe.poll():
             data = self.pipe.recv()
-            if data[0] == 'count_rates': self.callback(data)
+            if data[0] == 'count_rates': 
+                self.buffers_in_use+=-1
+                self.callback(data)
 
     def set_integration_time(self, integration_time):
         ''' Set the delays '''

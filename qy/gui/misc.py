@@ -37,3 +37,35 @@ class timeBinSlider(wx.Panel):
         self.indicator.SetLabel(s)
         self.indicator.Fit()
 
+class integrationSlider(wx.Panel):
+    ''' A GUI slider '''
+    def __init__(self, parent, default):
+        ''' Constructor '''
+        wx.Panel.__init__(self, parent)
+        sizer=wx.BoxSizer(wx.HORIZONTAL)
+        self.slider=wx.Slider(self, value=0, minValue=200, maxValue=2000, size=(200,20))
+        self.slider.SetLineSize(1)
+        sizer.Add(self.slider, 1, wx.EXPAND)
+        self.slider.Bind(wx.EVT_SCROLL, self.update)
+        self.indicator=wx.StaticText(self, label='')
+        self.indicator.SetMinSize((130, 20))
+        sizer.Add(self.indicator, 0, wx.LEFT, 10)
+        self.SetValue(default*1000)
+        self.SetSizerAndFit(sizer)
+
+    def SetValue(self, n):
+        ''' Set the value indicated '''
+        self.slider.SetValue(n)
+        self.update()
+
+    def GetValue(self):
+        ''' Get the current delay '''
+        return self.slider.GetValue()/1000.
+
+    def update(self, event=None):
+        ''' Update the GUI components '''
+        t=self.slider.GetValue()
+        s='%d  ms' % (t)
+        self.indicator.SetLabel(s)
+        self.indicator.Fit()
+

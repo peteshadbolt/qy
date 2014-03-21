@@ -1,6 +1,8 @@
 import wx
 import qy.graphics
 from qy.analysis.coincidence_counting import parse_coincidence_pattern
+import qy.settings
+import beeper
 
 class browser_block(wx.Panel):
     def __init__(self, parent, index):
@@ -51,7 +53,9 @@ class browser(wx.Panel):
         ''' Constructor '''
         wx.Panel.__init__(self, parent)
         self.number=number
+        self.beep=qy.settings.get('realtime.sound')
         self.build()
+
 
     def build(self):
         ''' Build the widget '''
@@ -65,18 +69,22 @@ class browser(wx.Panel):
 
         self.SetSizerAndFit(mainsizer)
 
+
     def set_patterns(self, patterns):
         ''' Set all of the patterns (inputs) at once'''
         for i in range(min(len(patterns), len(self.blocks))):
             self.blocks[i].set_input(patterns[i])
 
+
     def get_patterns(self):
         ''' Get all of the patterns as text '''
         return [b.get_input() for b in self.blocks]
 
-    def bind_change(self, function):
-        ''' Bind a function to be called when anything is changed by the user '''
-        self.on_change=function
+
+    def toggle_beep(self, event):
+        ''' Toggle hi-contrast mode '''
+        self.beep = event.GetEventObject().IsChecked()
+
 
     def update_count_rates(self, count_rates):
         '''
@@ -85,6 +93,7 @@ class browser(wx.Panel):
         '''
 
         filtered_count_rates=[]
+
 
         for block in self.blocks:
             pattern = block.get_input().strip()
@@ -95,6 +104,9 @@ class browser(wx.Panel):
                     'count':value, 'index':block.index})
             else:
                 block.set_output(None)
+                    
+        if self.beep and len(filtered_count_rates)>0:
+            beeper.beep(filtered_count_rates[0]['count'])
 
         return filtered_count_rates
 

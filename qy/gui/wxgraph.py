@@ -28,6 +28,7 @@ class curve:
         if len(self.ydata)>HISTORY_SIZE:
             self.ydata=self.ydata[1:]
 
+
     def update(self):
         ''' Draw the curve '''
         mask=self.ydata>=0
@@ -45,6 +46,8 @@ class graph_panel(wx.Panel):
     def __init__(self, *args, **kwargs):
         wx.Panel.__init__(self, *args, **kwargs)
         self.curves={}
+        self.beep=qy.settings.get('realtime.sound')
+        self.hi_contrast=False
         self.build()
 
 
@@ -84,6 +87,7 @@ class graph_panel(wx.Panel):
         hi_contrast = event.GetEventObject().IsChecked()
         for key, curve in self.curves.items():
             curve.plot_curve.set_color('white' if hi_contrast else curve.color)
+            curve.max_line.set_color('white' if hi_contrast else curve.color)
 
 
     def draw(self):
