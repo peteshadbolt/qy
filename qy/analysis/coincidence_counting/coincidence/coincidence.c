@@ -202,16 +202,20 @@ static char set_window_docs[] = "set_window(window): Set the coincidence window 
 static PyObject* set_window(PyObject* self, PyObject* args)
 { 
     if (!PyArg_ParseTuple(args, "i", &window)) { return NULL; }
+    if (window<1){ window=1; }
     PyObject *response = Py_BuildValue("i", window);
     return response;
 }
 
-static char set_time_cutoff_ms_docs[] = "set_time_cutoff_ms(cutoff): Set the cutoff point in milliseconds";
-static PyObject* set_time_cutoff_ms(PyObject* self, PyObject* args)
+static char set_time_cutoff_docs[] = "set_time_cutoff(cutoff): Set the cutoff point in seconds";
+static PyObject* set_time_cutoff(PyObject* self, PyObject* args)
 { 
-    int new_time_cutoff_ms;
-    if (!PyArg_ParseTuple(args, "i", &new_time_cutoff_ms)) { return NULL; }
-    time_cutoff=new_time_cutoff_ms*1e12/TPB; 
+    int new_time_cutoff;
+    if (!PyArg_ParseTuple(args, "f", &new_time_cutoff)) { return NULL; }
+    if (new_time_cutoff>500) 
+    { 
+        time_cutoff=(long long)(new_time_cutoff*TPB_INV_SECS); 
+    }
     PyObject *response = Py_BuildValue("L", time_cutoff);
     return response;
 }
@@ -220,7 +224,7 @@ static PyObject* set_time_cutoff_ms(PyObject* self, PyObject* args)
 static PyMethodDef coincidence_funcs[] = {
     {"process_spc", (PyCFunction)process_spc, METH_VARARGS, process_spc_docs},
     {"set_window", (PyCFunction)set_window, METH_VARARGS, set_window_docs},
-    {"set_time_cutoff_ms", (PyCFunction)set_time_cutoff_ms, METH_VARARGS, set_time_cutoff_ms_docs},
+    {"set_time_cutoff", (PyCFunction)set_time_cutoff, METH_VARARGS, set_time_cutoff_docs},
     {"set_delays", (PyCFunction)set_delays, METH_VARARGS, set_delays_docs},
     {NULL}
 };

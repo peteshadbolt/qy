@@ -79,6 +79,13 @@ class graph_panel(wx.Panel):
         return ax
 
 
+    def toggle_hi_contrast(self, event):
+        ''' Toggle hi-contrast mode '''
+        hi_contrast = event.GetEventObject().IsChecked()
+        for key, curve in self.curves.items():
+            curve.plot_curve.set_color('white' if hi_contrast else curve.color)
+
+
     def draw(self):
         ''' Draw/update all of the curves '''
         # Update the curves

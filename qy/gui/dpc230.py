@@ -12,6 +12,15 @@ class dpc230_settings(wx.Dialog):
         self.callback = (lambda x: x) if callback==None else callback
         self.build(parent)
 
+    def on_close(self, arg):
+        ''' Is called when the dialog is closed '''
+        delays=[q.GetValue() for q in self.delay_lines]
+        window=self.coincidence_window.GetValue()
+        qy.settings.put('dpc230.delays', delays)
+        qy.settings.put('dpc230.coincidence_window', window)
+        self.timer.Stop()
+        self.Destroy()
+
     def simple_label(self, label):
         ''' Add a simple bit of text '''
         label=wx.StaticText(self, label=label, style=0)
@@ -40,17 +49,20 @@ class dpc230_settings(wx.Dialog):
 
         # Finish up
         self.SetSizerAndFit(self.mainsizer)
+        self.Bind(wx.EVT_CLOSE, self.on_close)
 
         # Set up the timer
-        timer=wx.Timer(self)
-        self.Bind(wx.EVT_TIMER, self.ontimer, timer)
-        timer.Start(1000)
+        self.timer=wx.Timer(self)
+        self.Bind(wx.EVT_TIMER, self.ontimer, self.timer)
+        self.timer.Start(1000)
 
 
     def ontimer(self, event):
         ''' Every timer event, send the delays '''
         delays=[q.GetValue() for q in self.delay_lines]
+        window=self.coincidence_window.GetValue()
         self.callback(['delays', delays])
+        self.callback(['coincidence_window', window])
 
 
 class gui_head(coincidence_counting.gui_head):
@@ -59,18 +71,27 @@ class gui_head(coincidence_counting.gui_head):
         ''' Constructor. Inherits from coincidence_counting '''
         coincidence_counting.gui_head.__init__(self, pipe)
 
+
     def show_settings(self, arg):
         ''' Show the delay dialog '''
-        dialog=dpc230_settings(parent=self, callback=None)
-        dialog.ShowModal()
-        #dialog.Destroy()
+        dialog=dpc230_settings(parent=self, callback=self.send)
+        dialog.Show()
+        #dialog.ShowModal()
+
 
     def populate_left_panel(self):
         ''' Build the left panel '''
         # Status box
-        self.status=wx.StaticText(self.left_panel, label='DPC230', style=wx.ST_NO_AUTORESIZE|wx.SUNKEN_BORDER)
+        self.status=wx.StaticText(self.left_panel, label='DPC230', style=wx.ST_NO_AUTORESIZE)
         self.status.SetFont(wx.Font(10, wx.MODERN, wx.NORMAL, wx.BOLD))
         self.left_panel_sizer.Add(self.status, 0, wx.EXPAND|wx.BOTTOM, 5)
+
+        # Various options!
+        self.hi_contrast = wx.CheckBox(self.left_panel, label='Goggles')
+        self.left_panel_sizer.Add(self.hi_contrast, 0, wx.BOTTOM, 5)
+        self.hi_contrast.Bind(wx.EVT_CHECKBOX, self.graph.toggle_hi_contrast)
+        self.sound = wx.CheckBox(self.left_panel, label='Sound')
+        self.left_panel_sizer.Add(self.sound, 0, wx.BOTTOM, 5)
 
         # Button
         self.configure_button=wx.Button(self.left_panel, label='Options')

@@ -238,7 +238,7 @@ class dpc230:
         # Connect to the board. Be robust!
         self.connect_to_board()
         if self.get_init_status() == -6:
-            if qy.settings.get('dpc.force_connection'):
+            if qy.settings.get('dpc230.force_connection'):
                 # TODO: this is still dodgy. Why can't we close the connection?
                 print 'Forcing connection to DPC230 ... (enable/disable using qy.settings)'
                 self.set_mode(0, 1)
@@ -650,6 +650,9 @@ class postprocessor:
         self.send = (lambda x: x) if pipe == None else pipe.send
         self.recv = (lambda x: x) if pipe == None else pipe.recv
         self.dpc_post = dpc230('postprocessing')
+        coincidence.set_window(qy.settings.get('dpc230.coincidence_window'))
+        coincidence.set_delays(qy.settings.get('dpc230.delays'))
+        coincidence.set_time_cutoff(1)
         self.listen()
 
 
@@ -675,6 +678,10 @@ class postprocessor:
             self.shutdown()
         elif message[0] == 'delays':
             coincidence.set_delays(message[1])
+        elif message[0] == 'coincidence_window':
+            coincidence.set_window(message[1])
+        elif message[0] == 'integration_time':
+            coincidence.set_time_cutoff(message[1])
 
 
     def handle_tdc(self, message):
@@ -710,12 +717,14 @@ class coincidence_counter:
         # Start up the postprocessing process and build the communication network
         self.pipe, post_pipe = Pipe()
         self.post = Process(target = postprocessor, name = 'post', args = (post_pipe,))
+        self.set_integration_time(1)
         self.post.start()
 
-    def count(self, integration_time, context):
+    def count(self, context):
         ''' Count coincidences '''
+        #TODO: there is a race condition in here
         # Count for the specified amount of time
-        tdc1, tdc2 = self.dpc230.count(integration_time)
+        tdc1, tdc2 = self.dpc230.count(self.integration_time)
 
         # Send those timetags off to the postprocessor
         self.pipe.send(('tdc', {'tdc1':tdc1, 'tdc2':tdc2, 'context':context}))
@@ -723,12 +732,24 @@ class coincidence_counter:
             data = self.pipe.recv()
             if data[0] == 'count_rates': self.callback(data)
 
+    def set_integration_time(self, integration_time):
+        ''' Set the delays '''
+        self.integration_time=integration_time
+        self.pipe.send(('integration_time', integration_time))
+
+    def set_delays(self, delays):
+        ''' Set the delays '''
+        self.pipe.send(('delays', delays))
+
+    def set_window(self, window):
+        ''' Set the coincidence window '''
+        self.pipe.send(('coincidence_window', window))
 
     def collect(self):
+        ''' Collect all information from the coincidence counter '''
         if self.pipe.poll(self.timeout):
             data = self.pipe.recv()
             if data[0] == 'count_rates': self.callback(data)
-
 
     def shutdown(self, *args):
         ''' Shut down carefully '''

@@ -109,17 +109,18 @@ class gui:
         self.gui = Process(target=gui_head, name='gui_head', args=(their_pipe,))
         self.gui.start()
 
+    def collect(self):
+        ''' Collect all messages and act upon them '''
+        messages=[]
+        while self.pipe.poll(0):
+            messages.append(self.pipe.recv())
+        return messages
+
     def send(self, key, value):
-        ''' Send a message asynchrously to the GUI '''
+        ''' Send a message to the threaded GUI '''
         self.pipe.send((key, value))
 
-    def recv(self, timeout=0):
-        ''' Try to get a message from the GUI, else timeout '''
-        if self.pipe.poll(timeout):
-            return self.pipe.recv()
 
-    def shutdown(self):
-        self.send('shutdown', None)
 
 
 

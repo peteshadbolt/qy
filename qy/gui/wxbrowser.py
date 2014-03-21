@@ -85,6 +85,7 @@ class browser(wx.Panel):
         '''
 
         filtered_count_rates=[]
+
         for block in self.blocks:
             pattern = block.get_input().strip()
             if len(pattern)>0:
