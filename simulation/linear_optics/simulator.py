@@ -54,7 +54,7 @@ class simulator:
                 rows=self.basis.modes_from_index(output)
                 n2=self.basis.get_normalization_constant(rows)
                 output_state[output]+=input_amplitude*self.perm(self.device.unitary[rows][:,cols])/np.sqrt(n1*n2)
-                util.progress_bar(output, self.basis.hilbert_space_dimension, label='Computing output state...')
+                #util.progress_bar(output, self.basis.hilbert_space_dimension, label='Computing output state...')
         return output_state
 
     def get_probabilities_quantum(self, outputs=None):
@@ -69,7 +69,7 @@ class simulator:
                 rows=self.basis.modes_from_index(output)
                 n2=self.basis.get_normalization_constant(rows)
                 amplitudes[index]+=input_amplitude*self.perm(self.device.unitary[rows][:,cols])/np.sqrt(n1*n2)
-                util.progress_bar(index, N, label='Computing probabilities...')
+                #util.progress_bar(index, N, label='Computing probabilities...')
         probabilities=np.abs(amplitudes)
         probabilities=probabilities*probabilities
         return probabilities
@@ -88,7 +88,7 @@ class simulator:
                 submatrix=np.abs(self.device.unitary[rows][:,cols])
                 submatrix=np.multiply(submatrix, submatrix)
                 probabilities[index]+=input_probability*self.perm(submatrix)/n2
-                util.progress_bar(index, N, label='Computing probabilities...')
+                #util.progress_bar(index, N, label='Computing probabilities...')
         return probabilities
 
     def get_probabilities_limited_visibility(self, outputs=None):
@@ -131,7 +131,7 @@ class simulator:
         for index, output in enumerate(outputs):
             label=tuple(self.basis.modes_from_index(output))
             d[label]=probabilities[index]
-            util.progress_bar(index, len(outputs), label='Labelling...')
+            #util.progress_bar(index, len(outputs), label='Labelling...')
         return util.dict_to_sorted_numpy(d)
 
     def get_probability_quantum(self, pattern):

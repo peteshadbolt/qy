@@ -33,7 +33,8 @@ class dac:
             voltages=[0,0,0,0,0,0,0,0]
             av=voltages
         self.task.write(voltages)
-        print 'wrote', av.round(2)
+        #print 'wrote', av.round(2)
+        
     def zero(self):
         self.write_voltages([0,0,0,0,0,0,0,0])
         

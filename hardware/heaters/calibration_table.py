@@ -4,12 +4,6 @@ from qy.util import json_no_unicode
 import numpy as np
 import os, json
 
-# These functions do not really get used here, they are just for reference
-def phasefunc(p, v): return p[1]+p[2]*(v**2)
-def countfunc(p, phase): return p[0]*(1-p[5]*np.sin(phase)*np.sin(phase))
-def fitfunc(p, voltage): return countfunc(p, phasefunc(p, voltage))
-def errfunc(p, voltage, count): return np.sum(np.power(fitfunc(p, voltage)-count, 2))
-
 class calibration_table:
     def __init__(self, filename=None):
         ''' A heater calibration table, stored on disk, with lookup functions '''
@@ -55,12 +49,29 @@ class calibration_table:
 
     def get_voltage_from_phase(self, heater_index, phase):
         ''' Get the appropriate voltage to set to the chip, given a phase '''
+        '''Assuming that phi=a+b*v^2'''
         p=self.get_parameters(heater_index)
         phase=phase%(2*np.pi)
         phase=phase-2*np.pi
         while p[0]>phase: phase=phase+2*np.pi
         v=np.sqrt((phase-float(p[0]))/float(p[1]))
         return v if v>=0 else -v
+        
+        
+    def get_voltage_from_phase_2(self,heater_index,phase,initial=True):
+        '''Assuming that phi= a+b*v^2+c*v'''
+        p=self.get_parameters(heater_index)
+        if initial:
+            phase=phase%(2*np.pi)
+        while p[2]**2<4*(p[0]-phase)*p[1] :
+            phase=phase+2*np.pi
+        alpha=np.sqrt(p[2]**2-4*(p[0]-phase)*p[1])
+        if (alpha > p[2] and p[1]>0) or (alpha < p[2] and p[1]<0):
+            return (-p[2]+alpha)/(2*p[1])
+        else : 
+            phase+=2*np.pi
+            return self.get_voltage_from_phase_2(heater_index,phase,initial=False)
+         
         
     def get_voltages(self, phases):
         '''Turn a list of (8) phases in to a list of voltages'''
@@ -78,9 +89,11 @@ if __name__=='__main__':
     c=calibration_table()
 
     for i in range(100):
-        for heater in range(8):
-            v=c.get_voltage_from_phase(heater, np.random.uniform(-np.pi*4, np.pi*4))
+        for heater_index in range(7):
+            v=c.get_voltage_from_phase_2(heater_index, np.random.uniform(-np.pi*4, np.pi*4))
+            #print v
             if not 0<=v<=7:
                 print 'fail'
+                print v
 
     c.save()
