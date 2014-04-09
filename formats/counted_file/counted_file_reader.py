@@ -44,7 +44,7 @@ class counted_file_reader:
         while chunks_read>0:
             chunks_read=self.read_chunk() 
             if callback!=None: callback(total)
-            util.progress_bar(self.progress*100, 100, loading_messsage)
+            #util.progress_bar(self.progress*100, 100, loading_messsage)
             total+=1
         if trim: self.trim()
         if not self.silent: print
