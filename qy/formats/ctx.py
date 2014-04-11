@@ -58,16 +58,13 @@ class ctx:
             if a>0 and line[:a].strip()==tag:
                 yield json.loads(line[a+1:], object_hook=json_no_unicode)
 
-        print 'closing file'
         f.close()
 
 
     def read_metadata(self):
         ''' Look for metadata in the file '''
-        # There doesn't seem to be any metadata in the file
-        self.metadata={'label':'%s (no metadata found)' % self.filename}
-
-        print self.stream('metadata').next()
+        # TODO: this isn't finished!
+        self.metadata=self.stream('metadata').next()
 
 
 

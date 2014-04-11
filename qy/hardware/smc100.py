@@ -69,7 +69,6 @@ class smc100_actuator:
         self.state=controller_state_map[t] if t in controller_state_map else 'Unknown state'
         errorstring = ''.join(['%04d' % int(bin(int(c,16))[2:]) for c in s[:-2]])
         self.errors=[error_names[i] for i in range(16) if errorstring[i]=='1']
-        if len(self.errors)==0: self.errors=[None]
         
 
     def home(self):
@@ -241,7 +240,10 @@ class smc100:
         self.serial.write(command+'\r\n')
         return_value=self.serial.readline()
         return return_value[len(command):].strip()
-        
+
+    def dict(self):
+        ''' Get a dictionary representing the full hardware model '''
+        return {key: value.dict() for key, value in self.actuators.items()}
     
     def __str__(self):
         ''' Summarise the motor controller model '''

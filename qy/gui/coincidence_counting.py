@@ -120,6 +120,10 @@ class gui:
         ''' Send a message to the threaded GUI '''
         self.pipe.send((key, value))
 
+    def kill(self):
+        ''' Send the message to shut down '''
+        self.send('kill', None)
+
 
 
 

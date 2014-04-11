@@ -719,7 +719,8 @@ class coincidence_counter:
         # Start up the postprocessing process and build the communication network
         self.pipe, post_pipe = Pipe()
         self.post = Process(target = postprocessor, name = 'post', args = (post_pipe,))
-        self.set_integration_time(1)
+        self.set_integration_time(qy.settings.get('realtime.integration_time'))
+        self.set_delays(qy.settings.get('dpc230.delays'))
         self.post.start()
 
     def count(self, context):
@@ -738,8 +739,9 @@ class coincidence_counter:
                 self.callback(data)
 
     def set_integration_time(self, integration_time):
-        ''' Set the delays '''
-        self.integration_time=integration_time
+        ''' Set the integration time '''
+        self.integration_time=float(integration_time)
+        if self.integration_time>2: print 'WARNING: internal integration times > 2s are not yet implemented!'
         self.pipe.send(('integration_time', integration_time))
 
     def set_delays(self, delays):

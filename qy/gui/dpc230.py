@@ -47,7 +47,7 @@ class dpc230_settings(wx.Dialog):
         self.mainsizer.Add(self.coincidence_window, 0, wx.ALL, 2)
 
         # Make the delay lines
-        self.simple_label('Delays')
+        self.simple_label('Delays (nudge with arrow keys)')
         defaults = qy.settings.get('dpc230.delays')
         self.delay_lines=[]
         for i in range(len(defaults)):
@@ -100,7 +100,7 @@ class gui_head(coincidence_counting.gui_head):
         self.status.SetFont(wx.Font(10, wx.MODERN, wx.NORMAL, wx.BOLD))
         self.left_panel_sizer.Add(self.status, 0, wx.EXPAND|wx.BOTTOM, 5)
 
-        # Various options!
+        # Various options
         self.hi_contrast = wx.CheckBox(self.left_panel, label='Goggles')
         self.left_panel_sizer.Add(self.hi_contrast, 0, wx.BOTTOM, 5)
         self.hi_contrast.Bind(wx.EVT_CHECKBOX, self.graph.toggle_hi_contrast)
@@ -108,10 +108,14 @@ class gui_head(coincidence_counting.gui_head):
         self.beep.SetValue(qy.settings.get('realtime.sound'))
         self.left_panel_sizer.Add(self.beep, 0, wx.BOTTOM, 5)
 
-        # Button
+        # Buttons
         self.configure_button=wx.Button(self.left_panel, label='Options')
         self.configure_button.Bind(wx.EVT_BUTTON, self.show_settings)
         self.left_panel_sizer.Add(self.configure_button, 0, wx.EXPAND|wx.BOTTOM, 5)
+
+        self.clear_button=wx.Button(self.left_panel, label='Clear graph')
+        self.clear_button.Bind(wx.EVT_BUTTON, self.graph.clear)
+        self.left_panel_sizer.Add(self.clear_button, 0, wx.EXPAND|wx.BOTTOM, 5)
 
         # Browser
         self.browser=wxbrowser.browser(self.left_panel)
