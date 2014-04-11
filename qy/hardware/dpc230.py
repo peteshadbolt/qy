@@ -663,7 +663,7 @@ class postprocessor:
             self.handle_message(message)
 
 
-    def shutdown(self, *args):
+    def kill(self, *args):
         ''' Shut down carefully '''
         print 'Shut down the postprocessor'
         self.dpc_post.kill()
@@ -674,8 +674,8 @@ class postprocessor:
         ''' Handle a message coming from the client '''
         if message[0] == 'tdc':
             self.handle_tdc(message)
-        elif message[0] == 'shutdown':
-            self.shutdown()
+        elif message[0] == 'kill':
+            self.kill()
         elif message[0] == 'delays':
             coincidence.set_delays(message[1])
         elif message[0] == 'coincidence_window':
@@ -756,10 +756,10 @@ class coincidence_counter:
             data = self.pipe.recv()
             if data[0] == 'count_rates': self.callback(data)
 
-    def shutdown(self, *args):
+    def kill(self, *args):
         ''' Shut down carefully '''
         print 'Shut down the DPC230'
-        self.pipe.send(('shutdown', None))
+        self.pipe.send(('kill', None))
         self.dpc230.kill()
 
 
