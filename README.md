@@ -1,10 +1,28 @@
 ##Qy for Python
 
-Quantum photonics with Python. Control and automation, DAQ, IO, simulation, graphics, GUI, analysis.
+Quantum photonics with Python. 
+Control and automation, DAQ, IO, simulation, graphics, GUI, analysis.
 
-### Installing
+### Dependencies
 
-I recently moved from disutils to setuptools. I'm sure this will create headaches...
+`qy` is tested under [Python27](https://python.org/download/releases/2.7/).
+
+`qy` depends on [numpy](http://numpy.org), [matplotlib](http://matplotlib.org).
+For RS-232 communication with hardware, we need the [pySerial](http://pyserial.sourceforge.net/) library. For GUIs, we use [wx](http://wxpython.org).
+
+Some old modules still depend on [Scipy](http://scipy.org) and [Cython](http://cython.org) --- soon these will no longer be required.  
+
+
+### Installing / testing / developing
+
+To quickly get started with `qy` under Microsoft Windows, use the precompiled installer: TODO: implement this!
+
+If you want to modify qy and/or build from source, you will need a `C` compiler (I suggest [MinGW](http://www.mingw.org/) under Windows). `qy` includes a number of Python extensions written in `C`. 
+
+A simple build/install is then done with
+    
+    $ python setup.py build
+    $ python setup.py install
 
 ### Contents
 
@@ -19,7 +37,7 @@ Post-processing and analysis tools.
 Non-standard file formats. In particular, a serial file format for long-running experiments.
 
 ####Simulation
-Optimized code for simulating linear quantum optics and quantum information, some of which is written using [cython](http://www.cython.org).
+Optimized code for simulating linear quantum optics and quantum information, some of which is written using [cython](http://cython.org).
 - Optimized linear optics simulator. *p* photons in *m* modes. Reck schemes, quantum walks, interferometers, random unitaries.
 - Optimized permanent in cython.
 - Optimized factorials and combinatorics
@@ -39,6 +57,8 @@ Useful wrappers for various bits of [wxPython](http://wxpython.org).
 
 ####Miscellaneous useful things
 - Easier file access, numpy tools, command line tools...
+
+
 
 ###TODO
 - Get rid of Scipy (`$ grep -rl "scipy" ./`) 
