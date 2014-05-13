@@ -694,6 +694,7 @@ class postprocessor:
         # Heavy lifting is here
         spc_filename = self.dpc_post.convert_raw_data(tdc1, tdc2)
         count_rates = coincidence.process_spc(spc_filename)
+        print count_rates
         data = {'context':context, 'count_rates': count_rates}
         self.send(('count_rates', data))
 
