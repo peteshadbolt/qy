@@ -109,7 +109,7 @@ class dpc230:
         # Set up
         self.mode = mode
         self.callback = callback if callback != None else nocallback
-        self.callback('Connecting to DPC-230...')
+        self.callback_status('Connecting to DPC-230...')
 
         # We only have one card at the moment, so we always communicate with card #0
         self.module_no = c_short(0)
@@ -132,6 +132,11 @@ class dpc230:
             self.init_hardware_mode()
         else:
             self.init_software_mode()
+
+    def callback_status(self, status):
+        ''' Send a properly formatted status to the callback '''
+        self.callback(('dpc230_status', status))
+
 
     ###########################
     # really useful functions #
@@ -163,7 +168,7 @@ class dpc230:
 
         # Start the measurement
         self.start_measurement()
-        #self.callback('Collecting photons...')
+        #self.callback_message('Collecting photons...')
 
         # Keep grabbing data and dumping it to the file
         while both_armed:
@@ -178,7 +183,7 @@ class dpc230:
                 total = int(rates.sync_rate+rates.cfd_rate)
                 total = format(total, ",d")
                 actual_collection_time = self.get_actual_coltime()
-                stay_alive = self.callback('%s photons/s (%.2fs)' % (total,actual_collection_time))
+                stay_alive = self.callback_status('%s photons/s (%.2fs)' % (total,actual_collection_time))
                 if stay_alive == False: both_armed = False
                 measurement_time = time.clock()
 
@@ -191,7 +196,7 @@ class dpc230:
         tdc2_file.close()
 
         # Return the filenames of the two photon buffers
-        self.callback('%s photons/s (%.2fs)' % (total, 0))
+        self.callback_status('%s photons/s (%.2fs)' % (total, 0))
         return tdc1_filename, tdc2_filename
 
 
@@ -212,9 +217,9 @@ class dpc230:
 
         # if the return code is <0, we couldn't initialize the board for some reason
         if ret<0:
-            self.callback('Error connecting to DPC-230!')
+            self.callback_status('Error connecting to DPC-230!')
         else:
-            self.callback('Initialized the DPC-230 OK, using INI file "%s"' % os.path.split(ini_file)[1])
+            self.callback_status('Initialized the DPC-230 OK, using INI file "%s"' % os.path.split(ini_file)[1])
         return ret
 
 
@@ -229,7 +234,7 @@ class dpc230:
             print 'error: python couldn\'t initialize spcm32x64.dll'
             sys.exit(0)
         else:
-            self.callback('Initialized the DPC-230 OK, using INI file "%s"' % os.path.split(ini_file)[1])
+            self.callback_status('Initialized the DPC-230 OK, using INI file "%s"' % os.path.split(ini_file)[1])
         return ret
 
 
@@ -245,7 +250,7 @@ class dpc230:
                 self.kill()
                 self.connect_to_board()
                 if self.get_init_status() == -6:
-                    self.callback('Still failed to connect :(')
+                    self.callback_status('Still failed to connect :(')
                     sys.exit(0)
             else:
                 sys.exit(0)
@@ -268,7 +273,7 @@ class dpc230:
     def get_init_status(self):
         ''' gets the initialization status of the board '''
         ret = self.spc.SPC_get_init_status(self.module_no);
-        if ret<0: self.callback('Warning: unexpected spc init status. \n\
+        if ret<0: self.callback_status('Warning: unexpected spc init status. \n\
 This usually means that another process has control of the DPC-230.')
         return ret
 
@@ -494,7 +499,7 @@ This usually means that another process has control of the DPC-230.')
     def spc_close(self):
         ''' Close the connection to the DPC230 '''
         self.spc.SPC_close()
-        self.callback('Closed connection to DPC230')
+        self.callback_status('Closed connection to DPC230')
 
 
     #################################
@@ -542,18 +547,18 @@ This usually means that another process has control of the DPC-230.')
         max_per_call = c_int(int(4e6))        # how many?
 
         # initialize and convert first chunk
-        self.callback('Converting raw data...')
+        self.callback_status('Converting raw data...')
         ret = self.spc.SPC_convert_dpc_raw_data(tdc1_stream_hndl, tdc2_stream_hndl, c_short(1), spc_file, max_per_call)
 
         # convert remaining chunks
         while ret>0:
             ret = self.spc.SPC_convert_dpc_raw_data(tdc1_stream_hndl, tdc2_stream_hndl, c_short(0), spc_file, max_per_call)
-            self.callback('Converting raw data...')
-        self.callback('Finished converting raw data.')
+            self.callback_status('Converting raw data...')
+        self.callback_status('Finished converting raw data.')
 
         # check for errors
         if ret<0:
-            self.callback('Error converting raw data file to SPC format')
+            self.callback_status('Error converting raw data file to SPC format')
             print 'Error converting raw data file to SPC format';   sys.exit(0)
 
         # close streams
@@ -606,18 +611,18 @@ This usually means that another process has control of the DPC-230.')
         max_per_call = c_int(int(4e6))        # how many?
 
         # initialize and convert first chunk
-        self.callback('Converting raw data...')
+        self.callback_status('Converting raw data...')
         ret = self.spc.SPC_convert_dpc_raw_data(tdc1_stream_hndl, tdc2_stream_hndl, c_short(1), spc_file, max_per_call)
 
         # convert remaining chunks
         while ret>0:
             ret = self.spc.SPC_convert_dpc_raw_data(tdc1_stream_hndl, tdc2_stream_hndl, c_short(0), spc_file, max_per_call)
-            self.callback('Converting raw data...')
-        self.callback('Finished converting raw data.')
+            self.callback_status('Converting raw data...')
+        self.callback_status('Finished converting raw data.')
 
         # check for errors
         if ret<0:
-            self.callback('Error converting raw data file to SPC format')
+            self.callback_status('Error converting raw data file to SPC format')
             print 'Error converting raw data file to SPC format';   sys.exit(0)
 
         # close streams
@@ -694,9 +699,8 @@ class postprocessor:
         # Heavy lifting is here
         spc_filename = self.dpc_post.convert_raw_data(tdc1, tdc2)
         count_rates = coincidence.process_spc(spc_filename)
-        print count_rates
         data = {'context':context, 'count_rates': count_rates}
-        self.send(('count_rates', data))
+        self.send(('coincidence_data', data))
 
 
 class coincidence_counter:
@@ -706,18 +710,17 @@ class coincidence_counter:
     Data aquisition and postprocessing run in parallel subprocesses.
     This allows for more efficient data processing.
     '''
-    def __init__(self, callback = None, dpc_callback = None, timeout = 2):
+    def __init__(self, callback = None, timeout = 2):
         ''' Initialize both sub-processes '''
-        # Connect to the DPC230
-        self.dpc230 = dpc230('hardware', dpc_callback)
-
-        # Interface
+        # Interface to the outside world
         self.callback = callback if callback else sys.stderr.write
         self.timeout = timeout
 
-        self.buffers_in_use=0
+        # Connect to the DPC230
+        self.dpc230 = dpc230('hardware', callback=self.callback)
 
         # Start up the postprocessing process and build the communication network
+        self.buffers_in_use=0
         self.pipe, post_pipe = Pipe()
         self.post = Process(target = postprocessor, name = 'post', args = (post_pipe,))
         self.set_integration_time(qy.settings.get('realtime.integration_time'))
@@ -735,7 +738,7 @@ class coincidence_counter:
         self.pipe.send(('tdc', {'tdc1':tdc1, 'tdc2':tdc2, 'context':context}))
         while self.pipe.poll():
             data = self.pipe.recv()
-            if data[0] == 'count_rates': 
+            if data[0] == 'coincidence_data': 
                 self.buffers_in_use+=-1
                 self.callback(data)
 
@@ -757,7 +760,7 @@ class coincidence_counter:
         ''' Collect all information from the coincidence counter '''
         if self.pipe.poll(self.timeout):
             data = self.pipe.recv()
-            if data[0] == 'count_rates': self.callback(data)
+            if data[0] == 'coincidence_data': self.callback(data)
 
     def kill(self, *args):
         ''' Shut down carefully '''
