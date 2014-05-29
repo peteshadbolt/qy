@@ -1,9 +1,10 @@
-from distutils.core import setup
-from distutils.extension import Extension
-from Cython.Distutils import build_ext
-import numpy
+from setuptools import setup, Extension
+from glob import glob
+import numpy as np
+print np.get_include()
 
-setup(
-    cmdclass = {'build_ext': build_ext},
-    ext_modules = [Extension("perm", ["perm.pyx"], include_dirs=[numpy.get_include()])]
-)
+setup(name = 'permanent', 
+      version = '1.0',  
+      ext_modules = [Extension('permanent', ['permanent.c'])],
+      include_dirs = [np.get_include()+'/numpy']
+      )

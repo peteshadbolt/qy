@@ -32,7 +32,7 @@ class gui_head(wx.Frame):
         elif key=='count_rates':
             filtered_counts=self.browser.update_count_rates(value)
             self.graph.add_counts(filtered_counts)
-        elif key=='shutdown':
+        elif key=='kill':
             self.quit()
 
     def ontimer(self, arg):
@@ -119,6 +119,10 @@ class gui:
     def send(self, key, value):
         ''' Send a message to the threaded GUI '''
         self.pipe.send((key, value))
+
+    def kill(self):
+        ''' Send the message to shut down '''
+        self.send('kill', None)
 
 
 

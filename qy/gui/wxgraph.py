@@ -36,19 +36,32 @@ class curve:
         self.plot_curve.set_ydata(self.ydata[mask])
         self.max_line.set_xdata([0, HISTORY_SIZE])
         self.max_line.set_ydata([max(self.ydata)]*2)
-        if sum(mask)==0:
-            self.alive=False
-            self.plot_curve.remove()
-            self.max_line.remove()
+        if sum(mask)==0: self.delete()
+
+
+    def delete(self):
+        ''' Delete the curve '''
+        self.alive=False
+        self.plot_curve.remove()
+        self.max_line.remove()
 
 
 class graph_panel(wx.Panel):
     def __init__(self, *args, **kwargs):
+        ''' Constructor '''
         wx.Panel.__init__(self, *args, **kwargs)
         self.curves={}
         self.beep=qy.settings.get('realtime.sound')
         self.hi_contrast=False
         self.build()
+
+    
+    def clear(self, *args):
+        ''' clear the graph '''
+        for curve in self.curves.values():
+            curve.delete()
+        self.curves={}
+        self.draw()
 
 
     def build(self):

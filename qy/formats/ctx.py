@@ -1,227 +1,102 @@
 import os
-from StringIO import StringIO
-import base64
-import gzip
-import struct
+import json
 from qy.util import progressbar
+from qy.util import json_no_unicode
 from qy.util import timestamp
-
-required_metadata = set(['scan_label'])
-data_formats = {
-'scan_npoints':[int],
-'scan_nloops':[int],
-'scan_integration_time':[float],
-'scan_close_shutter':[bool],
-'scan_dont_move':[bool],
-'scan_motor_controller':[int],
-'scan_start_position':[float],
-'scan_stop_position':[float],
-'scan_loop':[int],
-'scan_step':[int],
-'integration_step': [int],
-'motor_controller_update': [int, float]
-}
 
 class CTXException(Exception):
     ''' A generic exception for the CTX file class '''
     pass
 
-def format_key_value(key, values):
-    ''' Try to format a key-value pair, converting strings to ints etc '''
-    try:
-        values=[f(v) for f, v in zip(data_formats[key], values)]
-        return key, values
-    except KeyError:
-        return key, values
-
-def encode_counts(binary_string):
-    ''' Encodes a binary blob of countrates to a text format for storage '''
-    # GZIP the data
-    zipped = StringIO()
-    zipper = gzip.GzipFile(mode='wb', fileobj=zipped)
-    zipper.write(binary_string)
-    zipper.close()
-
-    # Base 64 encode the string
-    s = base64.b64encode(zipped.getvalue())
-    return s
-
-def binary_pattern_to_alphanumeric(pattern):
-    ''' Convert a binary-encoded detection event to an alphanumeric string'''
-    alphabet='abcdefghijklmnop'
-    letters = [alphabet[i] for i in range(16) if (1<<i & pattern)>0]
-    return ''.join(letters)
-
-def decode_counts(data_string):
-    ''' Decodes a text blob to a dictionary of count rates '''
-    # Base 64 decode the string
-    s = base64.b64decode(data_string)
-
-    # unGZIP the data
-    zipped = StringIO(s)
-    zipper = gzip.GzipFile(mode='r', fileobj=zipped)
-
-    # Build a dictionary of countrates
-    output={}
-    while True:
-        data=zipper.read(8)
-        if data=='': return output
-        key,value=struct.unpack('HI', data)
-        key = binary_pattern_to_alphanumeric(key)
-        output[key]=value
-
 class ctx:
     ''' a .CTX file '''
-    def __init__(self, filename=None, mode=None):
+    def __init__(self, filename=None, metadata=None):
+        # Get a timestamp
+        time_started = timestamp()
+
+        # If no filename is provided, use the timestamp
         if filename:
-            self.filename=filename
+            if os.path.isdir(filename):
+                self.filename=os.path.join(filename, time_started+'.ctx')
+            else:
+                self.filename=filename
         else:
-            self.filename=timestamp()
-        self.event_list=[]
-
-        # Choose mode automatically 
-        self.mode=mode
-        if not self.mode in ['read', 'write', 'preview']:  
-            self.mode='preview' if os.path.exists(self.filename) else 'write'
-
-        if self.mode=='preview': 
-            self.load_metadata()
-        elif self.mode=='read': 
-            self.load_metadata()
-            self.load_in_full()
-
-    def write_metadata(self, metadata):
-        ''' Write metadata to the file '''
-        # Check for bad behaviour 
-        if self.mode!='write':
-            raise CTXException('Cannot write in read/preview mode!')
-        if not required_metadata <= set(metadata.keys()):
-            raise CTXException('Certain metadata is required!')
-
-        # Put the metadata in an attribute
-        self.metadata=metadata
-
-        # Write the key-value pairs to the file
-        f=open(self.filename, 'w')
-        f.write('ctx data file\n')
-        for key, value in metadata.items():
-            s='%s, %s\n' % (key, value)
-            f.write(s)
-        f.write('end_metadata\n\n')
-        f.close()
+            self.filename=time_started+'.ctx'
 
 
-    def write_list(self, data):
-        ''' Write '''
-        f=open(self.filename, 'a')
-        s=', '.join(map(str, data))+'\n'
-        f.write(s)
-        f.close()
-    
-    def write_key_value(self, key, value):
-        ''' Write '''
-        f=open(self.filename, 'a')
-        s='%s, %s\n' % (key, value)
-        f.write(s)
-        f.close()
+        # If the file exists, we are trying to read from it. 
+        # Otherwise, we are writing a new file
+        self.mode='read' if os.path.exists(self.filename) else 'write'
+
+        # If we are writing to a file, put the metadata at the top.
+        if self.mode=='write':
+            # Construct some metadata
+            if metadata:
+                self.metadata=metadata
+            else:
+                self.metadata={'label':'%s (no metadata provided)' % self.filename}
+
+            # Automatically add some extra metadata
+            self.metadata['timestamp']=str(time_started)
+            self.metadata['computer']=os.environ['COMPUTERNAME']
+
+            # Write it to disk
+            self.write('metadata', self.metadata)
+
+        # If we are trying to read from the file, we should open it for reading.
+        if self.mode=='read': 
+            self.read_metadata()
 
 
-    def write_counts(self, counts_dict):
-        ''' Write down some countrates as a binary string '''
-        # TODO: THIS IS FUCKED UP!
-        #binary_string=str(counts_dict)
-        #s=encode_counts(binary_string)
-        s='count_rates, '+str(counts_dict)
-
-        # Write it to disk
-        f=open(self.filename, 'a')
-        f.write('start_counts\n' + s + '\nend_counts\n\n')
-        f.close()
-
-
-    def load_metadata(self):
-        ''' Load the metadata '''
-        self.filesize=os.path.getsize(self.filename)
-        self.metadata={}
+    def stream(self, tag=''):
+        ''' 
+        Stream data from the file, filtering for a particular tag of interest
+        '''
         f=open(self.filename, 'r')
         for line in f:
-            line=map(str.strip, line.split(','))
-            if len(line)==2:
-                key, value=format_key_value(line[0], line[1])
-                self.metadata[key]=value
-            elif line == 'end_metadata': 
-                f.close()
-                return
+            a = line.find(':')
+            if a>0 and line[:a].strip()==tag:
+                yield json.loads(line[a+1:], object_hook=json_no_unicode)
+
         f.close()
 
-    def load_in_full(self):
-        ''' Load the file in full, with an optional callback for progress '''
-        # Jump to the end of the metadata
-        f=open(self.filename, 'r')
-        line=''
-        while line!='end_metadata':
-            line = f.readline().strip()
 
-        # Load all the events
-        self.event_list=[]
-        pb=progressbar(self.filesize, label='Loading %s' % self.filename)
-        while line!='':
-            line=f.readline()
-            pb.update(f.tell())
-            items=map(lambda x: x.strip(), line.split(','))
-            key=items[0]
+    def read_metadata(self):
+        ''' Look for metadata in the file '''
+        # TODO: this isn't finished!
+        self.metadata=self.stream('metadata').next()
 
-            if key=='motor_controller_update':
-                data=(key, int(items[1]), float(items[2]))
-                self.event_list.append(data)
 
-            elif key=='scan_loop':
-                data=(key, int(items[1]))
-                self.event_list.append(data)
 
-            elif key=='scan_step':
-                data=(key, int(items[1]))
-                self.event_list.append(data)
+    def write(self, key, data):
+        ''' Write '''
+        if self.mode!='write':
+            raise CTXException('Cannot write to existing CTX file "%s"' % self.filename)
 
-            elif key=='integration_step':
-                data=(key, int(items[1]))
-                self.event_list.append(data)
-
-            elif key=='start_counts':
-                data=f.readline()
-                data=decode_counts(data)
-                data=('count_rates', data)
-                self.event_list.append(data)
-            else:
-                pass
-
-        pb.finish()
+        data_encoded=json.dumps(data, sort_keys=True)
+        f=open(self.filename, 'a')
+        s='%s: %s\n' % (key, data_encoded)
+        f.write(s)
         f.close()
-        self.iterator_index=0
 
 
-    def __len__(self):
-        ''' Number of events '''
-        return len(self.event_list)
+    def write_counts(self, data):
+        ''' Helper function '''
+        self.write('counts', data)
 
 
     def __iter__(self): return self
-    def next(self):
-        ''' Allow use as an iterator (for index, modes in basis)'''
-        if self.iterator_index < len(self.event_list)-1:
-            cur, self.iterator_index = self.iterator_index, self.iterator_index+1
-            return self.event_list[self.iterator_index]
-        else:
-            self.iterator_index=0
-            raise StopIteration()
+
+
+    #def next(self):
+        #''' Allow use as an iterator (for index, modes in basis)'''
 
 
     def __str__(self):
         ''' Convert to a string '''
         s = 'CTX file'
-        s += ' [%s] [%s]\n' % (self.filename, self.mode)
-        s += '\n'.join(map(lambda x: '%s: %s' % x, self.metadata.items()))
-        if len(self.event_list)>0:
-            s += '\n%d events.' % len(self.event_list)
+        s += ' %s [%s]\n' % (self.filename, self.mode)
+        for key, value in self.metadata.items():
+            s+='  %s: %s\n' % (key, value)
         return s
 

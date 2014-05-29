@@ -111,7 +111,7 @@ void get_next_photon()
 // Counts coincidences in the current chunk of data
 void count_coincidences()
 {
-    short pattern=0;                // Stores which coincidences we have
+    int pattern=0;                // Stores which coincidences we have
     long long int window_time=0;    // The quantized time of this window
     get_next_photon();
     while(photon_time!=-1)
