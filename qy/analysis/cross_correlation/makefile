@@ -1,9 +1,12 @@
-all: cross_correlate
+all: build
 
-cross_correlate:
+build: cross_correlate.c delays.h
 	python setup.py build_ext --inplace
 
+test: build cross_correlate_test.py
+	python cross_correlate_test.py
+
 clean:
-	@rm build/
-	@rm cross_correlate.so
+	rm -r build/
+	rm cross_correlate.so
 

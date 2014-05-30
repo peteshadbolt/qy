@@ -23,7 +23,7 @@ static PyObject* set_delays(PyObject* self, PyObject* args)
 
 
 // Just set the delays to zero
-void zero_delays() 
+void zero_delays(void) 
 {
     int i; 
     for (i=0; i<16; i+=1) {delays[i]=0;}
@@ -31,7 +31,7 @@ void zero_delays()
 
 
 // Show the current delay settings
-void show_delays() 
+void show_delays(void) 
 {
     printf("Delays:\n");
     int i; 

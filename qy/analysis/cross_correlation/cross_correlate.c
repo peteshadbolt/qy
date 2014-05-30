@@ -1,11 +1,11 @@
-// This python extension reads .SPC files from the Becker & Hickl DPC-230 timetagging card and counts coincidences events
+// This python extension reads .SPC files from the Becker & Hickl DPC-230 timetagging card and computes cross-correlation functions.
 // All questions to Peter Shadbolt (pete.shadbolt@gmail.com)
+//
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <Python.h>
 #include "dpc.h"
-#include "delays.h"
 char ALPHABET[16] = "abcdefghijklmnop";
 
 // Global vars
@@ -22,6 +22,11 @@ long long int photon_time=0;            // the arrival time of this photon
 int photon_channel=0;                   // the channel of the current photon
 long long int time_cutoff;              // how many chunks we should process
 int pattern_rates[65536];               // table of count rates
+int start_channel;                      // ``start'' channel for cross-correlation
+int stop_channel;                       // ``stop'' channel for cross-correlation
+#define MAX_HISTOGRAM_BINS 1001 		// eighty feet ought to be enough for anyone
+int histogram_bins;						// the size of the histogram
+int histogram[MAX_HISTOGRAM_BINS];		// the histogram
 
 
 // Implements the coincidence window
@@ -29,7 +34,7 @@ long long int quantize(long long int t, int win) {return t-(t % win);}
 
 
 // Grabs a chunk of data from the SPC file
-void grab_chunk(){nrecords=fread(&buffer, 4, CHUNK_SIZE, spc_file);}
+void grab_chunk(void){nrecords=fread(&buffer, 4, CHUNK_SIZE, spc_file);}
 
 
 // Count bits in a string
@@ -43,51 +48,50 @@ int bitcount (int n)  {
 }
 
 
-// Splits the current chunk of data into seperate buffers for each channel
-int split_channels()
+// Splits the current chunk of data into seperate buffers for the start and stop channels
+int split_channels(void)
 {
-    int i;
-    int this_record=0;              // this record
-    int next_record=0;              // the previous record
-    long long int high_time=0;      // stores the current high time
-    
-    // empty the channel counts and indeces
-    for (i=0; i<16; i+=1){channel_count[i]=0; channel_index[i]=0;}
-        
-    // start building
-    for (i=0; i < nrecords-1; i+=1)
-    {
-        this_record=buffer[i]; 
-        next_record=buffer[i+1];
-        
-        if (is_photon(this_record))
-        {
-            if (has_gap(this_record)){fifo_gap+=1;}
-            photon_channel=photon_to_channel(this_record);
-            photon_time=photon_to_time(this_record);
-            photon_time+=delays[photon_channel];
-            photon_time=photon_time ^ high_time;
-            if (photon_time>time_cutoff && time_cutoff>0) {
-                /*printf("Bailed due to time cutoff");*/
-                return -1;
-            }
-            channels[photon_channel][channel_count[photon_channel]]=photon_time;
-            channel_count[photon_channel]+=1;
-        }
-        
-        if (is_high_time(next_record)) 
-        {
-            high_time=get_high_time(next_record);
-            high_time=high_time << 24;
-        }
-    }
-    if (fifo_gap){printf("WARNING: FIFO gap. You are missing photons!");}
-    return 0;
+	int i;
+	int this_record=0;				// this record
+	int next_record=0;				// the previous record
+	long long int high_time=0;		// stores the current high time
+	
+	channel_count[0]=0; channel_count[1]=0; 
+	channel_index[0]=0; channel_index[1]=0; 
+		
+
+    printf("time cutoff %lld", time_cutoff);
+
+	for (i=0; i < nrecords-1; i+=1)
+	{
+		this_record=buffer[i]; 
+		next_record=buffer[i+1];
+		
+		if (is_photon(this_record))
+		{
+
+			photon_channel=photon_to_channel(this_record);
+			
+			photon_time=photon_to_time(this_record);
+			photon_time=photon_time ^ high_time;
+			if (photon_time>time_cutoff && time_cutoff>0){return -1;}
+			
+			if (photon_channel==start_channel) {channels[0][channel_count[0]]=photon_time; channel_count[0]+=1;}
+			if (photon_channel==stop_channel) {channels[1][channel_count[1]]=photon_time; channel_count[1]+=1;}
+		}
+		
+		if (is_high_time(next_record))
+		{
+			high_time=get_high_time(next_record);
+			high_time=high_time << 24;
+		}
+	}
+	return 0;
 }
 
 
 // Gets the next photon from the file
-void get_next_photon()
+void get_next_photon(void)
 {
     int i;
     long long int t;
@@ -108,68 +112,55 @@ void get_next_photon()
 }
 
 
-// Counts coincidences in the current chunk of data
-void count_coincidences()
+// Cross-correlates on the current chunk of data
+int cross_correlate(void)
 {
-    short pattern=0;                // Stores which coincidences we have
-    long long int window_time=0;    // The quantized time of this window
-    get_next_photon();
-    while(photon_time!=-1)
-    {
-        photon_time=quantize(photon_time, window);
-        if ((photon_time==window_time) ^ (photon_time==window_time+window))
-        {
-            // Update the picture of the event
-            pattern = pattern ^ (1 << photon_channel);
-        }
-        else
-        {
-            // Store the event in the main table
-            /*if ((pattern_rates[pattern]==0) && pattern!=0){nonzero_pattern_count+=1;}*/
-            pattern_rates[pattern]+=1;
-            // Get ready for the next event
-            pattern = (1 << photon_channel);
-        }
-        window_time=photon_time;
-        get_next_photon();
-    }
+	int i=0; int j=0; int j0=0;
+	long long int start_time;
+	long long int stop_time;
+	int bin;
+	
+	
+	for (i=0; i<channel_count[0]; i+=1)
+	{
+		// find the first photon in the stop channel which is later than or equal to the photon in the start channel
+		start_time=channels[0][i];
+		j=j0;
+		while (channels[1][j]<start_time){j+=1;}
+		j0=j;
+		bin=0;
+		
+		while (bin<histogram_bins && j<channel_count[1])
+		{
+			stop_time=channels[1][j];
+			bin=stop_time-start_time;
+			
+			if (bin>=0 && bin<histogram_bins){histogram[bin]+=1;}
+			j+=1;
+		}
+	}
+	
+	return 1;
 }
 
-static PyObject* label_from_binary_pattern(int pattern)
-{
-    char label[17];
-    int i=0;
-    int j=0;
-    for (i=0; i<16; i+=1) {
-        if ((pattern & 1<<i) > 0) {
-            label[j]=ALPHABET[i];
-            j+=1;
-        }
-    }
-    PyObject *response = Py_BuildValue("s#", label, j);
-    return response;
-}
 
-// Builds the dictionary of count rates, to be returned to the user
-static PyObject* build_output_dict()
+// Builds the output histogram as a dictionary containing two lists
+static PyObject* build_output_dict(void)
 {
+
     PyObject *output_dict = PyDict_New();
-    int pattern=1; 
-    int i=0;
-    for (pattern=1; pattern<65536; pattern+=1) {
-        if (pattern_rates[pattern]>0) {
-            PyObject *key = label_from_binary_pattern(pattern);
-            PyObject *value = Py_BuildValue("i", pattern_rates[pattern]);
-            PyDict_SetItem(output_dict, key, value);
-            i+=1;
-        }
-    }
-
+    PyObject *key = Py_BuildValue("s", "awd");
+    PyObject *value = Py_BuildValue("i", 1337);
+    PyDict_SetItem(output_dict, key, value);
     return output_dict;
 }
 
 
-// The main coincidence-counting process
+//*********************************************************
+//Functions here provide an interface to the outside world
+
+
+// The main cross-correlation process
 static char process_spc_docs[] = "process_spc(filename): Process an SPC file";
 static PyObject* process_spc(PyObject* self, PyObject* args)
 {
@@ -189,7 +180,7 @@ static PyObject* process_spc(PyObject* self, PyObject* args)
     grab_chunk();
     while (nrecords>0 && finished!=-1) {    
         finished=split_channels();
-        count_coincidences();
+        cross_correlate();
         if (finished!=-1){grab_chunk();}
     }
     
@@ -200,15 +191,23 @@ static PyObject* process_spc(PyObject* self, PyObject* args)
     return build_output_dict();
 }
 
-
-static char set_window_docs[] = "set_window(window): Set the coincidence window TB";
-static PyObject* set_window(PyObject* self, PyObject* args)
+static char set_histogram_bins_docs[] = "set_histogram_bins(n): Set the number of bins in the histogram";
+static PyObject* set_histogram_bins(PyObject* self, PyObject* args)
 { 
-    if (!PyArg_ParseTuple(args, "i", &window)) { return NULL; }
-    if (window<1){ window=1; }
-    PyObject *response = Py_BuildValue("i", window);
+    if (!PyArg_ParseTuple(args, "i", &histogram_bins)) { return NULL; }
+    PyObject *response = Py_BuildValue("i", histogram_bins);
     return response;
 }
+
+
+static char set_channels_docs[] = "set_channels(start, stop): Set the START and STOP channels";
+static PyObject* set_channels(PyObject* self, PyObject* args)
+{ 
+    if (!PyArg_ParseTuple(args, "ii", &start_channel, &stop_channel)) { return NULL; }
+    PyObject *response = Py_BuildValue("i", 1);
+    return response;
+}
+
 
 static char set_time_cutoff_docs[] = "set_time_cutoff(cutoff): Set the cutoff point in seconds";
 static PyObject* set_time_cutoff(PyObject* self, PyObject* args)
@@ -223,17 +222,16 @@ static PyObject* set_time_cutoff(PyObject* self, PyObject* args)
     return response;
 }
 
-
-static PyMethodDef coincidence_funcs[] = {
-    {"process_spc", (PyCFunction)process_spc, METH_VARARGS, process_spc_docs},
-    {"set_window", (PyCFunction)set_window, METH_VARARGS, set_window_docs},
+static PyMethodDef cross_correlate_funcs[] = {
+    {"set_histogram_bins", (PyCFunction)set_histogram_bins, METH_VARARGS, set_histogram_bins_docs},
     {"set_time_cutoff", (PyCFunction)set_time_cutoff, METH_VARARGS, set_time_cutoff_docs},
-    {"set_delays", (PyCFunction)set_delays, METH_VARARGS, set_delays_docs},
+    {"set_channels", (PyCFunction)set_channels, METH_VARARGS, set_channels_docs},
+    {"process_spc", (PyCFunction)process_spc, METH_VARARGS, process_spc_docs},
     {NULL}
 };
 
-void initcoincidence(void)
+void initcross_correlate(void)
 {
-    Py_InitModule3("coincidence", coincidence_funcs,
-                   "Fast coincidence counting for DPC230 timetag data. Unless otherwise stated, all units are in timebins (1 TB = 0.082 ns)");
+    Py_InitModule3("cross_correlate", cross_correlate_funcs,
+                   "Fast cross-correlation on timetags from the DPC-230");
 }
