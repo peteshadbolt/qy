@@ -1,9 +1,10 @@
 import coincidence as c
+from glob import glob
 import re
 
 help(c)
 c.set_window(5)
-c.set_time_cutoff_ms(9000)
+c.set_time_cutoff(9)
 c.set_delays([0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
 data=c.process_spc('minute.spc')
 
