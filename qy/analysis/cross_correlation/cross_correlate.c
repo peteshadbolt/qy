@@ -7,6 +7,7 @@
 #include <Python.h>
 #include "dpc.h"
 
+
 // Global vars
 #define CHUNK_SIZE 200000
 FILE *spc_file;                                 // the SPC file
@@ -161,10 +162,8 @@ static PyObject* set_histogram_width(PyObject* self, PyObject* args)
 { 
     float time_ns;
     if (!PyArg_ParseTuple(args, "f", &time_ns)) { return NULL; }
-    printf("%f/%f=%f\n", time_ns, TPB_NS, time_ns/TPB_NS);
-
-    /*histogram_bins = (int)(time_ns/TPB_NS);*/
-    /*printf("Set histogram width to %.1f ns (%d bins)\n", time_ns, histogram_bins);*/
+    histogram_bins = (int)(time_ns/(TPB_NS));
+    printf("Set histogram width to %.1f ns (%d bins)\n", time_ns, histogram_bins);
     PyObject *response = Py_BuildValue("i", histogram_bins);
     return response;
 }
