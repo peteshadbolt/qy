@@ -127,7 +127,7 @@ static PyObject* cross_correlate(PyObject* self, PyObject* args)
     // Parse the args
     const char* my_spc_filename;
     if (!PyArg_ParseTuple(args, "sii", &my_spc_filename, &start_channel, &stop_channel)) { return NULL; }
-    printf("%s (START: %d / STOP: %d)\n", my_spc_filename, start_channel, stop_channel);
+    printf("Cross-correlating on %s (START: %d / STOP: %d)\n", my_spc_filename, start_channel, stop_channel);
 
     // Reset count rates, etc
     int i;

@@ -527,7 +527,7 @@ This usually means that another process has control of the DPC-230.')
     #################################
 
 
-    def convert_raw_data(self, tdc1_filename, tdc2_filename):
+    def convert_raw_data(self, tdc1_filename, tdc2_filename, output_filename=None):
         ''' converts a raw FIFO data file to SPC format '''
 
         # initialize photon streams
@@ -536,7 +536,10 @@ This usually means that another process has control of the DPC-230.')
 
         # prepare for conversion
         if tdc1_stream_hndl.value<0 or tdc2_stream_hndl.value<0: print 'error loading raw data streams'; sys.exit(0)
-        spc_file = os.path.join(os.path.dirname(tdc1_filename), 'photons.spc')
+        if output_filename==None:
+            spc_file = os.path.join(os.path.dirname(tdc1_filename), 'photons.spc')
+        else:
+            spc_file=output_filename
 
         # empty the spc file
         q = open(spc_file, 'wb')
