@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <Python.h>
 #include "dpc.h"
-char ALPHABET[16] = "abcdefghijklmnop";
 
 // Global vars
 #define CHUNK_SIZE 200000
@@ -19,17 +18,15 @@ int nrecords=1;                                 // the number of records we actu
 long fifo_gap=0;                                // tells us whether any data went missing due to a FIFO gap
 long long int photon_time=0;                    // the arrival time of this photon
 int photon_channel=0;                           // the channel of the current photon
-long long int time_cutoff;                      // how many chunks we should process
+long long int integration_time;                 // how many chunks we should process
 int start_channel;                              // ``start'' channel for cross-correlation
 int stop_channel;                               // ``stop'' channel for cross-correlation
 #define MAX_HISTOGRAM_BINS 1001 		        // eighty feet ought to be enough for anyone
 int histogram_bins;						        // the size of the histogram
 int *histogram;		                            // the histogram
 
-
 // Grabs a chunk of data from the SPC file
 void grab_chunk(void){nrecords=fread(&buffer, 4, CHUNK_SIZE, spc_file);}
-
 
 // Splits the current chunk of data into seperate buffers for the start and stop channels
 int split_channels(void)
@@ -49,7 +46,7 @@ int split_channels(void)
 		if (is_photon(this_record)) {
 			photon_channel=photon_to_channel(this_record);
 			photon_time=photon_to_time(this_record) ^ high_time;
-			if (photon_time>time_cutoff && time_cutoff>0){return -1;}
+			if (photon_time>integration_time && integration_time>0){return -1;}
 			if (photon_channel==start_channel) {channels[0][channel_count[0]]=photon_time; channel_count[0]+=1;}
 			if (photon_channel==stop_channel) {channels[1][channel_count[1]]=photon_time; channel_count[1]+=1;}
 		}
@@ -105,7 +102,7 @@ static PyObject* build_output_dict(void)
     int i;
     for (i=0; i<histogram_bins; i+=1)
     {
-        PyObject *time_entry = Py_BuildValue("f", 2*i*TPB/1000000);
+        PyObject *time_entry = Py_BuildValue("f", 2*(i-histogram_bins/2)*TPB_NS);
         PyList_SetItem(times, i, time_entry);
         PyObject *count_entry = Py_BuildValue("i", histogram[i]);
         PyList_SetItem(counts, i, count_entry);
@@ -151,47 +148,43 @@ static PyObject* cross_correlate(PyObject* self, PyObject* args)
         if (finished!=-1){grab_chunk();}
     }
     
-    // Close the SPC file 
+    // Close the SPC file, prepare the data, free memory and return
     fclose(spc_file);
-
-    // Prepare the data 
     PyObject* output = build_output_dict();
-
-    // Free memory and return
     free(histogram);
     return output;
 }
 
 
-static char set_histogram_bins_docs[] = "set_histogram_bins(n): Set the number of bins in the histogram";
-static PyObject* set_histogram_bins(PyObject* self, PyObject* args)
+static char set_histogram_width_docs[] = "set_histogram_width(n): Set the width of the histogram in ns";
+static PyObject* set_histogram_width(PyObject* self, PyObject* args)
 { 
-    if (!PyArg_ParseTuple(args, "i", &histogram_bins)) { return NULL; }
-    float histo_width_ns = histogram_bins * TPB/1000000;
-    printf("Set histogram width to %.1f ns\n", histo_width_ns);
+    float time_ns;
+    if (!PyArg_ParseTuple(args, "f", &time_ns)) { return NULL; }
+    printf("%f/%f=%f\n", time_ns, TPB_NS, time_ns/TPB_NS);
+
+    /*histogram_bins = (int)(time_ns/TPB_NS);*/
+    /*printf("Set histogram width to %.1f ns (%d bins)\n", time_ns, histogram_bins);*/
     PyObject *response = Py_BuildValue("i", histogram_bins);
     return response;
 }
 
 
-static char set_time_cutoff_docs[] = "set_time_cutoff(cutoff): Set the cutoff point in seconds";
-static PyObject* set_time_cutoff(PyObject* self, PyObject* args)
+static char set_integration_time_docs[] = "set_integration_time(time): Set the cutoff point in seconds";
+static PyObject* set_integration_time(PyObject* self, PyObject* args)
 { 
-    float new_time_cutoff;
-    if (!PyArg_ParseTuple(args, "f", &new_time_cutoff)) { return NULL; }
-    if (new_time_cutoff>.1) 
-    { 
-        time_cutoff=(long long)(new_time_cutoff*TPB_INV_SECS); 
-    }
-    printf("Set time cutoff to %.1f seconds\n", new_time_cutoff);
-    PyObject *response = Py_BuildValue("L", time_cutoff);
+    float new_integration_time;
+    if (!PyArg_ParseTuple(args, "f", &new_integration_time)) { return NULL; }
+    if (new_integration_time>.1) { integration_time=(long long)(new_integration_time*TPB_INV_SECS); }
+    printf("Set integration time to %.1f seconds\n", new_integration_time);
+    PyObject *response = Py_BuildValue("L", integration_time);
     return response;
 }
 
 
 static PyMethodDef cross_correlate_funcs[] = {
-    {"set_histogram_bins", (PyCFunction)set_histogram_bins, METH_VARARGS, set_histogram_bins_docs},
-    {"set_time_cutoff", (PyCFunction)set_time_cutoff, METH_VARARGS, set_time_cutoff_docs},
+    {"set_histogram_width", (PyCFunction)set_histogram_width, METH_VARARGS, set_histogram_width_docs},
+    {"set_integration_time", (PyCFunction)set_integration_time, METH_VARARGS, set_integration_time_docs},
     {"cross_correlate", (PyCFunction)cross_correlate, METH_VARARGS, cross_correlate_docs},
     {NULL}
 };
