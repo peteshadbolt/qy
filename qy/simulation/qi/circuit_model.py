@@ -26,7 +26,7 @@ def cu_gate(unitary, control_qubit, target_qubit, nqubits):
 
 def cnot_gate(control_qubit, target_qubit, nqubits):
     ''' a cnot gate '''
-    return cu_gate(qi.pz, control_qubit, target_qubit, nqubits)
+    return cu_gate(qi.px, control_qubit, target_qubit, nqubits)
 	
 def swap_gate(qubit_1, qubit_2, nqubits):
 	''' generate a SWAP gate unitary '''

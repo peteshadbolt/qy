@@ -38,7 +38,10 @@ class ctx:
 
             # Automatically add some extra metadata
             self.metadata['timestamp']=str(time_started)
-            self.metadata['computer']=os.environ['COMPUTERNAME']
+            try:
+                self.metadata['computer']=os.environ['COMPUTERNAME']
+            except KeyError:
+                pass
 
             # Write it to disk
             self.write('metadata', self.metadata)
@@ -57,7 +60,6 @@ class ctx:
             a = line.find(':')
             if a>0 and line[:a].strip()==tag:
                 yield json.loads(line[a+1:], object_hook=json_no_unicode)
-
         f.close()
 
 

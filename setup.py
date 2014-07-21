@@ -3,12 +3,13 @@ import os
 
 
 # Fast coincidence-counting/cross-correlation code
-path=os.path.join('qy', 'analysis', 'coincidence_counting', 'coincidence', 'coincidence.c')
-coincidence = Extension('qy.analysis.coincidence_counting.coincidence', [path])
-path=os.path.join('qy', 'analysis', 'cross_correlation', 'cross_correlate.c')
-cross_correlate = Extension('qy.analysis.cross_correlation.cross_correlate', [path])
+#path=os.path.join('qy', 'analysis', 'coincidence_counting', 'coincidence', 'coincidence.c')
+#coincidence = Extension('qy.analysis.coincidence_counting.coincidence', [path])
+#path=os.path.join('qy', 'analysis', 'cross_correlation', 'cross_correlate.c')
+#cross_correlate = Extension('qy.analysis.cross_correlation.cross_correlate', [path])
 
-extensions = [coincidence, cross_correlate]
+#extensions = [coincidence, cross_correlate]
+extensions=[]
 
 setup(
     name = "qy",
