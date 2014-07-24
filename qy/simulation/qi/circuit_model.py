@@ -1,12 +1,29 @@
 import numpy as np
 import qi
 
+def label(i, n):
+    ''' Get the binary label associated with basis state i for N qubits '''
+    s=bin(i)[2:]
+    s='0'*(n-len(s))+s
+    return '|%s>' % s
+
+def show_sign(state, newline=None):
+    ''' Print out the state, but I'm only interested in the sign of each term '''
+    if newline==None: newline=len(state)>16
+    n=np.log2(len(state))
+    s=''
+    for index, term in enumerate(state):
+        sign={True:'+', False:'-'}[term[0,0]>0]
+        s+='%s%s ' % (sign, label(index, n))
+        if newline: s+='\n'
+    return s
+
 def ph(phi): 
-	''' a phase shifter on two modes '''
+	''' A phase shifter on two modes '''
 	return np.matrix([[1,0],[0,np.exp(1j*phi)]])
 
 def vector_state(index, nqubits):
-	''' get the state vector from a number. e.g. (0,2)-> |00>, (3,2) -> |11> '''
+	''' Get the state vector from a number. e.g. (0,2)-> |00>, (3,2) -> |11> '''
 	name = str(bin(index))[2:]
 	name = ('0'*(nqubits-len(name))+name)
 	psi=np.zeros(2**nqubits)
@@ -14,7 +31,7 @@ def vector_state(index, nqubits):
 	return name, np.matrix(psi).T
 
 def cu_gate(unitary, control_qubit, target_qubit, nqubits):
-	''' generate a CU gate unitary'''
+	''' Generate a CU gate unitary'''
 	d=2**nqubits
 	cu=np.matrix(np.zeros((d,d)), dtype=complex)
 	extended_u=[unitary if i==target_qubit else qi.identity for i in range(nqubits)]
