@@ -12,7 +12,7 @@ if __name__=='__main__':
     
     for i in range(3):
         context={'iteration': i, 'sandwich': {'flavour':'egg', 'price':2.50}}
-        count_rates={'a':100, 'b':100, 'ab':10, 'abc':1, 'p':0}
+        count_rates={'a':100, 'b':100, 'ab':10, 'abc':1, 'p':666}
         output_file.write('context', context)
         output_file.write('count_rates', count_rates)
 
@@ -27,6 +27,11 @@ if __name__=='__main__':
         print 'Only "A" clicked, different method:', pp.parse_coincidence_pattern('A', count_rates)
         print '"A" clicked, don\'t care about other detectors:', pp.parse_coincidence_pattern('a', count_rates)
         print 
+
+    # Looking at the data, simplest way. 
+    raw_data=input_file.stream('count_rates')
+    get_a_counts = lambda counts: counts['a']
+    print 'Simple way to get a column:', map(get_a_counts, raw_data)
 
     # Looking at the data, clever way
     raw_data=input_file.stream('count_rates')
