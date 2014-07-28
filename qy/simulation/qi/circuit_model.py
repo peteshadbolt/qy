@@ -74,6 +74,10 @@ def r_gate(k):
 def cr_gate(k, control_qubit, target_qubit, nqubits):
 	''' controlled version of the R gate'''
 	return cu_gate(r_gate(k), control_qubit, target_qubit, nqubits)
+
+def indexed_single_qubit_gate(u, qubit, nqubits):
+	''' a single-qubit operation on a particular qubit '''
+	return reduce(np.kron, [u if i==qubit else qi.identity for i in range(nqubits)])
 	
 def indexed_hadamard_gate(qubit, nqubits):
 	''' a hadamard on a particular qubit '''
