@@ -125,7 +125,7 @@ void count_coincidences()
         else
         {
             // Store the event in the main table
-            /*if ((pattern_rates[pattern]==0) && pattern!=0){nonzero_pattern_count+=1;}*/
+            //if ((pattern_rates[pattern]==0) && pattern!=0){nonzero_pattern_count+=1;}
             pattern_rates[pattern]+=1;
             // Get ready for the next event
             pattern = (1 << photon_channel);

@@ -15,6 +15,7 @@ class powermeter:
         self.serial.parity=serial.PARITY_NONE
         self.serial.stopbits=serial.STOPBITS_ONE
         self.serial.open()
+        
 
     def read(self):
         s=self.serial.readline(1000)
@@ -27,4 +28,5 @@ class powermeter:
         """ Shut down the powermeter and close the serial port """
         self.serial.close()
         print 'Disconnected from powermeter'
+
 
