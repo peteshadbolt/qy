@@ -673,10 +673,9 @@ class postprocessor:
 
     def kill(self, *args):
         ''' Shut down carefully '''
-        print 'Shut down the postprocessor'
+        print 'Shut down the processor'
         self.dpc_post.kill()
-        sys.exit(0)
-
+        
 
     def handle_message(self, message):
         ''' Handle a message coming from the client '''
