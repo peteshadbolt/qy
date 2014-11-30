@@ -554,15 +554,24 @@ This usually means that another process has control of the DPC-230.')
         ret = self.spc.SPC_convert_dpc_raw_data(tdc1_stream_hndl, tdc2_stream_hndl, c_short(1), spc_file, max_per_call)
 
         # convert remaining chunks
+        n=0
         while ret>0:
             ret = self.spc.SPC_convert_dpc_raw_data(tdc1_stream_hndl, tdc2_stream_hndl, c_short(0), spc_file, max_per_call)
+            n+=1
             self.callback_status('Converting raw data...')
         self.callback_status('Finished converting raw data.')
+
+        return_value=spc_file.value
 
         # check for errors
         if ret<0:
             self.callback_status('Error converting raw data file to SPC format')
             print 'Error converting raw data file to SPC format';   sys.exit(0)
+            print 'Converted %d chunks before error' % n
+            print self.get_board_summary()
+            print self.get_module_info()
+            return_value=None
+
 
         # close streams
         self.spc.SPC_close_phot_stream(tdc1_stream_hndl)
@@ -573,7 +582,7 @@ This usually means that another process has control of the DPC-230.')
         f = open(tdc2_filename, 'wb'); f.close()
 
         # return the name of the new spc file
-        return spc_file.value
+        return return_value
 
 
     #################################
@@ -700,9 +709,14 @@ class postprocessor:
 
         # Heavy lifting is here
         spc_filename = self.dpc_post.convert_raw_data(tdc1, tdc2)
-        count_rates = coincidence.process_spc(spc_filename)
-        data = {'context':context, 'count_rates': count_rates}
-        self.send(('coincidence_data', data))
+        if spc_filename!=None:
+            count_rates = coincidence.process_spc(spc_filename)
+            data = {'context':context, 'count_rates': count_rates}
+            self.send(('coincidence_data', data))
+        else:
+            count_rates = coincidence.process_spc(spc_filename)
+            data = {'context':context, 'count_rates': {}, 'error':'error processing raw timetags'}
+            self.send(('coincidence_data', data))
 
 
 class coincidence_counter:
