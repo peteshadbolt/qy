@@ -1,0 +1,14 @@
+build/lib.linux-x86_64-2.7/qy/simulation/linear_optics.py:#TODO: these should be namedtuples for extra badass
+build/lib.linux-x86_64-2.7/qy/simulation/linear_optics.py:    # TODO: Find all nonzero patterns by classical (fast) means
+build/lib.linux-x86_64-2.7/qy/hardware/__init__.py:# TODO: include a simple heater driver
+build/lib.linux-x86_64-2.7/qy/hardware/dpc230.py:                # TODO: this is still dodgy. Why can't we close the connection?
+build/lib.linux-x86_64-2.7/qy/hardware/dpc230.py:        #TODO: there is a race condition in here
+build/lib.linux-x86_64-2.7/qy/formats/ctx.py:        # TODO: this isn't finished!
+all.sh:grep -R TODO > todo.mkd
+qy/simulation/linear_optics.py:#TODO: these should be namedtuples for extra badass
+qy/simulation/linear_optics.py:    # TODO: Find all nonzero patterns by classical (fast) means
+qy/simulation/permanent/permanent.c:// TODO: Example interface
+qy/hardware/__init__.py:# TODO: include a simple heater driver
+qy/hardware/dpc230.py:                # TODO: this is still dodgy. Why can't we close the connection?
+qy/hardware/dpc230.py:        #TODO: there is a race condition in here
+qy/formats/ctx.py:        # TODO: this isn't finished!
