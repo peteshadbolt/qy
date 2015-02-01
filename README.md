@@ -3,4 +3,4 @@
 - Hardware control
 - Simulation
 - GUI
-- Etc.
+- etc.
