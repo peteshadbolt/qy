@@ -1,4 +1,4 @@
-# qy: Quantum Stuff with Python
+# `qy`: Quantum Stuff with Python
 
 - Hardware control
 - Simulation
