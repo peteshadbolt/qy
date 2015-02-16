@@ -1,0 +1,7 @@
+To build:
+
+    python setup.py build_ext --inplace
+
+Windows
+
+    python setup.py build_ext --inplace -c mingw32
