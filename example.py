@@ -21,12 +21,13 @@ if __name__=="__main__":
             count_rates=value["count_rates"]
             # together with the context in which they were measured
             context=value["context"]
-
+            '''
             # Print out some stuff
             print "Recieved data:"
             pprint(count_rates)
             print "Context"
             pprint(context)
+            '''
             
             # Write that data to disk
             output_file.write("context", context)
@@ -35,7 +36,6 @@ if __name__=="__main__":
         elif key=="dpc230_status":
             #print value
             pass
-
 
     # START HERE 
     # Get a file ready to store data
@@ -47,7 +47,7 @@ if __name__=="__main__":
     counter=coincidence_counter(callback=handle_data)
     counter.set_delays_tb([0]*16)
     counter.set_integration_time_s(1)
-    counter.set_slice_time_ms(100)
+    counter.set_slice_window_ms(10)
 
     # Count ten times
     for i in range(10):

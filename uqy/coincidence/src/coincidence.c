@@ -182,6 +182,7 @@ void count_coincidences(void)
         window_time=photon_time;
         get_next_photon();
     }
+    finish_slice();
 }
 
 // The main coincidence-counting process
@@ -192,6 +193,7 @@ static PyObject* process_spc(PyObject* self, PyObject* args)
     int i;
     fifo_gap=0;
     high_time=0;
+    slice_time=0;
     for (i=0; i<65536; i+=1){pattern_rates[i]=0;}
     /*output_times = PyList_New(0);*/
     output_counts = PyList_New(0);
