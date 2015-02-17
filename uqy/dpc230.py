@@ -796,7 +796,8 @@ class coincidence_counter:
         self.integration_time = float(integration_time)
         if self.integration_time > 2:
             print 'WARNING: internal integration times > 2s are not yet implemented!'
-        self.pipe.send(('integration_time', integration_time))
+        fake_integration_time=0.1
+        self.pipe.send(('integration_time', fake_integration_time))
 
     def set_delays(self, delays):
         ''' Set the delays '''

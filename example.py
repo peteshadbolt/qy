@@ -49,7 +49,7 @@ if __name__=="__main__":
 
     # Count ten times
     for i in range(10):
-        counter.count(context=current_context)
+        counter.count({"test":i})
 
     # Collect and log the last piece of data from the postprocessor
     counter.collect()
