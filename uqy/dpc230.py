@@ -774,7 +774,7 @@ class coincidence_counter:
         self.pipe, post_pipe = Pipe()
         self.post = Process(
             target=postprocessor, name='post', args=(post_pipe,))
-        self.set_integration_time(settings.get('realtime.integration_time'))
+        self.set_integration_time_s(settings.get('realtime.integration_time'))
         self.set_delays_tb(settings.get('dpc230.delays'))
         self.post.start()
 
@@ -806,13 +806,13 @@ class coincidence_counter:
         self.slice_time_ms = float(slice_time_ms)
         self.pipe.send(('slice_time_ms', slice_time_ms))
 
+    def set_coincidence_window_tb(self, window):
+        ''' Set the coincidence window '''
+        self.pipe.send(('coincidence_window_tb', window))
+
     def set_delays_tb(self, delays_tb):
         ''' Set the delays '''
         self.pipe.send(('delays_tb', delays_tb))
-
-    def set_window(self, window):
-        ''' Set the coincidence window '''
-        self.pipe.send(('coincidence_window', window))
 
     def collect(self):
         ''' Collect all information from the coincidence counter '''
