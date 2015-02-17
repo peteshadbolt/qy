@@ -45,7 +45,9 @@ if __name__=="__main__":
 
     # Connect to the counting gear and configure it
     counter=coincidence_counter(callback=handle_data)
-    counter.set_integration_time(1)
+    counter.set_delays_tb([0]*16)
+    counter.set_integration_time_s(1)
+    counter.set_slice_time_ms(100)
 
     # Count ten times
     for i in range(10):

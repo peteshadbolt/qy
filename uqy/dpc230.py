@@ -698,9 +698,9 @@ class postprocessor:
         self.send = (lambda x: x) if pipe == None else pipe.send
         self.recv = (lambda x: x) if pipe == None else pipe.recv
         self.dpc_post = dpc230('postprocessing')
-        coincidence.set_window(settings.get('dpc230.coincidence_window'))
-        coincidence.set_delays(settings.get('dpc230.delays'))
-        coincidence.set_time_cutoff(1)
+        coincidence.set_coincidence_window_tb(settings.get('dpc230.coincidence_window'))
+        coincidence.set_delays_tb(settings.get('dpc230.delays'))
+        coincidence.set_time_cutoff_s(1)
         self.listen()
 
     def listen(self):
@@ -720,12 +720,15 @@ class postprocessor:
             self.handle_tdc(message)
         elif message[0] == 'kill':
             self.kill()
-        elif message[0] == 'delays':
-            coincidence.set_delays(message[1])
-        elif message[0] == 'coincidence_window':
-            coincidence.set_window(message[1])
-        elif message[0] == 'integration_time':
-            coincidence.set_time_cutoff(message[1])
+        elif message[0] == 'delays_tb':
+            coincidence.set_delays_tb(message[1])
+        elif message[0] == 'coincidence_window_tb':
+            coincidence.set_coincidence_window_tb(message[1])
+        elif message[0] == 'slice_time_ms':
+            coincidence.set_slice_time_ms(message[1])
+        elif message[0] == 'integration_time_s':
+            coincidence.set_time_cutoff_s(message[1])
+        coincidence.wtf();
 
     def handle_tdc(self, message):
         ''' Process some timetags '''
@@ -772,7 +775,7 @@ class coincidence_counter:
         self.post = Process(
             target=postprocessor, name='post', args=(post_pipe,))
         self.set_integration_time(settings.get('realtime.integration_time'))
-        self.set_delays(settings.get('dpc230.delays'))
+        self.set_delays_tb(settings.get('dpc230.delays'))
         self.post.start()
 
     def count(self, context):
@@ -791,17 +794,21 @@ class coincidence_counter:
                 self.buffers_in_use += -1
                 self.callback(data)
 
-    def set_integration_time(self, integration_time):
+    def set_integration_time_s(self, integration_time_s):
         ''' Set the integration time '''
-        self.integration_time = float(integration_time)
-        if self.integration_time > 2:
+        self.integration_time = float(integration_time_s)
+        if self.integration_time_s > 2:
             print 'WARNING: internal integration times > 2s are not yet implemented!'
-        fake_integration_time=0.1
-        self.pipe.send(('integration_time', fake_integration_time))
+        self.pipe.send(('integration_time_s', integration_time_s))
 
-    def set_delays(self, delays):
+    def set_slice_time_ms(self, slice_time_ms):
+        ''' Set the integration time '''
+        self.slice_time_ms = float(slice_time_ms)
+        self.pipe.send(('slice_time_ms', slice_time_ms))
+
+    def set_delays_tb(self, delays_tb):
         ''' Set the delays '''
-        self.pipe.send(('delays', delays))
+        self.pipe.send(('delays_tb', delays_tb))
 
     def set_window(self, window):
         ''' Set the coincidence window '''
