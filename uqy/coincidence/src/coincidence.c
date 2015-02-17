@@ -15,21 +15,25 @@ int buffer[CHUNK_SIZE];                 // the photon buffer
 long long int channels[16][CHUNK_SIZE]; // data, split up into channels
 int channel_count[16];                  // last index used per channel
 int channel_index[16];                  // last index used per channel
-int window=30;                          // the coincidence window size
+int coincidence_window=30;              // the coincidence window size
 int nrecords=1;                         // the number of records we actually read from the disk
 long fifo_gap=0;                        // tells us whether any data went missing due to a FIFO gap
 long long int photon_time=0;            // the arrival time of this photon
+long long int slice_time=0;             // the beginning of the slice
+long int slice_window=30;               // timing slice window
 int photon_channel=0;                   // the channel of the current photon
 long long int time_cutoff;              // how many chunks we should process
 int pattern_rates[65536];               // table of count rates
-
+long long int high_time=0;              // stores the current high time
+/*PyObject *output_times;                 // where we put the final dataset*/
+PyObject *output_counts;                // where we put the final dataset
 
 // Implements the coincidence window
 long long int quantize(long long int t, int win) {return t-(t % win);}
 
 
 // Grabs a chunk of data from the SPC file
-void grab_chunk(){nrecords=fread(&buffer, 4, CHUNK_SIZE, spc_file);}
+void grab_chunk(void){nrecords=fread(&buffer, 4, CHUNK_SIZE, spc_file);}
 
 
 // Count bits in a string
@@ -42,14 +46,45 @@ int bitcount (int n)  {
    return count ;
 }
 
+static PyObject* label_from_binary_pattern(int pattern)
+{
+    char label[17];
+    int i=0;
+    int j=0;
+    for (i=0; i<16; i+=1) {
+        if ((pattern & 1<<i) > 0) {
+            label[j]=ALPHABET[i];
+            j+=1;
+        }
+    }
+    PyObject *response = Py_BuildValue("s#", label, j);
+    return response;
+}
+
+
+// Builds the dictionary of count rates, to be returned to the user
+static PyObject* build_counts_dict(void)
+{
+    PyObject *counts_dict = PyDict_New();
+    int pattern=1; 
+    int i=0;
+    for (pattern=1; pattern<65536; pattern+=1) {
+        if (pattern_rates[pattern]>0) {
+            PyObject *key = label_from_binary_pattern(pattern);
+            PyObject *value = Py_BuildValue("i", pattern_rates[pattern]);
+            PyDict_SetItem(counts_dict, key, value);
+            i+=1;
+        }
+    }
+
+    return counts_dict;
+}
 
 // Splits the current chunk of data into seperate buffers for each channel
-int split_channels()
+int split_channels(void)
 {
     int i;
     int this_record=0;              // this record
-    int next_record=0;              // the previous record
-    long long int high_time=0;      // stores the current high time
     
     // empty the channel counts and indeces
     for (i=0; i<16; i+=1){channel_count[i]=0; channel_index[i]=0;}
@@ -58,7 +93,6 @@ int split_channels()
     for (i=0; i < nrecords-1; i+=1)
     {
         this_record=buffer[i]; 
-        next_record=buffer[i+1];
         
         if (is_photon(this_record))
         {
@@ -68,16 +102,16 @@ int split_channels()
             photon_time+=delays[photon_channel];
             photon_time=photon_time ^ high_time;
             if (photon_time>time_cutoff && time_cutoff>0) {
-                /*printf("Bailed due to time cutoff");*/
+                finish_slice();
                 return -1;
             }
             channels[photon_channel][channel_count[photon_channel]]=photon_time;
             channel_count[photon_channel]+=1;
         }
         
-        if (is_high_time(next_record)) 
+        if (is_high_time(this_record)) 
         {
-            high_time=get_high_time(next_record);
+            high_time=get_high_time(this_record);
             high_time=high_time << 24;
         }
     }
@@ -87,7 +121,7 @@ int split_channels()
 
 
 // Gets the next photon from the file
-void get_next_photon()
+void get_next_photon(void)
 {
     int i;
     long long int t;
@@ -107,17 +141,26 @@ void get_next_photon()
     if (photon_time!=-1){channel_index[photon_channel]+=1;}
 }
 
+void finish_slice(void){
+    int i;
+    PyObject *key = Py_BuildValue("i", (int)(TPB*slice_time/1e12));
+    PyObject *value = build_counts_dict();
+    /*PyList_Append(output_times, key);*/
+    PyList_Append(output_counts, value);
+    for (i=0; i<65536; i+=1){pattern_rates[i]=0;}
+}
+
 
 // Counts coincidences in the current chunk of data
-void count_coincidences()
+void count_coincidences(void)
 {
-    int pattern=0;                // Stores which coincidences we have
+    int pattern=0;                  // Stores which coincidences we have
     long long int window_time=0;    // The quantized time of this window
     get_next_photon();
     while(photon_time!=-1)
     {
-        photon_time=quantize(photon_time, window);
-        if ((photon_time==window_time) ^ (photon_time==window_time+window))
+        photon_time=quantize(photon_time, coincidence_window);
+        if ((photon_time==window_time) ^ (photon_time==window_time+coincidence_window))
         {
             // Update the picture of the event
             pattern = pattern ^ (1 << photon_channel);
@@ -125,49 +168,21 @@ void count_coincidences()
         else
         {
             // Store the event in the main table
-            //if ((pattern_rates[pattern]==0) && pattern!=0){nonzero_pattern_count+=1;}
             pattern_rates[pattern]+=1;
             // Get ready for the next event
             pattern = (1 << photon_channel);
+            // Did we reach the end of a slice? If so, put the current data in a dictionary and reset the table of count rates
+            if (photon_time > slice_time + slice_window)
+            {
+                slice_time = photon_time - (photon_time % slice_window);
+                finish_slice();
+            }
+ 
         }
         window_time=photon_time;
         get_next_photon();
     }
 }
-
-static PyObject* label_from_binary_pattern(int pattern)
-{
-    char label[17];
-    int i=0;
-    int j=0;
-    for (i=0; i<16; i+=1) {
-        if ((pattern & 1<<i) > 0) {
-            label[j]=ALPHABET[i];
-            j+=1;
-        }
-    }
-    PyObject *response = Py_BuildValue("s#", label, j);
-    return response;
-}
-
-// Builds the dictionary of count rates, to be returned to the user
-static PyObject* build_output_dict()
-{
-    PyObject *output_dict = PyDict_New();
-    int pattern=1; 
-    int i=0;
-    for (pattern=1; pattern<65536; pattern+=1) {
-        if (pattern_rates[pattern]>0) {
-            PyObject *key = label_from_binary_pattern(pattern);
-            PyObject *value = Py_BuildValue("i", pattern_rates[pattern]);
-            PyDict_SetItem(output_dict, key, value);
-            i+=1;
-        }
-    }
-
-    return output_dict;
-}
-
 
 // The main coincidence-counting process
 static char process_spc_docs[] = "process_spc(filename): Process an SPC file";
@@ -176,7 +191,10 @@ static PyObject* process_spc(PyObject* self, PyObject* args)
     // Reset count rates, etc
     int i;
     fifo_gap=0;
+    high_time=0;
     for (i=0; i<65536; i+=1){pattern_rates[i]=0;}
+    /*output_times = PyList_New(0);*/
+    output_counts = PyList_New(0);
 
     // Load the SPC file
     const char* my_spc_filename;
@@ -197,38 +215,69 @@ static PyObject* process_spc(PyObject* self, PyObject* args)
     fclose(spc_file);
 
     // Prepare the data to return
-    return build_output_dict();
+    PyObject *output_dict = PyDict_New();
+    /*PyDict_SetItem(output_dict, Py_BuildValue("s", "times"), output_times);*/
+    PyDict_SetItem(output_dict, Py_BuildValue("s", "slices"), output_counts);
+    return output_dict;
 }
 
 
-static char set_window_docs[] = "set_window(window): Set the coincidence window TB";
-static PyObject* set_window(PyObject* self, PyObject* args)
+static char set_coincidence_window_tb_docs[] = "set_coincidence_window_tb(coincidence_window): Set the coincidence window TB";
+static PyObject* set_coincidence_window_tb(PyObject* self, PyObject* args)
 { 
-    if (!PyArg_ParseTuple(args, "i", &window)) { return NULL; }
-    if (window<1){ window=1; }
-    PyObject *response = Py_BuildValue("i", window);
+    if (!PyArg_ParseTuple(args, "i", &coincidence_window)) { return NULL; }
+    if (coincidence_window<1){ coincidence_window=1; }
+    PyObject *response = Py_BuildValue("i", coincidence_window);
+    printf("Set coincidence window to %d tb (%.1f ns)\n", coincidence_window, coincidence_window * TPB/1e6);
     return response;
 }
 
-static char set_time_cutoff_docs[] = "set_time_cutoff(cutoff): Set the cutoff point in seconds";
-static PyObject* set_time_cutoff(PyObject* self, PyObject* args)
+static char set_slice_window_ms_docs[] = "set_slice_window_ms(slice_window): Set the timing slice window";
+static PyObject* set_slice_window_ms(PyObject* self, PyObject* args)
 { 
-    float new_time_cutoff;
-    if (!PyArg_ParseTuple(args, "f", &new_time_cutoff)) { return NULL; }
-    if (new_time_cutoff>.1) 
-    { 
-        time_cutoff=(long long)(new_time_cutoff*TPB_INV_SECS); 
-    }
+    float new_slice_window_ms;
+    if (!PyArg_ParseTuple(args, "f", &new_slice_window_ms)) { return NULL; }
+    slice_window = (long long)(new_slice_window_ms * TPB_INV_MS);
+    if (slice_window<1){ slice_window=1; }
+    printf("Set timing slice window to %ld tb (%.1f ms)\n", slice_window, new_slice_window_ms);
+    PyObject *response = Py_BuildValue("i", slice_window);
+    return response;
+}
+
+static char set_time_cutoff_s_docs[] = "set_time_cutoff_s(cutoff): Set the cutoff point in seconds";
+static PyObject* set_time_cutoff_s(PyObject* self, PyObject* args)
+{ 
+    float new_time_cutoff_s;
+    if (!PyArg_ParseTuple(args, "f", &new_time_cutoff_s)) { return NULL; }
+    if (new_time_cutoff_s>.1) { time_cutoff=(long long)(new_time_cutoff_s*TPB_INV_SECS); }
     PyObject *response = Py_BuildValue("L", time_cutoff);
+    return response;
+}
+
+
+static char wtf_docs[] = "wtf(): WTF is about to happen ... ?";
+static PyObject* wtf(PyObject* self, PyObject* args)
+{ 
+    printf("Coincidence counting setup:\n");
+    float cutoff_s = time_cutoff*TPB/1e15;
+    float slice_window_ms = (float)slice_window * TPB/1e12;
+    float coincidence_window_ns = coincidence_window * TPB/1e6;
+    int n_slices = (int)(1000*cutoff_s / slice_window_ms);
+    printf("  I'm going to consume at most %.1f s of data.\n", cutoff_s);
+    printf("  I'll slice it up into %d x %.1f ms slices.\n", n_slices, slice_window_ms);
+    printf("  For each slice, I'll count all coincidences with a window of %.1f ns.\n", coincidence_window_ns);
+    PyObject *response = Py_BuildValue("i", 0);
     return response;
 }
 
 
 static PyMethodDef coincidence_funcs[] = {
     {"process_spc", (PyCFunction)process_spc, METH_VARARGS, process_spc_docs},
-    {"set_window", (PyCFunction)set_window, METH_VARARGS, set_window_docs},
-    {"set_time_cutoff", (PyCFunction)set_time_cutoff, METH_VARARGS, set_time_cutoff_docs},
-    {"set_delays", (PyCFunction)set_delays, METH_VARARGS, set_delays_docs},
+    {"set_coincidence_window_tb", (PyCFunction)set_coincidence_window_tb, METH_VARARGS, set_coincidence_window_tb_docs},
+    {"set_slice_window_ms", (PyCFunction)set_slice_window_ms, METH_VARARGS, set_slice_window_ms_docs},
+    {"set_time_cutoff_s", (PyCFunction)set_time_cutoff_s, METH_VARARGS, set_time_cutoff_s_docs},
+    {"set_delays_tb", (PyCFunction)set_delays_tb, METH_VARARGS, set_delays_tb_docs},
+    {"wtf", (PyCFunction)wtf, METH_VARARGS, wtf_docs},
     {NULL}
 };
 
