@@ -102,7 +102,7 @@ int split_channels(void)
             photon_time+=delays[photon_channel];
             photon_time=photon_time ^ high_time;
             if (photon_time>time_cutoff && time_cutoff>0) {
-                finish_slice();
+                printf("bailed %f\n", photon_time*TPB/1e15);
                 return -1;
             }
             channels[photon_channel][channel_count[photon_channel]]=photon_time;
@@ -174,11 +174,13 @@ void count_coincidences(void)
             // Did we reach the end of a slice? If so, put the current data in a dictionary and reset the table of count rates
             if (photon_time > slice_time + slice_window)
             {
-                slice_time = photon_time - (photon_time % slice_window);
-                finish_slice();
+                while (photon_time > slice_time + slice_window){
+                    slice_time+=slice_window;
+                    finish_slice();
+                }
             }
- 
         }
+
         window_time=photon_time;
         get_next_photon();
     }
@@ -193,7 +195,7 @@ static PyObject* process_spc(PyObject* self, PyObject* args)
     fifo_gap=0;
     high_time=0;
     for (i=0; i<65536; i+=1){pattern_rates[i]=0;}
-    /*output_times = PyList_New(0);*/
+    slice_time = 0;
     output_counts = PyList_New(0);
 
     // Load the SPC file
@@ -210,6 +212,7 @@ static PyObject* process_spc(PyObject* self, PyObject* args)
         count_coincidences();
         if (finished!=-1){grab_chunk();}
     }
+    finish_slice();
     
     // Close the SPC file 
     fclose(spc_file);
@@ -239,7 +242,6 @@ static PyObject* set_slice_window_ms(PyObject* self, PyObject* args)
     if (!PyArg_ParseTuple(args, "f", &new_slice_window_ms)) { return NULL; }
     slice_window = (long long)(new_slice_window_ms * TPB_INV_MS);
     if (slice_window<1){ slice_window=1; }
-    printf("Set timing slice window to %ld tb (%.1f ms)\n", slice_window, new_slice_window_ms);
     PyObject *response = Py_BuildValue("i", slice_window);
     return response;
 }

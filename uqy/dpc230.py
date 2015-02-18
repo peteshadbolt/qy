@@ -797,9 +797,9 @@ class coincidence_counter:
     def set_integration_time_s(self, integration_time_s):
         ''' Set the integration time '''
         self.integration_time = float(integration_time_s)
-        if self.integration_time_s > 2:
+        if self.integration_time > 2:
             print 'WARNING: internal integration times > 2s are not yet implemented!'
-        self.pipe.send(('integration_time_s', integration_time_s))
+        self.pipe.send(('integration_time_s', integration_time))
 
     def set_slice_time_ms(self, slice_time_ms):
         ''' Set the integration time '''
