@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <Python.h>
 #include "dpc.h"
 #include "delays.h"
@@ -25,27 +26,19 @@ int photon_channel=0;                   // the channel of the current photon
 long long int time_cutoff;              // how many chunks we should process
 int pattern_rates[65536];               // table of count rates
 long long int high_time=0;              // stores the current high time
-/*PyObject *output_times;                 // where we put the final dataset*/
+PyObject *output_times;                 // where we put the final dataset
 PyObject *output_counts;                // where we put the final dataset
 
 // Implements the coincidence window
-long long int quantize(long long int t, int win) {return t-(t % win);}
+long long int quantize(long long int t, int win) {return t==-1 ? -1 : t-(t % win);}
 
 
 // Grabs a chunk of data from the SPC file
 void grab_chunk(void){nrecords=fread(&buffer, 4, CHUNK_SIZE, spc_file);}
 
 
-// Count bits in a string
-int bitcount (int n)  {
-   int count = 0 ;
-   while (n)  {
-      count++ ;
-      n &= (n - 1) ;
-   }
-   return count ;
-}
-
+// Takes a pattern represented in binary (i.e. an int). 
+// e.g. 0000000000011000 = 2^3+2^4 = 8+16 = 24 = "LM"
 static PyObject* label_from_binary_pattern(int pattern)
 {
     char label[17];
@@ -62,7 +55,7 @@ static PyObject* label_from_binary_pattern(int pattern)
 }
 
 
-// Builds the dictionary of count rates, to be returned to the user
+// Builds the dictionary of count rates, to be returned to python
 static PyObject* build_counts_dict(void)
 {
     PyObject *counts_dict = PyDict_New();
@@ -76,11 +69,11 @@ static PyObject* build_counts_dict(void)
             i+=1;
         }
     }
-
     return counts_dict;
 }
 
 // Splits the current chunk of data into seperate buffers for each channel
+// The main task here is to sort photons into a single serial array
 int split_channels(void)
 {
     int i;
@@ -93,29 +86,25 @@ int split_channels(void)
     for (i=0; i < nrecords-1; i+=1)
     {
         this_record=buffer[i]; 
-        
         if (is_photon(this_record))
         {
             if (has_gap(this_record)){fifo_gap+=1;}
-            photon_channel=photon_to_channel(this_record);
-            photon_time=photon_to_time(this_record);
-            photon_time+=delays[photon_channel];
-            photon_time=photon_time ^ high_time;
+            photon_channel = photon_to_channel(this_record);
+            photon_time = (photon_to_time(this_record) + delays[photon_channel]) ^ high_time; 
             if (photon_time>time_cutoff && time_cutoff>0) {
                 printf("bailed %f\n", photon_time*TPB/1e15);
                 return -1;
             }
             channels[photon_channel][channel_count[photon_channel]]=photon_time;
             channel_count[photon_channel]+=1;
-        }
-        
-        if (is_high_time(this_record)) 
+        } 
+        else if (is_high_time(this_record)) 
         {
             high_time=get_high_time(this_record);
             high_time=high_time << 24;
         }
     }
-    if (fifo_gap){printf("WARNING: FIFO gap. You are missing photons!");}
+    if (fifo_gap > 0){printf("WARNING: FIFO gap. You are missing photons!");}
     return 0;
 }
 
@@ -141,11 +130,12 @@ void get_next_photon(void)
     if (photon_time!=-1){channel_index[photon_channel]+=1;}
 }
 
+// Finish a slice - generates a dictionary 
 void finish_slice(void){
     int i;
-    PyObject *key = Py_BuildValue("i", (int)(TPB*slice_time/1e12));
+    PyObject *key = Py_BuildValue("i", (int)round(TPB*slice_time/1e12));
     PyObject *value = build_counts_dict();
-    /*PyList_Append(output_times, key);*/
+    PyList_Append(output_times, key);
     PyList_Append(output_counts, value);
     for (i=0; i<65536; i+=1){pattern_rates[i]=0;}
 }
@@ -156,17 +146,17 @@ void count_coincidences(void)
 {
     int pattern=0;                  // Stores which coincidences we have
     long long int window_time=0;    // The quantized time of this window
-    get_next_photon();
     while(photon_time!=-1)
     {
+        get_next_photon();
         photon_time=quantize(photon_time, coincidence_window);
-        if ((photon_time==window_time) ^ (photon_time==window_time+coincidence_window))
+        if (photon_time==window_time)
         {
-            // Update the picture of the event
-            pattern = pattern ^ (1 << photon_channel);
+            pattern = pattern ^ (1 << photon_channel); // Update the picture of the event
         }
         else
         {
+            window_time=photon_time;
             // Store the event in the main table
             pattern_rates[pattern]+=1;
             // Get ready for the next event
@@ -175,14 +165,12 @@ void count_coincidences(void)
             if (photon_time > slice_time + slice_window)
             {
                 while (photon_time > slice_time + slice_window){
-                    slice_time+=slice_window;
                     finish_slice();
+                    slice_time+=slice_window;
                 }
             }
         }
 
-        window_time=photon_time;
-        get_next_photon();
     }
 }
 
@@ -197,6 +185,7 @@ static PyObject* process_spc(PyObject* self, PyObject* args)
     for (i=0; i<65536; i+=1){pattern_rates[i]=0;}
     slice_time = 0;
     output_counts = PyList_New(0);
+    output_times = PyList_New(0);
 
     // Load the SPC file
     const char* my_spc_filename;
@@ -219,7 +208,7 @@ static PyObject* process_spc(PyObject* self, PyObject* args)
 
     // Prepare the data to return
     PyObject *output_dict = PyDict_New();
-    /*PyDict_SetItem(output_dict, Py_BuildValue("s", "times"), output_times);*/
+    PyDict_SetItem(output_dict, Py_BuildValue("s", "times"), output_times);
     PyDict_SetItem(output_dict, Py_BuildValue("s", "slices"), output_counts);
     return output_dict;
 }

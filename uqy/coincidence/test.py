@@ -8,5 +8,7 @@ for i in range(1, 100, 10):
     coincidence.set_slice_window_ms(i)
     output = coincidence.process_spc("photons.spc")
     print output["slices"][0], output["slices"][1], output["slices"][-1]
+    print output["times"]
     print "%.2f   %d" % (1000./i, len(output["slices"]))
+    raw_input()
 
