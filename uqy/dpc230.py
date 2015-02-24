@@ -701,6 +701,7 @@ class postprocessor:
         coincidence.set_coincidence_window_tb(settings.get('dpc230.coincidence_window'))
         coincidence.set_delays_tb(settings.get('dpc230.delays'))
         coincidence.set_time_cutoff_s(1)
+        coincidence.set_slice_window_ms(1000)
         self.listen()
 
     def listen(self):
@@ -724,11 +725,11 @@ class postprocessor:
             coincidence.set_delays_tb(message[1])
         elif message[0] == 'coincidence_window_tb':
             coincidence.set_coincidence_window_tb(message[1])
-        elif message[0] == 'slice_time_ms':
-            coincidence.set_slice_time_ms(message[1])
+        elif message[0] == 'slice_window_ms':
+            coincidence.set_slice_window_ms(message[1])
         elif message[0] == 'integration_time_s':
             coincidence.set_time_cutoff_s(message[1])
-        coincidence.wtf();
+        #coincidence.wtf();
 
     def handle_tdc(self, message):
         ''' Process some timetags '''
@@ -801,10 +802,10 @@ class coincidence_counter:
             print 'WARNING: internal integration times > 2s are not yet implemented!'
         self.pipe.send(('integration_time_s', integration_time))
 
-    def set_slice_time_ms(self, slice_time_ms):
+    def set_slice_window_ms(self, slice_window_ms):
         ''' Set the integration time '''
-        self.slice_time_ms = float(slice_time_ms)
-        self.pipe.send(('slice_time_ms', slice_time_ms))
+        self.slice_window_ms = float(slice_window_ms)
+        self.pipe.send(('slice_window_ms', slice_window_ms))
 
     def set_coincidence_window_tb(self, window):
         ''' Set the coincidence window '''
