@@ -43,7 +43,10 @@ class ctx:
 
             # Automatically add some extra metadata
             self.metadata['timestamp'] = str(time_started)
-            self.metadata['computer'] = os.environ['COMPUTERNAME']
+            if "COMPUTERNAME" in os.environ: 
+                self.metadata['computer'] = os.environ['COMPUTERNAME']
+            else:
+                self.metadata['computer'] = "Unknown computer"
 
             # Write it to disk
             self.write('metadata', self.metadata)
