@@ -5,6 +5,7 @@ import os
 import settings
 from multiprocessing import Process, Pipe
 import coincidence
+import util
 
 param_names_list = [
     'CFD_LIMIT_LOW', 'CFD_LIMIT_HIGH', 'CFD_ZC_LEVEL', 'CFD_HOLDOFF',
@@ -740,6 +741,15 @@ class postprocessor:
 
         # Heavy lifting is here
         spc_filename = self.dpc_post.convert_raw_data(tdc1, tdc2)
+        
+        # Optionally, save the timetags to disk. Only do this when you don't have tonnes of timetags...
+        if settings.get("dpc230.store_timetags"):
+            timetag_dir = settings.get("dpc230.timetag_dir")
+            if not(os.path.exists(timetag_dir)): os.mkdir(timetag_dir)
+            f=open(spc_filename, "rb"); data=f.read(); f.close()
+            filename = os.path.join(timetag_dir, util.timestamp())+".spc"
+            f=open(filename, "wb"); f.write(data); f.close()
+
         if spc_filename != None:
             count_rates = coincidence.process_spc(spc_filename)
             data = {'context': context, 'count_rates': count_rates}

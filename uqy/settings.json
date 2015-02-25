@@ -7,6 +7,8 @@
     "cross_correlation_buffer": "C:\\Users\\Administrator\\Data\\cross_correlation_buffer",
     "dpc230.dll_path": "C:\\Program Files (x86)\\BH\\dll",
     "dpc230.coincidence_window": 30,
+    "dpc230.store_timetags": 0,
+    "dpc230.timetag_dir": "timetags/",
     "realtime.integration_time": 1,
     "dpc230.force_connection": 1,
     "dpc230.delays": [5,5,5,5,5,5,5,5,5,5,5,5,10,5,5,0],
