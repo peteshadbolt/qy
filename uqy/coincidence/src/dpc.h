@@ -3,8 +3,8 @@ short channel_map[21]={ -1, -1, -1,  0,  1,  2,  3,  4,  5,  6,  7, -1, -1,  8, 
 
 // Time per bin
 #define TPB 82305.00030517578125
-#define TPB_INV_SECS 1e15/82305.00030517578125
-#define TPB_INV_MS 1e12/82305.00030517578125
+#define TPB_INV_SECS 12149930137
+#define TPB_INV_MS 12149930
 
 // Functions
 int is_high_time(int p) {return p >> 30 == 1;}									// determines if this is a high time record

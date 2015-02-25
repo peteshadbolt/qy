@@ -21,7 +21,7 @@ int nrecords=1;                         // the number of records we actually rea
 long fifo_gap=0;                        // tells us whether any data went missing due to a FIFO gap
 long long int photon_time=0;            // the arrival time of this photon
 long long int slice_time=0;             // the beginning of the slice
-long int slice_window=30;               // timing slice window
+long long int slice_window=30;          // timing slice window
 int photon_channel=0;                   // the channel of the current photon
 long long int time_cutoff;              // how many chunks we should process
 int pattern_rates[65536];               // table of count rates
@@ -92,7 +92,7 @@ int split_channels(void)
             photon_channel = photon_to_channel(this_record);
             photon_time = (photon_to_time(this_record) + delays[photon_channel]) ^ high_time; 
             if (photon_time>time_cutoff && time_cutoff>0) {
-                printf("bailed %f\n", photon_time*TPB/1e15);
+                /*printf("bailed %f\n", photon_time*TPB/1e15);*/
                 return -1;
             }
             channels[photon_channel][channel_count[photon_channel]]=photon_time;
@@ -231,7 +231,12 @@ static PyObject* set_slice_window_ms(PyObject* self, PyObject* args)
 { 
     float new_slice_window_ms;
     if (!PyArg_ParseTuple(args, "f", &new_slice_window_ms)) { return NULL; }
+    if (new_slice_window_ms > 1000) {
+        printf("Your slices are too long. Integrate over many slices please\n");
+        new_slice_window_ms = 1000;
+    }
     slice_window = (long long)(new_slice_window_ms * TPB_INV_MS);
+    /*printf("%lld\n", slice_window);*/
     if (slice_window<1){ slice_window=1; }
     PyObject *response = Py_BuildValue("i", slice_window);
     return response;
