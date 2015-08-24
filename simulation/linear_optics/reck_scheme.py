@@ -1,7 +1,8 @@
 import numpy as np
-from beamsplitter_network import beamsplitter_network
+from beamsplitter_phase_network import beamsplitter_phase_network
+import json
 
-class reck_scheme(beamsplitter_network):
+class reck_scheme(beamsplitter_phase_network):
     ''' builds beamsplitter networks according to reck et al'''
     def __init__(self, nmodes, dense_phase_shifters=False):
         ''' dense phase shifters gives us more PS than we strictly need '''
@@ -10,6 +11,7 @@ class reck_scheme(beamsplitter_network):
         self.dense_phase_shifters=dense_phase_shifters
         self.structure=[]
         self.phaseshifters=[]
+        self.phaseshifters_extended=[]
         self.beamsplitters=[]
         self.input_modes=[]
         self.build()
@@ -27,7 +29,7 @@ class reck_scheme(beamsplitter_network):
         
         #add the phaseshifters
         for x in ps_x_vals:
-            self.add_phaseshifter(x,modenum)
+            self.add_phaseshifter_extended(x,modenum)
             
     def buildend(self):
         n = self.nmodes
@@ -40,7 +42,7 @@ class reck_scheme(beamsplitter_network):
     def build(self):
         for modenum in range(self.nmodes-1):
             self.buildrow(modenum)
-        self.buildend()
+        #self.buildend()
         self.order_structure()
         
         #this doesn't work. need to order by x values
@@ -52,3 +54,41 @@ class reck_scheme(beamsplitter_network):
     def order_structure(self):
         self.structure = sorted(self.structure, key=lambda s: s.x)
         
+    def set_realistic_shifter_parameters(self):
+        for p in self.phaseshifters_extended:
+            p.set_phase_offset(np.random.uniform(0,np.pi/2.))
+            p.set_phase_offset(np.random.normal(0.14,0.01))
+            
+    def set_realistic_splitting_ratios(self):
+        for s in self.beamsplitters:
+            s.set_splitting_ratio(np.random.normal(0.5,0.01))
+            
+    def to_dict(self):
+        couplers=[]
+        for c in self.beamsplitters:  
+            couplers.append({'y':c.y, 'x':c.x, 'ratio':c.splitting_ratio})
+        shifters=[]
+        for s in self.phaseshifters_extended:
+            shifters.append({'y':s.y, 'x':s.x, 'phase':s.phi, 'pva':s.a, 'pvb':s.b})
+        d={}
+        d['name']='reck_scheme'
+        d['modes']=self.nmodes
+        d['width']=(np.max([c.x for c in self.structure])+2)
+        d['couplers']=couplers
+        d['extended_shifters']=shifters
+        
+        self.asdict=d
+            
+    def to_json(self,filename='test.json'):
+        self.to_dict()
+        f=open(filename,'w')
+        json.dump(self.asdict,f, indent=4)
+        
+        
+        
+        
+if __name__ == "__main__":
+    r=reck_scheme(6)
+    r.set_realistic_splitting_ratios()
+    print r
+    r.to_json()

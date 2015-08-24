@@ -69,7 +69,7 @@ class beamsplitter_phase_network:
         self.structure.append(ps)
         self.phaseshifters.append(ps)
         
-    def add_phaseshifter_extended(self, x, y, a, b,v=0,phase=0,invert=False):
+    def add_phaseshifter_extended(self, x, y, a=0, b=0.14,v=0,phase=0,invert=False):
         ps=components.phaseshifter_extended(x,y,a,b,len(self.phaseshifters_extended),v,phase,invert)
         self.structure.append(ps)
         self.phaseshifters_extended.append(ps)
@@ -132,8 +132,9 @@ class beamsplitter_phase_network:
         ''' make a string representing the beamsplitter network '''
         s='%d-mode %s\n' % (self.nmodes, self.name)
         s+='%d phase shifters | ' % len(self.phaseshifters)
+        s+='%d extended phase shifters | ' % len(self.phaseshifters_extended)
         s+='%d beam splitters | ' % len(self.beamsplitters)
-        s+='%d degrees of freedom\n' % (len(self.phaseshifters)+len(self.beamsplitters))
+        s+='%d degrees of freedom\n' % (len(self.phaseshifters)+len(self.beamsplitters)+len(self.phaseshifters_extended))
 
         for i, component in enumerate(self.structure):
             s+='  (#%d) %s\n' % (i, str(component))

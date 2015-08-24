@@ -150,7 +150,7 @@ class phaseshifter_extended:
         
     def __str__(self):
         ''' print '''
-        return 'phase shifter (extended) %d [%d,%d] \t| phase =%.2f pi' % (self.index, self.x, self.y, self.phi/np.pi)
+        return 'phase shifter (extended) %d [%d,%d] \t| phase =%.2f pi | a =%.2f, b =%.2f' % (self.index, self.x, self.y, self.phi/np.pi, self.a, self.b)
 
 class static_phase:
     def __init__(self,x,y,phase,index,invert=False):
