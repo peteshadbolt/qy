@@ -55,7 +55,7 @@ class simulator:
                 rows=self.basis.modes_from_index(output)
                 n2=self.basis.get_normalization_constant(rows)
                 output_state[output]+=input_amplitude*self.perm(self.device.unitary[rows][:,cols])/np.sqrt(n1*n2)
-                pbar.update(output)
+                #pbar.update(output)
         #pbar.finish()
         return output_state
 
@@ -77,6 +77,24 @@ class simulator:
         probabilities=probabilities*probabilities
         #pbar.finish()
         return probabilities
+        
+    def get_output_state_terms(self, outputs=None):
+        ''' Iterate over a bunch of patterns.  Outputs must be a list or generator of indeces '''
+        outputs=map(self.basis.modes_to_index, outputs)
+        N=len(outputs)
+        amplitudes=np.zeros(N, dtype=complex)
+        #pbar = pb.ProgressBar(widgets=[pb.Percentage()], maxval=N).start()
+        for input in self.input_state.nonzero_terms:
+            input_amplitude=self.input_state.vector[input]
+            cols=self.basis.modes_from_index(input)
+            n1=self.basis.get_normalization_constant(cols)
+            for index, output in enumerate(outputs):
+                rows=self.basis.modes_from_index(output)
+                n2=self.basis.get_normalization_constant(rows)
+                amplitudes[index]+=input_amplitude*self.perm(self.device.unitary[rows][:,cols])/np.sqrt(n1*n2)
+                #pbar.update(index)
+        #pbar.finish()
+        return amplitudes
 
     def get_probabilities_classical(self, outputs=None):
         ''' Iterate over a bunch of patterns.  Outputs must be a list or generator of indeces '''
