@@ -14,7 +14,7 @@ class reck_scheme(beamsplitter_phase_network):
         self.phaseshifters_extended=[]
         self.beamsplitters=[]
         self.input_modes=[]
-        self.build()
+        self.build_basement()
         self.unitary = self.get_unitary()
 
     def buildrow(self, modenum):
@@ -31,13 +31,31 @@ class reck_scheme(beamsplitter_phase_network):
         for x in ps_x_vals:
             self.add_phaseshifter_extended(x,modenum)
             
+    #builds a reck scheme that looks like the one in the NSQI basement
+    def buildrow_basement(self,modenum):
+        xboost = (self.nmodes-2-modenum)*4
+        bs_x_vals = np.hstack([np.array([1,3])+a+xboost for a in np.array(range(modenum+1))*8])
+        ps_x_vals = np.hstack([np.array([2,4])+a+xboost for a in np.array(range(modenum+1))*8])
+        if modenum==(self.nmodes-2):
+            ps_x_vals=ps_x_vals[:-1]
+        print ps_x_vals
+        #add the beamsplitters
+        for x in bs_x_vals:
+            self.add_beamsplitter(x,modenum)
+        
+        #add the phaseshifters
+        for x in ps_x_vals:
+            self.add_phaseshifter_extended(x,modenum,invert=True)    
     def buildend(self):
         n = self.nmodes
         x = 4 + 8*(n-2)
         for y in range(n-1):
             self.add_phaseshifter(x,y)
             
-        
+    def buildstart(self):
+        n=self.nmodes
+        for y in range(n-1):
+            self.add_phaseshifter(0,y,invert=True)
             
     def build(self):
         for modenum in range(self.nmodes-1):
@@ -45,7 +63,12 @@ class reck_scheme(beamsplitter_phase_network):
         #self.buildend()
         self.order_structure()
         
-        #this doesn't work. need to order by x values
+    def build_basement(self):
+        for modenum in range(self.nmodes-1):
+            self.buildrow_basement(modenum)
+        #self.buildstart()
+        self.order_structure()
+        
         
     def set_random_phases(self):
         p = np.random.uniform(0,2*np.pi,len(self.phaseshifters))
@@ -57,11 +80,11 @@ class reck_scheme(beamsplitter_phase_network):
     def set_realistic_shifter_parameters(self):
         for p in self.phaseshifters_extended:
             p.set_phase_offset(np.random.uniform(0,np.pi/2.))
-            p.set_phase_offset(np.random.normal(0.14,0.01))
+            p.set_phase_quadratic_term(np.random.normal(0.14,0.01))
             
     def set_realistic_splitting_ratios(self):
         for s in self.beamsplitters:
-            s.set_splitting_ratio(np.random.normal(0.5,0.01))
+            s.set_splitting_ratio(np.random.normal(0.5,0.015))
             
     def to_dict(self):
         couplers=[]
@@ -71,11 +94,14 @@ class reck_scheme(beamsplitter_phase_network):
         for s in self.phaseshifters_extended:
             shifters.append({'y':s.y, 'x':s.x, 'phase':s.phi, 'pva':s.a, 'pvb':s.b})
         d={}
-        d['name']='reck_scheme'
+        d['name']=self.name
         d['modes']=self.nmodes
         d['width']=(np.max([c.x for c in self.structure])+2)
         d['couplers']=couplers
         d['extended_shifters']=shifters
+        
+        #for now, force this (needed for loading it as .json to work)
+        d['static_phases']=[{'y':0,'x':0,'offset':0.000001}]
         
         self.asdict=d
             
@@ -83,12 +109,18 @@ class reck_scheme(beamsplitter_phase_network):
         self.to_dict()
         f=open(filename,'w')
         json.dump(self.asdict,f, indent=4)
+        print 'Saved circuit as %s' % filename
         
         
         
         
 if __name__ == "__main__":
-    r=reck_scheme(6)
-    r.set_realistic_splitting_ratios()
+    r=reck_scheme(4)
+    #r.set_realistic_splitting_ratios()
+    #r.set_realistic_shifter_parameters()
     print r
-    r.to_json()
+    #r.to_json('reck4_test_phase.json')
+    r.draw('test.pdf')
+    
+    #s=beamsplitter_phase_network(json='reck4_test.json')
+    #print s

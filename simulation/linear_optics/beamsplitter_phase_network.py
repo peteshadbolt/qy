@@ -183,3 +183,30 @@ class beamsplitter_phase_network:
         self.axes.set_aspect(.5)
         self.canvas.print_figure(filename, bbox_inches='tight')
         #print 'done'
+
+    def to_dict(self):
+        couplers=[]
+        for c in self.beamsplitters:  
+            couplers.append({'y':c.y, 'x':c.x, 'ratio':c.splitting_ratio})
+        shifters=[]
+        for s in self.phaseshifters_extended:
+            shifters.append({'y':s.y, 'x':s.x, 'phase':s.phi, 'pva':s.a, 'pvb':s.b})
+        d={}
+        d['name']=self.name
+        d['modes']=self.nmodes
+        d['width']=(np.max([c.x for c in self.structure])+2)
+        d['couplers']=couplers
+        d['extended_shifters']=shifters
+        
+        #for now, force this (needed for loading it as .json to work)
+        d['static_phases']=[{'y':0,'x':0,'offset':0.000001}]
+        
+        self.asdict=d
+        
+    def to_json(self,filename='test.json'):
+        self.to_dict()
+        f=open(filename,'w')
+        json.dump(self.asdict,f, indent=4)
+        print 'Saved circuit as %s' % filename
+        
+        
